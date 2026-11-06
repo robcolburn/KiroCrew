@@ -12,6 +12,7 @@ operator's deny rule is not a question for whoever is watching the run.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any, Mapping
 
 #: Longest command text screened. A longer one is refused unscreened: a deny
@@ -22,21 +23,114 @@ MAX_SCREENED_COMMAND_CHARS = 64 * 1024
 _COMMAND_KEYS = ("command", "cmd", "script")
 
 
-def step_command(params: Mapping[str, Any]) -> str | None:
-    """The shell command a step's permission request asks to run, if any."""
-    tool_call = params.get("toolCall")
-    if not isinstance(tool_call, Mapping):
-        return None
-    raw = tool_call.get("rawInput")
-    if not isinstance(raw, Mapping):
-        return None
-    for key in _COMMAND_KEYS:
-        value = raw.get(key)
-        if isinstance(value, str) and value.strip():
-            return value
-        if isinstance(value, list) and value and all(isinstance(v, str) for v in value):
-            return " ".join(value)
+@dataclass(frozen=True)
+class StepCommand:
+    """The command a step's permission request asks to run, as every reader sees it.
+
+    ``text`` is the command to screen, show and grant on, or None when the call
+    names none. ``unreadable`` is True when a command is named in a shape this
+    resolver cannot read (not a non-empty string or list of strings, or two places
+    naming different commands): such a call is never screened clean, never matched
+    by a grant and never answered by an approval mode, so a person is asked.
+    """
+
+    text: str | None
+    unreadable: bool = False
+
+
+_NONE = StepCommand(None)
+_UNREADABLE = StepCommand(None, unreadable=True)
+
+
+def _command_text(value: Any) -> str | None:
+    """*value* as command text, or None when it is not a readable command."""
+    if isinstance(value, str):
+        return value if value.strip() else None
+    if isinstance(value, list) and value and all(isinstance(v, str) for v in value):
+        joined = " ".join(value)
+        return joined if joined.strip() else None
     return None
+
+
+def resolve_step_command(params: Mapping[str, Any]) -> StepCommand:
+    """The command a step's permission request asks to run, from every place KAS names it.
+
+    KAS's own ``_meta.kiro.command`` (set only for a shell call) and the call's
+    ``toolCall.rawInput`` (``command`` / ``cmd`` / ``script``) are both read. Any
+    of them present but unreadable, or two of them disagreeing, is
+    :data:`StepCommand.unreadable`.
+    """
+    found: list[Any] = []
+    meta = params.get("_meta")
+    if meta is not None:
+        if not isinstance(meta, Mapping):
+            return _UNREADABLE
+        kiro = meta.get("kiro")
+        if kiro is not None and not isinstance(kiro, Mapping):
+            return _UNREADABLE
+        if isinstance(kiro, Mapping) and "command" in kiro:
+            found.append(kiro.get("command"))
+    tool_call = params.get("toolCall")
+    if tool_call is not None and not isinstance(tool_call, Mapping):
+        return _UNREADABLE
+    raw = tool_call.get("rawInput") if isinstance(tool_call, Mapping) else None
+    if raw is not None:
+        if not isinstance(raw, Mapping):
+            return _UNREADABLE
+        found.extend(raw.get(key) for key in _COMMAND_KEYS if key in raw)
+    if not found:
+        return _NONE
+    texts = [_command_text(value) for value in found]
+    if any(text is None for text in texts) or len(set(texts)) != 1:
+        return _UNREADABLE
+    return StepCommand(texts[0])
+
+
+def step_input_denial(params: Mapping[str, Any]) -> str | None:
+    """Why a step's tool call is refused on its inputs, or None when nothing refuses it.
+
+    The chat turn's own screen (:func:`~kiro_crew.llm_helpers_parts.tool_approval.
+    tool_input_screen`: the title tier, then the tool-input tier with its path,
+    shell and deny-rule checks and its size ceiling) over the event the chat path
+    builds from the same request (``build_permission_event``, KAS consent read).
+    A step's ``tool_call`` frames never reach Crew, so what the chat path reads
+    from them is taken from the request itself: ``toolCall.rawInput``, every
+    ``toolCall.locations[].path`` and KAS's ``_meta.kiro.consent.resource``.
+    Fails closed: a request the builder cannot read, inputs that cannot be
+    rendered, or a screen that raises all refuse. Blocking: call it off the loop.
+    """
+    import json
+
+    from kiro_crew.agent_sdk.kas_workflows_driver import step_permission_event
+    from kiro_crew.hooks import effective_denied_regexes_from_config
+    from kiro_crew.llm_helpers_parts.tool_approval import tool_input_screen
+
+    event = step_permission_event(dict(params))
+    if event is None:
+        return "the step's permission request could not be read"
+    tool_call = params.get("toolCall")
+    tool_call = tool_call if isinstance(tool_call, Mapping) else {}
+    meta = params.get("_meta")
+    kiro = meta.get("kiro") if isinstance(meta, Mapping) else None
+    consent = kiro.get("consent") if isinstance(kiro, Mapping) else None
+    locations = tool_call.get("locations")
+    inputs = {
+        "rawInput": tool_call.get("rawInput"),
+        "locations": [
+            loc.get("path")
+            for loc in (locations if isinstance(locations, list) else [])
+            if isinstance(loc, Mapping)
+        ],
+        "resource": consent.get("resource") if isinstance(consent, Mapping) else None,
+    }
+    try:
+        rendered = json.dumps(inputs)
+    except (TypeError, ValueError):
+        return "the step's tool inputs could not be read"
+    event.tool_input = rendered
+    title = event.title or ""
+    hit = tool_input_screen(event, None, title, title, effective_denied_regexes_from_config())
+    return hit[1] if hit is not None else None
 
 
 def deny_reason(command: str) -> str | None:

@@ -9,6 +9,7 @@ import pytest
 
 from kiro_crew.kas_workflows import transcript, wire
 from kiro_crew.kas_workflows.router import KasWorkflowRouter, StepNotStarted
+from kiro_crew.testing.links import make_dir_link
 
 SID = "sess_81c4db41-9212-49ba-a7d3-2f09908a77b5"
 WID = "wf_4d59ddebfbc27732"
@@ -167,7 +168,7 @@ def test_a_symlinked_session_outside_the_root_is_not_followed(tmp_path):
     _session(outside, RECORDS)
     root = tmp_path / "root"
     (root / "bucket").mkdir(parents=True)
-    (root / "bucket" / SID).symlink_to(outside / "b069624b1d504c50" / SID)
+    make_dir_link(root / "bucket" / SID, outside / "b069624b1d504c50" / SID)
     with pytest.raises(transcript.StepTranscriptError):
         transcript.locate(SID, root=root)
 
