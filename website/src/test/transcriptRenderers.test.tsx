@@ -841,6 +841,11 @@ describe('authRequiredIsNewest -- the composer keeps Resume under a sign-in erro
     }
   })
 
+  it('holds under a row that asks for kiro-cli’s own sign-in too', () => {
+    const kiroCli = msg('error', { content: 'Not signed in.', meta: { kind: 'kiro_cli_sign_in' } })
+    expect(authRequiredIsNewest([user(), kiroCli])).toBe(true)
+  })
+
   it('lets go once a later turn opens or answers, and under a newer error of another kind', () => {
     expect(authRequiredIsNewest([user(), live(), msg('user', { content: 'again' })])).toBe(false)
     expect(authRequiredIsNewest([user(), live(), msg('assistant', { content: 'ok' })])).toBe(false)

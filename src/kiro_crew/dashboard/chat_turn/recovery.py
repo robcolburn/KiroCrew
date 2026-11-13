@@ -311,6 +311,20 @@ def _terminal_error_meta(exc: BaseException) -> dict[str, object] | None:
     contested = ambiguity_meta(exc)
     if contested is not None:
         return contested
+    if getattr(exc, "kiro_cli_sign_in", False) is True:
+        from kiro_crew.dashboard.chat_utils_injected_rows import KIRO_CLI_SIGN_IN_KIND
+
+        return {"kind": KIRO_CLI_SIGN_IN_KIND}
+    if getattr(exc, "auth_required", False) and _ran_on_kiro_clis_relay():
+        from kiro_crew.dashboard.chat_utils_injected_rows import KIRO_CLI_SIGN_IN_KIND
+
+        # Either sign-in can start the relay: kiro-cli's, or Crew's when its vault
+        # holds one, so the row offers both.
+        return {
+            "kind": KIRO_CLI_SIGN_IN_KIND,
+            "crew_sign_in": True,
+            **_kas_signed_out_notice(str(exc)),
+        }
     if getattr(exc, "auth_required", False):
         return {"kind": AUTH_REQUIRED_KIND, **_kas_signed_out_notice(str(exc))}
     if getattr(exc, "usage_limit", False):
@@ -363,6 +377,19 @@ def _limit_reset_meta(exc: BaseException) -> dict[str, object]:
         return {"reset_at": datetime.fromtimestamp(at, tz=timezone.utc).isoformat()}
     except (OverflowError, OSError, ValueError):
         return {}
+
+
+def _ran_on_kiro_clis_relay() -> bool:
+    """Whether the last KAS spawn ran through kiro-cli's relay, a KAS pick or a Kiro CLI one.
+
+    Read from the route the spawn recorded (``acp/kas_route.last_spawn_route``), the
+    same one the signed-out message names. False before any spawn, and on the
+    bundle route, where only Crew's sign-in fixes it.
+    """
+    from kiro_crew.acp import kas_route
+
+    route = kas_route.last_spawn_route()
+    return route is not None and not route.bundle
 
 
 def _kas_signed_out_notice(text: str) -> dict[str, object]:

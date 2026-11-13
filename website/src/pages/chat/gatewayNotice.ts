@@ -807,17 +807,6 @@ function outcomeAfter(messages: readonly ChatMessage[], index: number): Outcome 
 }
 
 /**
- * Copy for a KAS signed-out row drawn with the sign-in button under it, or null
- * for any other row. The row's own copy names the Settings path, for a surface
- * with no button; next to the button, the button is the way.
- */
-export function kasSignedOutBesideButton(m: ChatMessage): string | null {
-  const shape = shapeOf(m)
-  if (shape?.token !== 'kas_signed_out') return null
-  return withKasRoute(shape.args, i18nT('pages.chat.gatewayNotice.kas_signed_out_sign_in_below'))
-}
-
-/**
  * Resolve a gateway status row into localized copy, or null when the row is not
  * one (any other row keeps its verbatim prose).
  *

@@ -463,7 +463,7 @@ describe('KiroSignInCard: which account Kiro Agent runs as', () => {
       ...SIGNED_IN, expires_at: '2099-01-02T00:00:00Z',
     }))
     await waitFor(() => expect(kasLoginSources).toHaveBeenCalledTimes(2))
-    fireEvent.click(screen.getByTestId('kiro-sign-in-keep-current'))
+    fireEvent.keyDown(screen.getByTestId('kiro-sign-in-dialog'), { key: 'Escape' })
     expect(await screen.findByTestId('kiro-sign-in-sources')).toHaveAttribute('data-notice', 'two_accounts')
   })
 
@@ -476,7 +476,7 @@ describe('KiroSignInCard: which account Kiro Agent runs as', () => {
     expect(error).toHaveTextContent('Could not check which account Kiro Agent uses')
     expect(error).toHaveTextContent('boom')
     expect(screen.queryByTestId('kiro-sign-in-sources')).toBeNull()
-    if (authenticated) fireEvent.click(screen.getByRole('button', { name: 'Switch account' }))
+    fireEvent.click(authenticated ? screen.getByRole('button', { name: 'Switch account' }) : await screen.findByTestId('kiro-sign-in-open'))
     fireEvent.click(await screen.findByRole('button', { name: 'Continue with GitHub' }))
     expect(await screen.findByTestId('kas-login-user-code')).toHaveTextContent('ABCD-EFGH')
   })

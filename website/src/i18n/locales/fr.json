@@ -11511,7 +11511,6 @@
     },
     "kiroSignInNotice": {
       "sign_in_expired": "Connexion Kiro expirée",
-      "open_sign_in": "Ouvrir les paramètres de connexion",
       "expired_detail": "Les agents ne peuvent pas s’exécuter tant que tu ne te reconnectes pas. La connexion enregistrée a expiré et ne peut pas être renouvelée.",
       "refused_title": "Kiro a refusé de renouveler ta connexion",
       "refused_detail": "Les agents s’arrêteront quand cette connexion expirera. Reconnecte-toi pour qu’ils continuent.",
@@ -11523,6 +11522,12 @@
       "config_unavailable": "Impossible de lire les paramètres du tableau de bord",
       "config_unavailable_detail": "Recharge la page pour réessayer, ou demande à l’agent d’examiner le problème.",
       "load_failed": "Une partie du tableau de bord n’a pas pu se charger. Recharge la page pour réessayer."
+    },
+    "kiroSignInPrompt": {
+      "copy_request_id": "Copier l’ID de requête",
+      "keep_title": "Connecte-toi à Kiro pour continuer à discuter",
+      "sign_in": "Se connecter",
+      "title": "Connecte-toi à Kiro pour commencer à discuter"
     },
     "concurrencyCutChip": {
       "exec_reduced": "<0>Sous charge :</0> <1>{{cap}} agents sur {{configured}} à la fois</1>",
@@ -13172,6 +13177,8 @@
         "delete_failed": "Impossible de supprimer cette notification. Réessaie."
       },
       "errorCard": {
+        "kiro_cli_signed_out": "Aucune connexion à Kiro. Exécute l’une de ces commandes dans ton terminal.",
+        "kiro_cli_signed_out_or_sign_in": "Aucune connexion à Kiro. Exécute l’une de ces commandes dans ton terminal, ou connecte-toi ici.",
         "resume": "Reprendre",
         "resume_hint": "Reprendre là où ça s’est arrêté. Le travail déjà écrit sur le disque reste intact.",
         "retry_connection_lost": "Connexion perdue{{detail}} — reprends là où ça s’est arrêté.",
@@ -13189,8 +13196,6 @@
         "both_hint": "Faites les deux : « {{pick}} » corrige cette session, « {{default}} » empêche les nouvelles sessions de démarrer avec le même modèle s'il est défini par défaut. Puis renvoyez votre message.",
         "elsewhere_hint": "Le sélecteur de modèle et Paramètres → Chat sont dans la fenêtre de chat principale. Ouvrez-la pour choisir un modèle et changer le modèle par défaut.",
         "elsewhere_settings_hint": "Paramètres → Chat est dans la fenêtre de chat principale. Ouvrez-la pour changer le modèle par défaut.",
-        "sign_in": "Se connecter à Kiro",
-        "sign_in_hint": "Ouvrez Paramètres → Aperçu → Connexion Kiro, reconnectez-vous, puis renvoyez votre message.",
         "feature_request_form": "Ouvrir le formulaire GitHub (ne consomme pas de quota mensuel)",
         "feature_request_form_hint": "Ton quota mensuel est épuisé — dépose plutôt ta demande sur GitHub avec ce formulaire. Ce formulaire contourne l’agent : il ouvre le formulaire d’issue GitHub que tu remplis toi-même et ne consomme rien de ton quota mensuel.",
         "limit_resets_at": "La limite est réinitialisée le {{time}}.",
@@ -13882,7 +13887,6 @@
         "remote_crew_read_only": "Ce chat s’est exécuté sur une crew distante et il est maintenant en lecture seule. Ouvre la session de la crew pour continuer.",
         "archive_failed_turn_cancelled": "L’archivage de cet onglet a échoué après l’annulation de son tour en cours. L’onglet a été conservé, mais ce tour ne s’est pas terminé — renvoie ton message pour continuer.",
         "kas_signed_out": "Tu n’es pas connecté à Kiro. Connecte-toi dans Paramètres → Harness de l’agent → Kiro Agent → Connexion Kiro, puis renvoie ton message.",
-        "kas_signed_out_sign_in_below": "Tu n’es pas connecté à Kiro. Connecte-toi ci-dessous, puis renvoie ton message.",
         "windows_spawn_blocked": "Windows n’a pas pu démarrer le programme de l’agent ({{binary}}). AppLocker, un produit EDR ou une stratégie de groupe sur cet ordinateur l’a probablement bloqué. Demande à ton administrateur informatique d’autoriser ce fichier, puis lance une nouvelle discussion.",
         "tools_not_ready": "L’agent n’a pas pu démarrer, car ses outils intégrés n’étaient pas prêts à temps. Ton message est toujours là. Réessaie dans un instant. Si ça se reproduit, le journal de la passerelle contient les détails.",
         "kas_route_relay": "Ton agent passe par kiro-cli.",
@@ -16413,7 +16417,6 @@
         "sign_out": "Se déconnecter",
         "takes_effect_next_process": "S’applique aux processus d’agent démarrés à partir de maintenant ; les sessions en cours l’adoptent à leur prochain tour.",
         "could_not_sign_out": "Déconnexion impossible",
-        "keep_current_sign_in": "Conserver la connexion actuelle",
         "signed_in_body_no_refresh": "Les agents s’exécutent avec ce compte Kiro. Cette connexion n’a pas de jeton de rafraîchissement et ne peut pas se renouveler seule — reconnectez-vous avant son expiration.",
         "search_label": "Se déconnecter ou changer de compte Kiro",
         "search_description": "Déconnecte-toi de la connexion Kiro qu’utilisent tes agents, ou connecte-toi avec un autre compte.",

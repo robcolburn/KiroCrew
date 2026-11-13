@@ -11511,7 +11511,6 @@
     },
     "kiroSignInNotice": {
       "sign_in_expired": "Accesso a Kiro scaduto",
-      "open_sign_in": "Apri le impostazioni di accesso",
       "expired_detail": "Gli agenti non possono essere eseguiti finché non accedi di nuovo. L’accesso salvato è scaduto e non può essere rinnovato.",
       "refused_title": "Kiro ha rifiutato di rinnovare il tuo accesso",
       "refused_detail": "Gli agenti si fermeranno alla scadenza di questo accesso. Accedi di nuovo perché continuino a funzionare.",
@@ -11523,6 +11522,12 @@
       "config_unavailable": "Impossibile leggere le impostazioni della dashboard",
       "config_unavailable_detail": "Ricarica la pagina per riprovare, oppure chiedi all’agente di verificare.",
       "load_failed": "Non è stato possibile caricare una parte della dashboard. Ricarica la pagina per riprovare."
+    },
+    "kiroSignInPrompt": {
+      "copy_request_id": "Copia ID richiesta",
+      "keep_title": "Accedi a Kiro per continuare a chattare",
+      "sign_in": "Accedi",
+      "title": "Accedi a Kiro per iniziare a chattare"
     },
     "concurrencyCutChip": {
       "exec_reduced": "<0>Sotto carico:</0> <1>{{cap}} agenti su {{configured}} alla volta</1>",
@@ -13172,6 +13177,8 @@
         "delete_failed": "Impossibile eliminare questa notifica. Riprova."
       },
       "errorCard": {
+        "kiro_cli_signed_out": "Non hai effettuato l’accesso a Kiro. Esegui uno di questi comandi nel terminale.",
+        "kiro_cli_signed_out_or_sign_in": "Non hai effettuato l’accesso a Kiro. Esegui uno di questi comandi nel terminale, oppure accedi qui.",
         "resume": "Riprendi",
         "resume_hint": "Riprendi da dove si è fermato. Il lavoro già scritto su disco resta intatto.",
         "retry_connection_lost": "Connessione persa{{detail}} — riprendi da dove si è fermato.",
@@ -13189,8 +13196,6 @@
         "both_hint": "Fai entrambe le cose: “{{pick}}” sistema questa sessione, “{{default}}” evita che le nuove sessioni partano con lo stesso modello se è impostato come predefinito. Poi invia di nuovo il messaggio.",
         "elsewhere_hint": "Il selettore dei modelli e Impostazioni → Chat sono nella finestra principale della chat. Aprila per scegliere un modello e cambiare quello predefinito.",
         "elsewhere_settings_hint": "Impostazioni → Chat è nella finestra principale della chat. Aprila per cambiare il modello predefinito.",
-        "sign_in": "Accedi a Kiro",
-        "sign_in_hint": "Apri Impostazioni → Panoramica → Accesso a Kiro, accedi di nuovo e reinvia il messaggio.",
         "feature_request_form": "Apri il modulo GitHub (non consuma utilizzo mensile)",
         "feature_request_form_hint": "Il tuo utilizzo mensile è esaurito — invia invece la richiesta su GitHub con questo modulo. Questo modulo salta l’agente: apre il modulo delle issue di GitHub che compili tu e non consuma nulla del tuo utilizzo mensile.",
         "limit_resets_at": "Il limite si azzera il {{time}}.",
@@ -13882,7 +13887,6 @@
         "remote_crew_read_only": "Questa chat è stata eseguita su una crew remota ed è ora in sola lettura. Apri la sessione della crew per continuare.",
         "archive_failed_turn_cancelled": "L’archiviazione di questa scheda non è riuscita dopo l’annullamento del turno in corso. La scheda è stata mantenuta, ma quel turno non è terminato — invia di nuovo il messaggio per continuare.",
         "kas_signed_out": "Non hai effettuato l’accesso a Kiro. Accedi da Impostazioni → Harness dell’agente → Kiro Agent → Accesso a Kiro, poi invia di nuovo il messaggio.",
-        "kas_signed_out_sign_in_below": "Non hai effettuato l’accesso a Kiro. Accedi qui sotto, poi invia di nuovo il messaggio.",
         "windows_spawn_blocked": "Windows non è riuscito ad avviare il programma dell’agente ({{binary}}). Probabilmente l’ha bloccato AppLocker, un prodotto EDR o un criterio di gruppo su questo computer. Chiedi all’amministratore IT di consentire quel file, poi avvia una nuova chat.",
         "tools_not_ready": "L’agente non è riuscito ad avviarsi perché i suoi strumenti integrati non erano pronti in tempo. Il tuo messaggio è ancora qui. Riprova tra un momento. Se continua a succedere, il log del gateway contiene i dettagli.",
         "kas_route_relay": "Il tuo agente passa da kiro-cli.",
@@ -16413,7 +16417,6 @@
         "sign_out": "Esci",
         "takes_effect_next_process": "Si applica ai processi agente avviati da ora in avanti; le sessioni in corso lo adottano al turno successivo.",
         "could_not_sign_out": "Impossibile uscire",
-        "keep_current_sign_in": "Mantieni l’accesso attuale",
         "signed_in_body_no_refresh": "Gli agenti vengono eseguiti con questo account Kiro. Questo accesso non ha un token di aggiornamento e non può rinnovarsi da solo: accedi di nuovo prima che scada.",
         "search_label": "Esci o cambia account Kiro",
         "search_description": "Esci dall’accesso a Kiro usato dai tuoi agenti, oppure accedi con un altro account.",

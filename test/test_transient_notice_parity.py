@@ -507,6 +507,9 @@ def test_kas_signed_out_row_carries_the_token_and_its_route(
     # The route rides along so the translated copy names it: every KAS prompt
     # names the real route (the recorded decision on choosing KAS's engine).
     expected: dict[str, object] = {"kind": "auth_required", "notice": "kas_signed_out"}
+    if named == "relay":
+        # Either sign-in starts the relay: the row offers kiro-cli's commands too.
+        expected = {"kind": "kiro_cli_sign_in", "crew_sign_in": True, "notice": "kas_signed_out"}
     if named:
         expected["notice_args"] = {"route": named}
     assert meta == expected
@@ -523,12 +526,12 @@ def test_other_signed_out_wording_keeps_its_english(monkeypatch: pytest.MonkeyPa
     text = signed_out_message(ACP_BACKEND_KAS)
     assert "kiro-cli login" in text
     meta = _terminal_error_meta(AcpAuthRequired(text, backend=ACP_BACKEND_KAS))
-    assert meta == {"kind": "auth_required"}
+    assert meta == {"kind": "kiro_cli_sign_in", "crew_sign_in": True}
     # A sentence written under another route than the live one is not re-labelled.
     monkeypatch.setattr(kas_route, "_LAST_SPAWN_ROUTE", KasRoute(bundle=False))
     bundle_text = f"{KasRoute(bundle=True, reason=REASON_CONFIGURED).describe()}. Not signed"
     meta = _terminal_error_meta(AcpAuthRequired(bundle_text, backend=ACP_BACKEND_KAS))
-    assert meta == {"kind": "auth_required"}
+    assert meta == {"kind": "kiro_cli_sign_in", "crew_sign_in": True}
 
 
 @pytest.mark.parametrize(
@@ -563,6 +566,8 @@ def test_kas_signed_out_error_frame_row_carries_the_token(
     assert "Switching models will not help" in text
     assert (f"(request_id: {request_id})" in text) is bool(request_id)
     expected: dict[str, object] = {"kind": "auth_required", "notice": "kas_signed_out"}
+    if named == "relay":
+        expected = {"kind": "kiro_cli_sign_in", "crew_sign_in": True, "notice": "kas_signed_out"}
     if named:
         expected["notice_args"] = {"route": named}
     assert _terminal_error_meta(caught.value) == expected

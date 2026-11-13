@@ -40,11 +40,11 @@ import ConversationCard, { CARD_ROLE } from '../../cards/ConversationCard'
 import RecoveryCard, { opensTurn, resolveInjectCard } from './RecoveryCard'
 import { SystemNoticeRow, isSystemNoticeRow } from './CompactionCard'
 import SkillLoadCard, { isSkillLoadRow } from './SkillLoadCard'
-import { ErrorCard, SESSION_START_REPEAT_REFUSAL_AT, capabilityRefusal, isAppAgentRefused, isAuthRequired, isContextOverflow, isImageRepair, isKiroCliMissing, isModelUnentitled, isSessionStartFailed, isTurnTimeout, isUsageLimit, sessionStartFailureStreak, type CapabilityFix, type FreshSessionState, type RepairImagesState } from './ErrorCard'
+import { ErrorCard, SESSION_START_REPEAT_REFUSAL_AT, capabilityRefusal, isAppAgentRefused, isAuthRequired, isKiroCliSignIn, kiroCliRowOffersCrewSignIn, isContextOverflow, isImageRepair, isKiroCliMissing, isModelUnentitled, isSessionStartFailed, isTurnTimeout, isUsageLimit, sessionStartFailureStreak, type CapabilityFix, type FreshSessionState, type RepairImagesState } from './ErrorCard'
 import { isFeatureRequestRow } from '../../prompts/featureRequest'
 import { feedbackTracker } from '../../feedbackTracker'
 import NoticeCard from './NoticeCard'
-import { kasSignedOutBesideButton, resolveGatewayNotice } from './gatewayNotice'
+import { resolveGatewayNotice } from './gatewayNotice'
 import CrewDispatchNoticeCard from './CrewDispatchNoticeCard'
 import CrewPausedNoticeCard from './CrewPausedNoticeCard'
 import McpSignInNeededNotice, { isMcpSignInNeededNotice } from './McpSignInNeededNotice'
@@ -373,7 +373,8 @@ export function newestErrorOwnsRecovery(messages: readonly ChatMessage[]): boole
     || capabilityRefusalIsNewest(messages)
 }
 
-/** True when the newest error row is a sign-in error (`auth_required`) and
+/** True when the newest error row is a sign-in error (`auth_required`, or
+ *  `kiro_cli_sign_in` for kiro-cli's own sign-in) and
  *  nothing after it opens a new turn. The card withholds its own Continue, but
  *  the composer keeps Resume: once the sign-in lands, the same press works
  *  (Continue is not readiness-gated), and it is the one-press way back. So the
@@ -385,7 +386,7 @@ export function authRequiredIsNewest(messages: readonly ChatMessage[]): boolean 
     const row = messages[j]
     if (row.role === 'assistant' || opensTurn(row)) return false
   }
-  return isAuthRequired(messages[idx])
+  return isAuthRequired(messages[idx]) || isKiroCliSignIn(messages[idx])
 }
 
 /** Index of the last `error` row, so only that one offers Continue. Derived
@@ -842,11 +843,9 @@ export function createTranscriptRenderers(
         // already answered past, is settled and its session may already be new.
         const overflow = isContextOverflow(m)
         const imageRepair = isImageRepair(m)
-        // The sign-in button sits under the row, so its copy points at it.
-        const besideSignIn = authRequired && o.onOpenSignIn ? kasSignedOutBesideButton(m) : null
         return ctx.row(
           <ErrorCard
-            content={besideSignIn ?? (transient ? transient.text : m.content)}
+            content={transient ? transient.text : m.content}
             resumeContent={transient?.card === 'error' ? transient.resumeText : undefined}
             meta={m.meta}
             // A rejection the backend says no retry can fix never offers Continue,
@@ -865,6 +864,9 @@ export function createTranscriptRenderers(
             onPickModel={pickModelFix ? o.onPickModel : undefined}
             onOpenDefaultModel={pickModelFix ? o.onOpenDefaultModel : undefined}
             onOpenSignIn={authRequired ? o.onOpenSignIn : undefined}
+            kiroCliSignIn={isKiroCliSignIn(m)}
+            kiroCliCrewSignIn={kiroCliRowOffersCrewSignIn(m)}
+            rawContent={m.content}
             unentitledElsewhere={pickModelFix}
             featureRequestFormUrl={featureRequestFormUrl}
             // The newest row only, where the gateway's wait lives (it ends once the
