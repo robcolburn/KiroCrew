@@ -42,6 +42,27 @@ export function noteUnsavedRowTs(slot: string, ts: string | undefined): void {
   if (next !== undefined) unsavedRowTs.set(slot, next)
 }
 
+/** Newest row ts per slot that this window counts as read before any saved read covers it:
+ *  a row shown on screen here, or a read relayed from another device. */
+const shownHereTs = new Map<string, string>()
+
+export function noteShownHere(slot: string, ts: string | undefined): void {
+  if (!slot || !ts) return
+  const next = newerTs(shownHereTs.get(slot), ts)
+  if (next !== undefined) shownHereTs.set(slot, next)
+}
+
+export function shownHere(slot: string): string | undefined {
+  return shownHereTs.get(slot)
+}
+
+let readCoverImpl: (slot: string) => string | undefined = () => undefined
+
+/** Bind the newest row ts that a read of a slot also shows from other slots. */
+export function bindReadCover(impl: (slot: string) => string | undefined): void {
+  readCoverImpl = impl
+}
+
 /** Bind (or unbind, by passing a no-op) the wire sender. useWebSocket only. */
 export function bindSlotReadSender(impl: (slot: string, readTs?: string) => void): void {
   sendSlotReadImpl = impl
@@ -75,7 +96,7 @@ export function emitSlotRead(slot: string, readTs?: string): void {
   if (!slot) return
   // Every caller reads the slot on screen, so it has also seen any unsaved row
   // this window received for it; carry that ts so the read covers it.
-  readTs = newerTs(readTs, unsavedRowTs.get(slot))
+  readTs = newerTs(newerTs(readTs, unsavedRowTs.get(slot)), readCoverImpl(slot))
   const entry = pending.get(slot)
   if (entry) {
     entry.again = true  // coalesce into one trailing send at quiet-window end
@@ -94,6 +115,14 @@ export function emitSlotRead(slot: string, readTs?: string): void {
       if (e?.again) sendSlotReadImpl(slot, e.ts)
     }, READ_RELAY_QUIET_MS),
   })
+}
+
+/** Send a kept read again exactly as it was kept. Unlike `emitSlotRead` it adds
+ *  no unsaved-row ts: nobody is reading the slot now, so a permission row that
+ *  arrived after the read was kept stays unread. */
+export function resendSlotRead(slot: string, readTs?: string): void {
+  if (!slot) return
+  sendSlotReadImpl(slot, readTs)
 }
 
 /** Flush a slot's pending trailing relay NOW (every slot when omitted).
@@ -117,5 +146,6 @@ export function _resetSlotReadRelayForTest(): void {
   for (const e of pending.values()) clearTimeout(e.timer)
   pending.clear()
   unsavedRowTs.clear()
+  shownHereTs.clear()
   sendSlotReadImpl = () => {}
 }

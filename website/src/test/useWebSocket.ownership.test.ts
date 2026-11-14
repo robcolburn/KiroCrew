@@ -63,6 +63,7 @@ const OWNER_MODULES = [
   'retiredIds.ts',
   'rowDeliveryWatchdog.ts',
   'serverState.ts',
+  'serverReads.ts',
   'sessionProjection.ts',
   'slotList.ts',
   'slotProjection.ts',
@@ -237,7 +238,8 @@ describe('dependency direction', () => {
     'foldWatch.ts': ['serverState.ts'],
     'reconnectCatchUp.ts': ['bundleReload.ts', 'gatewayConnectivity.ts', 'serverState.ts'],
     'serverState.ts': ['browserEvents.ts'],
-    'slotList.ts': ['idleRowRefresh.ts'],
+    'serverReads.ts': ['attention.ts'],
+    'slotList.ts': ['idleRowRefresh.ts', 'serverReads.ts'],
     'turnCompletion.ts': ['attention.ts', 'idleRowRefresh.ts', 'serverState.ts'],
   }
 
