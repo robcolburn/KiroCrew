@@ -128,6 +128,9 @@ export interface MemberRosterRow {
    *  Sessions list. Off by default (absent reads as off): they show only on the
    *  Bot's Sessions tab. */
   show_sessions_in_list?: boolean
+  /** The prompts the Bot's empty chat offers as buttons: up to four lines of at most
+   *  120 characters, already checked by the gateway. Absent on an older gateway. */
+  starters?: string[]
   /** The person created this crewmate (the Crewmates page's create, or an
    *  approved `crewmate.create` / `crewmate.import` card): `source` is
    *  `kirocrew` AND the record carries a member id. Never true for the reserved
