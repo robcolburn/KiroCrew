@@ -463,6 +463,7 @@ _LAZY_IMPORTS = {
     "kiro_crew.kiro_prerequisite": "KiroPrerequisiteService register_turn_auth_service",
     "kiro_crew.knowledge.entity_resolution": "merge_split_entities",
     "kiro_crew.memory": "MemoryStore",
+    "kiro_crew.memory_provider.preview": "snapshot_at_start",
     "kiro_crew.messaging.session_trust": "clear_trusted_sessions",
     "kiro_crew.metrics": "_gauges",
     "kiro_crew.metrics.chat_runtime_share": "record_toggled",

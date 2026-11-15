@@ -512,6 +512,10 @@ class TestLeafOnlyPopulationIsRecorded:
     #: ledgers and own-memory eval sets, sealed read-only so an agent cannot choose
     #: which store a cleanup resets; a directory at the data-home root, so leaf-only
     #: is the only hold, as for ``memory_provider_migrations``.
+    #: One more root-level file, three entries per tier:
+    #: ``memory_provider_preview.json`` -- the owner's memory provider switch, a
+    #: file at the data-home root, so leaf-only is the only hold, as for
+    #: ``shared_crew_preview.json``.
     #:
     #: Four app-declared directories, a dozen entries per tier (the data and the
     #: lifecycle's move-aside spelling, at each data-home spelling):
@@ -630,6 +634,7 @@ class TestLeafOnlyPopulationIsRecorded:
         "<crew>/memory_provider_bench": (3, "standard cc strict"),
         "<crew>/memory_provider_consent.json": (3, "standard cc strict"),
         "<crew>/memory_provider_migrations": (3, "standard cc strict"),
+        "<crew>/memory_provider_preview.json": (3, "standard cc strict"),
         "<crew>/memory_stores": (3, "standard cc strict"),
         "<crew>/microvm_crews.json": (3, "standard cc strict"),
         "<crew>/models": (3, "standard cc strict"),

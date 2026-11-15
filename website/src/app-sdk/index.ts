@@ -674,3 +674,16 @@ export type { NumberOptions, DateStyleOptions, RelativeStyle } from '../i18n/for
 export { appWebOrigin } from './webOrigin'
 // The App Kit seam level; an app feature-detects the seams above by it.
 export { APP_SDK_LEVEL } from './sdkLevel'
+// Ask the owner to change which memory Crew uses (level 8): opens the host's own
+// confirmation sheet; only the owner's press there switches.
+export { requestMemoryProviderChange } from './memoryProviderChange'
+export type { MemoryProviderChangeTarget, MemoryProviderChangeOutcome } from './memoryProviderChange'
+// Ask the owner to move memory between providers (level 8): opens the host's move
+// sheet; an app may plan a move, only the owner's press there runs it.
+export { requestMemoryMove } from './memoryMove'
+export type { MemoryMoveTarget, MemoryMoveOutcome } from './memoryMove'
+// Ask the owner to benchmark memory providers (level 8): opens the host's benchmark
+// sheet; an app may plan a run, only the owner's press there starts it.
+export { requestMemoryBench } from './memoryBench'
+export type { MemoryBenchOutcome } from './memoryBench'
+export type { MemoryBenchRequest } from '../api/client/memory'

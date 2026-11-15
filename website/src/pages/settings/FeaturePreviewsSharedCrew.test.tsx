@@ -27,6 +27,8 @@ vi.mock('../../api/client', async importOriginal => {
       ...actual.api,
       sharedCrewPreview: vi.fn(),
       sharedCrewSetPreview: vi.fn(),
+      memoryProviderPreview: vi.fn(),
+      memoryProviderSetPreview: vi.fn(),
       restartGateway: vi.fn(),
       dashboardConfig: vi.fn(),
       kirocrewConfig: vi.fn(),
@@ -55,6 +57,7 @@ const toggle = () => screen.findByRole('switch', { name: 'Shared Crew' })
 
 beforeEach(() => {
   vi.resetAllMocks()
+  vi.mocked(api.memoryProviderPreview).mockResolvedValue(null)
   vi.mocked(api.dashboardConfig).mockResolvedValue({ decisions_enabled: false } as never)
   vi.mocked(api.kirocrewConfig).mockResolvedValue({} as never)
   vi.mocked(api.getDecisionsConsent).mockResolvedValue({ enabled: false, endpoint: '', configured_endpoint: '', permits: false })
@@ -265,5 +268,20 @@ describe('Shared Crew preview card', () => {
     read.mockRejectedValue(new ApiError(500, 'boom', '{}'))
     mount()
     expect(await screen.findByTestId('shared-crew-preview-load-error')).toHaveAttribute('role', 'alert')
+  })
+})
+
+describe('memory provider preview card', () => {
+  it('writes {enabled} through its own route and asks for the shared restart', async () => {
+    read.mockResolvedValue(null)
+    vi.mocked(api.memoryProviderPreview).mockResolvedValue(setting())
+    vi.mocked(api.memoryProviderSetPreview).mockResolvedValue(setting({ enabled: true, restart_required: true }))
+    mount()
+    const sw = await screen.findByRole('switch', { name: 'Memory providers' })
+    expect(sw).toHaveAttribute('aria-checked', 'false')
+    fireEvent.click(sw)
+    await waitFor(() => expect(api.memoryProviderSetPreview).toHaveBeenCalledWith(true))
+    expect(await screen.findByTestId('memory-provider-preview-restart')).toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: 'Shared Crew' })).toBeNull()
   })
 })
