@@ -533,6 +533,13 @@ class TestLeafOnlyPopulationIsRecorded:
     #: it cannot take a stand-in; nothing republishes ``state`` itself (its writers rename
     #: files INSIDE it), and its parents are pinned against rename.
     #:
+    #: ``market-registries`` adds three entries per tier: one folder per added Kiro
+    #: Space store, holding that store's CLI config and sign-in, masked so an agent
+    #: can neither read the token nor swap in another sign-in. The store CLI writes
+    #: files INSIDE each store folder and never replaces the directory itself. Its
+    #: parent is the data-home root beside writable siblings, so leaf-only is the
+    #: only hold, as for ``aws-control-staging``.
+    #:
     #: The record is one line per name, not a count per tier: two changes that each
     #: add a different leaf add different lines and stay green merged, where a count
     #: would be rewritten to the same number by both (testing-conventions.md
@@ -609,6 +616,7 @@ class TestLeafOnlyPopulationIsRecorded:
         "<crew>/mcp-launch-approvals": (3, "standard cc strict"),
         "<crew>/mcp/resolved": (3, "standard cc strict"),
         "<crew>/mcp_body_fields.json": (3, "standard cc strict"),
+        "<crew>/market-registries": (3, "standard cc strict"),
         "<crew>/md-notebook-staging": (3, "standard cc strict"),
         "<crew>/member-memory-bindings": (3, "standard cc strict"),
         "<crew>/member-records": (3, "standard cc strict"),

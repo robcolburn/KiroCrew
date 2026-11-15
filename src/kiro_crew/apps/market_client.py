@@ -12,7 +12,11 @@ bundled component sits in the zip. Those fields are left empty, never guessed,
 so the installer refuses such an app (``market_undeclared_capability``, or a
 malformed component) until the API carries them.
 
-Nothing here is wired to a route or the dashboard yet.
+It also reads the store for the App Store's Kiro Space source: ``ListListings``
+(one page) and ``GetListing`` (one listing), answered as the API's own
+``ListingView`` dicts. ``apps/market_registries.py`` turns those into card rows.
+The client is built by a store provider (``app["market_registries"]``); the
+open-source build ships none.
 """
 
 from __future__ import annotations
@@ -394,6 +398,30 @@ class HttpMarketClient:
         if not isinstance(url, str) or not isinstance(sha, str):
             raise MarketInstallError("market_download_refused", "download answer is incomplete")
         return ListingDownload(url=url, sha256=sha)
+
+    def list_listings(
+        self, *, kind: str = "app", cursor: str | None = None, limit: int = 100
+    ) -> tuple[list[dict[str, Any]], str | None]:
+        """One ``ListListings`` page: the ``ListingView`` items and the next cursor."""
+        body: dict[str, Any] = {"kind": kind, "limit": limit}
+        if cursor:
+            body["cursor"] = cursor
+        answer = self._call("ListListings", body)
+        items = answer.get("items")
+        if not isinstance(items, list):
+            raise MarketInstallError("market_api_invalid", "ListListings answer has no items")
+        next_cursor = answer.get("nextCursor")
+        return (
+            [i for i in items if isinstance(i, dict)],
+            next_cursor if isinstance(next_cursor, str) and next_cursor else None,
+        )
+
+    def get_listing(self, ref: str) -> dict[str, Any]:
+        """``GetListing`` by ``<namespace>/<name>``: the ``ListingView`` dict."""
+        listing = self._call("GetListing", {"ref": ref}).get("listing")
+        if not isinstance(listing, dict):
+            raise MarketInstallError("market_api_invalid", "GetListing answer has no listing")
+        return listing
 
     def open_download(self, url: str) -> Iterator[bytes]:
         # The signed URL carries its own authorisation: no bearer is sent.
