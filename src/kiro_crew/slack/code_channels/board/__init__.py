@@ -10,7 +10,8 @@ workspace's own per-channel refresh (no second publisher):
   one task per worker -- title, state, the current call or last report line.
   The goal and round are not shown. A worker that waits on a person gets one
   threaded reply mentioning the owner.
-
+* **The context bar** (``workspace.context_bar``): one Workers item with the
+  board's counts (:func:`.model.bar_label`), linked to the pinned board.
 Slack's ``agents.sessions.setStatus`` takes no text in a code channel (it has no
 ``loading_messages``), so the aggregate lives in the board header; the native
 status keeps its plain working / ready signal (the conductor's turns, and its
