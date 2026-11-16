@@ -122,6 +122,7 @@ from kiro_crew.acp_backends import (  # noqa: F401 - re-exported for existing im
     selectable_backends,
 )
 from kiro_crew.agent_sdk.backends import (  # noqa: F401 - re-exported for importers
+    ACP_BACKENDS_APPROVE_FOR_ME,
     escape_user_message_markup,
     wrap_user_message,
 )
@@ -505,9 +506,20 @@ KIRO_CLI_CLIENT_APPLICATION = "kirocrew"
 # ``secretStorage`` is NOT in this constant: the spawn adds it to a copy while
 # ``agent.kas_persist_mcp_sign_in`` is on (the default; ``acp/kas_secret_storage.py``),
 # and every other callback stays undeclared (= false).
+#
+# ``approveForMeOption`` asks the engine to list the session's ``approveForMe``
+# option, so Crew decides its value: always ``on`` or ``off``
+# (``acp/kas_approve_for_me.py``).
 KAS_CLIENT_CAPABILITIES: dict = {
     **ACP_CLIENT_CAPABILITIES,
-    "_meta": {"kiro": {"settings": {}, "openExternalUrl": True, "userInput": True}},
+    "_meta": {
+        "kiro": {
+            "settings": {},
+            "openExternalUrl": True,
+            "userInput": True,
+            "approveForMeOption": True,
+        }
+    },
 }
 
 # ── Claude backend permission modes ──

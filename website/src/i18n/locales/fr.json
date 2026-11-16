@@ -6610,6 +6610,9 @@
       "title_wants_to_run": "<title/> demande à s’exécuter"
     },
     "approvalModePicker": {
+      "approve_for_me_failed": "Impossible d'activer « Approuver pour moi ». Réessaie.",
+      "approve_for_me_label": "Approuver pour moi",
+      "approve_for_me_desc": "KAS, le moteur Kiro sur lequel tourne ce chat, décide seul des actions à approuver, y compris les commandes shell et les modifications de fichiers. Ces actions contournent les contrôles de sécurité propres à {{productName}}, mais elles restent journalisées. KAS te demande quand il n'est pas sûr.",
       "nudge_body": "C'est ici que vous réglez la façon dont {{productName}} demande une approbation. En choisissant « Confiance » ici, il travaille dans cette conversation sans demander d'abord — vous pouvez revenir en arrière à tout moment.",
       "nudge_dismiss": "J'ai compris",
       "nudge_title": "Envie de moins de demandes d'approbation ?",

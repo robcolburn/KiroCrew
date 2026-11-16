@@ -466,6 +466,7 @@ X_REGISTRATION_PENDING: dict[str, str] = {
     "ACP_BACKENDS_META_IDENTITY": "goose _meta tool identity channel",
     "ACP_BACKENDS_NATIVE_TODOS": "claude native /todos prompt command",
     "ACP_BACKENDS_AGENT_STARTED_TURNS": 'claude _meta["_claude/origin"] end-of-turn marker',
+    "ACP_BACKENDS_APPROVE_FOR_ME": "kas approveForMe session option and _meta.kiro.trustClassifierApproved (needs a live session with the option on)",
 }
 
 # Sets that are not X features, each with why. A set joins here only when its

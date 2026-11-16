@@ -6610,6 +6610,9 @@
       "title_wants_to_run": "<title/> quer ser executado"
     },
     "approvalModePicker": {
+      "approve_for_me_failed": "Não foi possível ativar \"Aprovar por mim\". Tente de novo.",
+      "approve_for_me_label": "Aprovar por mim",
+      "approve_for_me_desc": "O KAS, o motor do Kiro em que este chat roda, decide sozinho quais ações aprovar, incluindo comandos de shell e edições de arquivos. Essas ações ignoram as verificações de segurança do próprio {{productName}}, mas continuam registradas. O KAS pergunta a você quando não tem certeza.",
       "nudge_body": "É aqui que você ajusta como o {{productName}} pede aprovação. Ao escolher \"Confiança\" aqui, ele pode trabalhar neste chat sem perguntar antes — você pode voltar atrás a qualquer momento.",
       "nudge_dismiss": "Entendi",
       "nudge_title": "Quer menos pedidos de aprovação?",

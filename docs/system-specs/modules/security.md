@@ -3229,6 +3229,21 @@ enforcement and display correctly scoped:
   never surfacing as a no-op opt-out (UI success while the bound-profile gate
   still denies). This is display-only and does not widen enforcement.
 
+**KAS approve-for-me** (`acp/kas_approve_for_me.py`, `dashboard/approve_for_me.py`) —
+a KAS session a person opts in from the approval-mode picker lets the engine approve
+tool calls on its own, shell and file calls included; those calls raise no
+`session/request_permission`, so no row of the table below runs on them, and each
+gets an SEL row (`source=kas_approve_for_me`, `outcome=auto_approved`). A call the
+engine is unsure about still arrives as a permission request and takes this table.
+The `approval_modes` policy permits `approve_for_me` only where an installed rule's
+`allow` list names it; allowing `trust` does not. Every child Crew spawns carries
+`KIRO_TRUST_CLASSIFIER_MODE=off`; only an opted-in session's own `extra_env` carries
+`enforce` (`session_env`), which also keys it onto a process of its own, and the
+runtime spawn keeps the value from there alone (`apply_runtime_env`). The option is
+written `on` or `off` at session open and before each turn (`settle`); Trust, Reads,
+YOLO, another pick or a policy deny holds it off, and a running turn is cancelled at
+the next call the engine approves after the leave is withdrawn.
+
 **KAS spec built-in grant** (`spec-builtin-grant`, the third grant row of
 `GATE_TIERS`, after `operator-grants`) — a built-in the KAS session's agent spec
 grants in `allowedTools` is auto-approved by Crew at its permission request instead

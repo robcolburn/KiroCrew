@@ -2014,6 +2014,9 @@
       "trusted_channel_still_asks": "Approved this run — this host's shell setup means @{{role}} will still ask each time"
     },
     "approvalModePicker": {
+      "approve_for_me_failed": "Approve for me could not be turned on. Try again.",
+      "approve_for_me_label": "Approve for me",
+      "approve_for_me_desc": "KAS, the Kiro engine this chat runs on, decides on its own which actions to approve, including shell commands and file edits. Those actions skip {{productName}}'s own safety checks, but they are still logged. KAS asks you when it isn't sure.",
       "approval_mode_aria": "Approval mode: {{mode}}",
       "normal_label": "Normal",
       "normal_desc": "{{productName}} looks things up on its own, like reading files, searching the web or running read-only shell commands, but checks with you before anything else",

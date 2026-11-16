@@ -374,6 +374,11 @@ ULTRACODE_CONFIG_OPTION_ID = "ultracode"
 # mode switch".
 ACP_BACKENDS_FAST_MODE_CONFIG_OPTION = frozenset({ACP_BACKEND_CLAUDE})
 
+# Backends whose session offers the ``approveForMe`` option Crew sets: the engine
+# approves tool calls on its own (``acp/kas_approve_for_me.py``). Not kiro-cli: its
+# ``acp`` relay declares no such option to Crew, so Crew holds the switch off there.
+ACP_BACKENDS_APPROVE_FOR_ME = frozenset({ACP_BACKEND_KAS})
+
 #: The ``configId`` of that switch.
 FAST_MODE_CONFIG_OPTION_ID = "fast"
 
