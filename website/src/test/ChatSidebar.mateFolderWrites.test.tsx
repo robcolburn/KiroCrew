@@ -10,7 +10,10 @@
  *   (2) with only mate folders, the picker is absent rather than empty;
  *   (3) a board column's copy of a mate home renders no ⋯ menu, no header
  *       new-chat button and no empty-folder new-chat row, while an ordinary
- *       folder in the same column keeps all three.
+ *       folder in the same column keeps all three;
+ *   (4) an EMPTY folder inside a mate home opens a menu holding Delete folder
+ *       and nothing else, while the home, and a child that holds an archived
+ *       session, open none.
  *
  * Radix DropdownMenu cannot be opened by mouse in jsdom (needs PointerEvent),
  * so the create menu is opened by keyboard. The phone branch lists folder rows
@@ -185,5 +188,23 @@ describe('mate-managed folders offer no person writes', () => {
     expect(q(`col-${COL}-folder-${HOME}-menu`)).toBeNull()
     expect(q(`col-${COL}-folder-${HOME}-new-chat`)).toBeNull()
     expect(q(`col-${COL}-folder-${HOME}-empty-new-chat`)).toBeNull()
+  })
+
+  it('an empty folder inside a mate home offers Delete folder and nothing else', async () => {
+    const { container } = renderSidebar([mateHome, mateChild, plain])
+    const q = (id: string) => container.querySelector(`[data-testid="${id}"]`)
+    await screen.findByTestId(`folder-menu-${HOME_CHILD}`)
+    expect(q(`folder-menu-${HOME}`)).toBeNull()
+    expect(q(`folder-new-chat-${HOME_CHILD}`)).toBeNull()
+    fireEvent.keyDown(screen.getByTestId(`folder-menu-${HOME_CHILD}`), { key: 'Enter' })
+    const menu = await screen.findByRole('menu')
+    expect(within(menu).getByTestId(`folder-delete-${HOME_CHILD}`)).toBeTruthy()
+    expect(within(menu).getAllByRole('menuitem')).toHaveLength(1)
+  })
+
+  it('a folder inside a mate home that holds an archived session offers no menu', async () => {
+    const { container } = renderSidebar([mateHome, { ...mateChild, history_count: 1 }, plain])
+    await screen.findByTestId(`folder-menu-${PLAIN}`)
+    expect(container.querySelector(`[data-testid="folder-menu-${HOME_CHILD}"]`)).toBeNull()
   })
 })
