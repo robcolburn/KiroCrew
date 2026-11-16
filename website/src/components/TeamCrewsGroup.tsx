@@ -24,9 +24,11 @@ import { useSearchParams } from 'react-router-dom'
 import { ExternalLink } from 'lucide-react'
 import type { RelayCrewEntry } from '../api/client'
 import {
-  clearRelayCrewsUnseen, isRelayCrewOnline, openRelayCrew, recordRelayCrewsSeen, relayCrewStatusText,
+  clearRelayCrewsUnseen, isRelayCrewOnline, openRelayCrew, openRelayCrewTab, recordRelayCrewsSeen, relayCrewStatusText,
   relayRefusalText, relayRetryable, useRelayViewerCrews, type RelayListRefusal,
 } from '../hooks/useRelayViewerCrews'
+import { useAppDispatch } from '../store'
+import { relayPaneBridge } from '../lib/relayCrewPanes'
 import InstanceTabBar from './InstanceTabBar'
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui/dropdown-menu'
 import ErrorNotice, { ErrorNoticeMenuItem } from './ErrorNotice'
@@ -77,9 +79,12 @@ function TeamCrewItem({ crew, refusal, onOpen }: {
           </span>
           <span className="truncate text-[12px] text-muted">{type} · {relayCrewStatusText(crew)}</span>
         </span>
-        <span className="shrink-0 text-muted" title={t('components.relayCrews.opens_own_window')}>
-          <ExternalLink className="lucide-inline" aria-hidden />
-        </span>
+        {/* With panes on the Crew opens in this window, so no own-window mark. */}
+        {!relayPaneBridge() && (
+          <span className="shrink-0 text-muted" title={t('components.relayCrews.opens_own_window')}>
+            <ExternalLink className="lucide-inline" aria-hidden />
+          </span>
+        )}
       </DropdownMenuItem>
       {refusal && (
         <>
@@ -156,6 +161,7 @@ export function TeamCrewsGroup({ crews, refusal, retry, retrying, refreshOnOpen,
   // The menu shows what it last read, so a Crew that came online since would still read offline.
   useEffect(() => { refreshOnOpen() }, [refreshOnOpen])
   const queryClient = useQueryClient()
+  const dispatch = useAppDispatch()
   const [refusals, setRefusals] = useState<Record<string, string>>({})
   // The group renders only while the menu is open, so showing it is seeing its
   // new Crews: the gateway is told now, and the marks stay until the menu closes
@@ -193,11 +199,12 @@ export function TeamCrewsGroup({ crews, refusal, retry, retrying, refreshOnOpen,
       const { [endpointId]: _dropped, ...rest } = prev
       return rest
     })
-    void openRelayCrew(endpointId).then(res => {
+    const name = crews.find(c => c.endpointId === endpointId)?.name ?? ''
+    void openRelayCrewTab(endpointId, name, dispatch).then(res => {
       if (res.ok) close()
       else setRefusals(prev => ({ ...prev, [endpointId]: relayRefusalText(res.error) }))
     })
-  }, [close])
+  }, [close, crews, dispatch])
   return (
     <div role="group" aria-label={t('components.relayCrews.list_label')} data-testid="team-crews-group">
       <DropdownMenuSeparator />
