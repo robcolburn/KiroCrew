@@ -419,7 +419,7 @@ Changes to the kind:
 | A Bot's worker, a subagent, a scheduled run | No dashboard turn, so the card is refused, as today. The worker reports `blocked` with the provider name. Its Bot raises the card in its own chat. |
 | Side chats (a chat in the side panel) | Same as a dashboard chat when the turn came from the dashboard. |
 | Slack, Discord and other channels | Cards do not render there. The gateway answers with one line it builds itself, addressed to the person whose message needs the connection: "Slack isn't connected for you. Connect it in Kiro Crew: Settings → Connections." It adds the link to `<dashboard.url>/settings/connections#connection-slack` only when `dashboard.url` is set. The agent never writes the link. |
-| A shared Crew | Every collaborator can press **Connect**, and the press connects that person's own account. With roles on, every role with `chat` and `run_as: self` (section 7.4). A person who has not connected sees their own card. |
+| A shared Crew | The owner, every collaborator and every relay teammate can press **Connect**, and the press connects that person's own account. With roles on, every role with `chat` and `run_as: self` (section 7.4). A person who has not connected sees their own card. |
 
 #### 7.3 The gateway raises it too
 
@@ -486,7 +486,8 @@ person's credentials" with no exception. The amendment, in that RFC's own
 document, adds one sentence: a grant issued to the Crew's own OAuth app for
 a person is held by the gateway for that person. It is used only in runs
 that are that person's (the table below), and never enters the person's
-runtime. The amendment is for Ray to accept (open question 3).
+runtime. Ray (buluoray) accepted it on 2026-11-16 (open question 3); it is
+proposed in [#38142](https://github.com/kirodotdev/KiroCrew/pull/38142).
 
 **What is shared, what is per person.**
 
@@ -511,12 +512,32 @@ Google slugs) is kept per person the same way.
 
 **Who may Connect: roles.** "Equal rights" is per-person §7's state with no
 `people_policy.json`: "every admitted person keeps the rights Shared Crew
-gives them today" (§7 Built-in roles, §12 decision 6). There, every
-collaborator may Connect. A collaborator is a person whom
-`collaborators.is_collaborator_request` admits (shared-crew §5): the owner,
-a relay teammate, or a `tailscale_serve` or `tailscale_listener` peer. An
-app token, a Slack-allowlist dashboard token, an internal caller and Unknown
-are not collaborators and cannot Connect. Once the operator turns roles on:
+gives them today" (§7 Built-in roles, §12 decision 6). There, three kinds of
+person may Connect, each for their own account only:
+
+| Who | How the gateway knows | Token key (`Principal.id`) |
+|---|---|---|
+| The owner, on the machine or over the Kiro relay | `is_owner_dashboard_request` | the owner's own principal. A relayed owner already resolves to it ("the machine tab and the relay tab are one person", shared-crew §2 Derivation) |
+| A collaborator | `collaborators.is_collaborator_request` (shared-crew §5): a `tailscale_serve` or `tailscale_listener` peer | the tailnet principal (provider `tailscale`, issuer `tailnet`, the lowercased login) |
+| A relay teammate on a team Crew | `routes_identity._relay_teammate` (provenance `kiro_relay`) | the relay principal (provider `kiro`, issuer `kiro-relay`, the exact Kiro user ID, no case folding) |
+
+A relay teammate is not a collaborator: `collaborators.is_collaborator_actor`
+excludes every `kiro_relay` person (shared-crew §2). So the Connect check is
+its own predicate, "owner, collaborator or relay teammate", not
+`is_collaborator_request` alone, which would shut every relay teammate out
+of a team Crew. The same predicate gates cancel, paste and Disconnect. A
+`tailscale_direct` peer is attribution only (shared-crew §2) and cannot
+Connect. Neither can an app token, a Slack-allowlist dashboard token, an
+internal caller or Unknown.
+
+**The relayed owner.** Its published actor keeps `kiro_relay` provenance,
+which is never `local_operator` (shared-crew §2). So every gate that requires
+the local operator refuses or narrows it. No Connection route uses such a
+gate. Each one reads the caller's principal, and the relayed owner's
+principal is the owner's. So the owner can Connect, paste and Disconnect over
+the relay, and spends the same grant as at the machine. A test pins this.
+
+Once the operator turns roles on:
 
 | Role (per-person §7) | May Connect? | Why |
 |---|---|---|
@@ -534,7 +555,7 @@ closed list; this RFC does not propose one.
 
 Ray's "everyone can Connect" holds as written while roles are off. With roles
 on, `viewer` and `guest` cannot Connect. That carve-out follows from
-per-person §7 and R10, and Ray confirms it in open question 3.
+per-person §7 and R10, and Ray accepted it on 2026-11-16 (open question 3).
 
 **Whose token a call uses.** The token belongs to the person the run is
 for. Per-person names that person on each surface (§3 table, R7, R9, R10),
@@ -548,7 +569,7 @@ a header the harness sent, or a field a client supplied (R2).
 | The next turn, sent by someone else | that person's, from their turn on | R7 (decision 2: the runtime is replaced on a change of person) |
 | A subagent, fork, workflow step, or a Bot worker dispatched from a turn | the person who drove that turn | R7 "inherit the initiator's account" |
 | A cron job | the person the job runs as: its owner, or a person who consented | R9 and §5: consent checked at save and at every fire, against everyone who shaped the job; each use for someone else is logged where that person sees it |
-| A Bot's own wake (patrol, check-in) with no person sending | the person the Bot runs for, under the same R9 consent as a cron job | R9 names cron jobs and channel answers, not Bot wakes: extending it to Bot wakes is an amendment (open question 3) |
+| A Bot's own wake (patrol, check-in) with no person sending | the person the Bot runs for, under the same R9 consent as a cron job | R9 as amended in [#38142](https://github.com/kirodotdev/KiroCrew/pull/38142), which names a Bot's own wake next to cron jobs (open question 3) |
 | A channel message from a bound person | that person's | per-person §6: binding `(channel, user id) -> Principal` |
 | An unbound channel user, a shared-thread turn that names no single person (a merged queue row from several people, shared-crew §3), a webhook, Crew automation | no token | R10: never the owner, never "whoever has the freshest login" |
 
@@ -608,8 +629,9 @@ marks only the live sessions that person drives.
 
 **Who may start a sign-in and paste the address.** The mint route and the
 relay route (`POST /api/mcp/oauth/relay`) are owner-only today
-(`require_owner_dashboard_request`). Phase 5a admits every collaborator
-(above), or with roles on every person whose role may Connect. It scopes
+(`require_owner_dashboard_request`). Phase 5a admits the owner, every
+collaborator and every relay teammate (the table above), or with roles on
+every person whose role may Connect. It scopes
 each call to the caller's own principal: a person can start, cancel, relay
 into or disconnect only their own sign-in. The relay checks that the pending
 sign-in it delivers to was started by the same person. A Crew API delegated
@@ -638,8 +660,8 @@ default-off and changes nothing for a user who never turns it on.
 | 3 | Copy manifest (section 2): registry fields `app_manifest`, `redirect_urls_extra`; tip button; guide pictures. Blocked on Phase 0 for the redirect line. | The copied text parses as a Slack manifest. It carries the registry's scopes and no bot scopes. The guide's section 1 to 3 shrink to the manifest step plus the manual steps. |
 | 4 | Remote mode (section 4.1, 4.2): the `/reachable` route on the sign-in listener, `gatewayHeadless` in the status answer, the warning and the open paste box. | On a gateway the browser cannot reach, the paste box is open before **Allow**. On a local gateway it is closed. The route answers 204 only while a sign-in is pending. |
 | 5 | Verified Connected (section 6): the post-grant `tools/list`, "Checking…", `on_granted` on the card path, the open-chats line. | A grant whose `tools/list` fails never shows Connected. An open KAS chat can call a Slack tool after Connect with no reload. |
-| 5a | Per-person tokens with run-as off (section 7.4): the vault entry keyed by `Principal.id` and the one-time rename of today's entry to the owner's, a `state`-routed pre-registered listener, mint rows per person, the proxy's lookup of the person the run is for, per-person card state and Disconnect, mint and relay open to collaborators and scoped to the caller, R8 applied to Connection approvals, the shared-crew spec updated in the same PR. Cron jobs, Bot wakes and channel turns get no token in a shared Crew until the per-person phases below. | Two collaborators in one Crew each connect Slack at the same time. A's turn calls Slack with A's token and B's turn with B's, and the SEL event names each person. B's Disconnect leaves A connected. A turn with no single person, a channel turn and a cron job all get `needs_auth`, never a token. An app token cannot start a sign-in. A one-person Crew keeps its grant with no new sign-in. |
-| 5b | With per-person: roles gate Connect (`chat` plus `run_as: self`; viewer and guest refused) once per-person R0 ships; the peer-uid check on the proxy once per-person phase 0 and 1 ship; cron and Bot-wake tokens under R9 consent once per-person phase 3 ships; channel tokens through the §6 binding once per-person phase 5 ships. Each part is its own PR, after the per-person phase it needs. Blocked on open question 3 (the R5 and R9 amendments). | A viewer sees no **Connect**. A run-as bridge whose peer uid does not match the session's account is refused. A cron job edited by someone else spends no token without the owner's consent, and each use shows on the owner's "My account" page. A bound channel user's turn uses their token. |
+| 5a | Per-person tokens with run-as off (section 7.4): the vault entry keyed by `Principal.id` and the one-time rename of today's entry to the owner's, a `state`-routed pre-registered listener, mint rows per person, the proxy's lookup of the person the run is for, per-person card state and Disconnect, mint and relay open to the owner, collaborators and relay teammates and scoped to the caller, R8 applied to Connection approvals, the shared-crew spec updated in the same PR. Cron jobs, Bot wakes and channel turns get no token in a shared Crew until the per-person phases below. | A tailnet collaborator and a relay teammate in one Crew each connect Slack at the same time, and each token is keyed by that person's own principal. The owner connects over the relay and gets the same grant as at the machine. A `tailscale_direct` peer cannot Connect. A's turn calls Slack with A's token and B's turn with B's, and the SEL event names each person. B's Disconnect leaves A connected. A turn with no single person, a channel turn and a cron job all get `needs_auth`, never a token. An app token cannot start a sign-in. A one-person Crew keeps its grant with no new sign-in. |
+| 5b | With per-person: roles gate Connect (`chat` plus `run_as: self`; viewer and guest refused) once per-person R0 ships; the peer-uid check on the proxy once per-person phase 0 and 1 ship; cron and Bot-wake tokens under R9 consent once per-person phase 3 ships; channel tokens through the §6 binding once per-person phase 5 ships. Each part is its own PR, after the per-person phase it needs. Blocked on [#38142](https://github.com/kirodotdev/KiroCrew/pull/38142) (the R5 and R9 amendments) merging. | A viewer sees no **Connect**. A run-as bridge whose peer uid does not match the session's account is refused. A cron job edited by someone else spends no token without the owner's consent, and each use shows on the owner's "My account" page. A bound channel user's turn uses their token. |
 | 6 | Chat card (section 7.1, 7.2): `connection.connect` reads the pressing person's grant, renders the shared waiting body, channel fallback line. | In a dashboard chat the agent's card connects Slack end to end, paste box included. On a channel the reply carries the gateway's line and no card. |
 | 7 | Gateway-raised card and expiry (section 7.3). | A `needs_auth` refusal in a dashboard turn shows one card. A grant 3 days from its refresh lifetime shows the warning. |
 | 8 | Optional: https return for pre-registered cards (section 4.3). Blocked on open question 6. | With an https `dashboard.url` and the checkbox set, Slack returns to the gateway and the card connects with no paste. |
@@ -735,13 +757,16 @@ security model and an exposure review of each change.
     closes the borrowed-token path a single shared grant had. A cron job or
     Bot wake spends a person's token only under that person's R9 consent,
     and each such use is an SEL record on their "My account" page (§5).
-  - **Rights.** With roles off, Connect is open to collaborators only
-    (shared-crew §5). With roles on, it needs `chat` and `run_as: self`
-    (per-person §7). Saving the OAuth app needs `settings.write`. Start,
-    cancel, relay and Disconnect act on the caller's own principal, read
-    from the request's identity, never from a body field. Opening the mint
-    and relay routes to collaborators widens who may call them, not what a
-    call can reach.
+  - **Rights.** With roles off, Connect is open to the owner, collaborators
+    (shared-crew §5) and relay teammates, never to a `tailscale_direct` peer,
+    an app token or Unknown. With roles on, it needs `chat` and
+    `run_as: self` (per-person §7). Saving the OAuth app needs
+    `settings.write`. Start, cancel, relay and Disconnect act on the
+    caller's own principal, read from the request's identity, never from a
+    body field. No Connection route requires `local_operator` provenance,
+    so the relayed owner keeps the owner's rights, and nothing else gains
+    them. Opening the mint and relay routes to these people widens who may
+    call them, not what a call can reach.
   - **Approvals.** A Connection approval is answered only by the person
     whose token it spends (R8, applied early to these calls only).
   - **Audit.** The SEL event of every forwarded call names the person whose
@@ -810,25 +835,23 @@ For the repository owner.
    presses **Connect** for their own account. Tokens are per person, a call
    uses the token of the person the run is for, and no case borrows another
    person's. Section 7.4 builds this on
-   [rfc-per-person-execution.md](rfc-per-person-execution.md). Three points
-   need Ray's decision, because they amend or narrow that accepted RFC:
-   - **R5 amendment.** R5 says the Crew never reads a person's
-     credentials. Keeping Connection tokens Crew-held (option b) needs one
-     added sentence: a grant issued to the Crew's own OAuth app for a person
-     is gateway-held, used only in that person's runs, and never enters
-     their runtime. Recommendation: accept it. Option a (token in the
-     person's home) either shows the gateway every Slack refresh or puts
-     the app's client secret in every run-as account.
-   - **R9 for Bot wakes.** R9 covers cron jobs and channel answers. A Bot's
-     own wake that spends a person's token needs the same consent rule, so
-     R9 gains "and a Bot's own wake". Recommendation: accept it.
-   - **"Everyone" with roles on.** With no `people_policy.json`, every
-     collaborator may Connect, exactly as ruled. With roles on, `viewer`
-     (`run_as: none`) and `guest` (R10, one shared guest account) cannot.
-     Per-provider limits come from the role's profile, not from a new
-     right. Recommendation: keep this carve-out; it needs no amendment.
-   The amendments go into the per-person RFC's own document in a separate
-   docs PR once Ray agrees, so that accepted document is not edited here.
+   [rfc-per-person-execution.md](rfc-per-person-execution.md). The three
+   points that amend or narrow that accepted RFC were ruled by Ray
+   (buluoray) on 2026-11-16:
+   - **R5 amendment: accepted.** A grant issued to the Crew's own OAuth app
+     for a person is gateway-held, used only in that person's runs, and
+     never enters their runtime (option b).
+   - **R9 for Bot wakes: accepted.** A Bot's own wake that spends a
+     person's token needs the same consent as a cron job.
+   - **"Everyone" with roles on: accepted.** With no `people_policy.json`,
+     the owner, every collaborator and every relay teammate may Connect.
+     With roles on, `viewer` and `guest`
+     cannot. Per-provider limits come from the role's profile. This needs
+     no amendment.
+   The two amendments are proposed in the per-person RFC's own document in
+   [#38142](https://github.com/kirodotdev/KiroCrew/pull/38142), so that
+   accepted document is not edited here. That RFC's author must agree there
+   too; phase 5b waits for #38142 to merge.
 4. **Expiry warning (section 7.3).** Warn 3 days before Slack's 30-day end,
    on the card and with one bell notice? Recommendation: yes, 3 days.
 5. **Remote probe (section 4.1).** Is a fixed `/reachable` route on the
