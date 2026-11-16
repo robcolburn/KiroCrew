@@ -14,7 +14,10 @@ that had already gone green on every lane with auto-merge armed.
 monitor_start(
   message="Check https://github.com/owner/repo/pull/123 with green_age.py "
           "--pr 123 then pr_status.py --reviewers <profile reviewer names>. "
-          "green_age 30: re-sync, run the related tests, push. Do NOT push "
+          "green_age 30: re-sync locally, run the gates and related tests. "
+          "Green: do NOT push; keep the rebase local and report it. A "
+          "conflict or a red this PR causes: fix it, then push; a red also "
+          "on origin/main follows When main is red. Do NOT push "
           "while the head still has queued or in_progress runs -- wait a "
           "cycle. Then post ONE comment opening with exactly "
           "'Rebased: main moved in' and naming the files and both bases; "
@@ -50,7 +53,7 @@ is gated: an unchanged PR costs no turn and any change wakes it.
 Two of the clauses above are load-bearing and easy to lose when editing this
 call, so they are named here as well as written into it:
 
-- **`green_age` 31 is not 30.** 30 says rebase; 31 says the PR has spent its
+- **`green_age` 31 is not 30.** 30 says re-check on a local rebase; 31 says the PR has spent its
   re-sync budget and a person takes it from here. The script counts the PR
   `Rebased: main moved in` comments posted by the PR's author or by a member of
   the project, because a cycle remembers nothing; never re-derive the cap by
@@ -64,7 +67,7 @@ call, so they are named here as well as written into it:
   the `message` above rather than left to the cycle to recall.
 - **A STALE answer does not license a push into a running head, and never a
   cancel.** SKILL.md's no-push-while-runs-are-in-flight rule still holds, so
-  exit 30 waits a cycle. Cancelling the head's in-flight runs belongs to exit
+  a red re-check waits a cycle before it pushes. Cancelling the head's in-flight runs belongs to exit
   20, after a decision to change code — never to a re-sync.
 - **The reset is a person's comment, never the loop's.** A comment opening with
   `Re-sync budget reset` restarts the count 31 reads, so a cycle that posted one

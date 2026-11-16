@@ -14,8 +14,9 @@ the verdict: **did the base move in files this PR also touches?**
 
 * ``moved``  - ``git diff --name-only <merge-base> origin/<base>``, the files the
   base gained or changed since the commit this head was tested on top of.
-  kirocrew-prepare-pr rebases before every push, so the merge base of HEAD and
-  ``origin/<base>`` IS the base tip the green was measured on.
+  kirocrew-prepare-pr rebases before every push, and keeps a clean re-check's
+  rebase local, so the merge base of HEAD and ``origin/<base>`` IS the base tip
+  the latest green (CI or local re-check) was measured on.
 * ``mine``   - the PR's own changed files, from ``gh pr view --json files`` with
   ``--pr``, otherwise ``git diff --name-only origin/<base>...HEAD``.
 
@@ -40,9 +41,10 @@ first. Each class exists because it has been observed to break a green head:
 during the review wait, and costs anything only on a PR whose files actually
 collide. It adds no required check and slows no merge.
 
-A STALE answer tells a caller to rebase, and on a base that moves every minute it
-can keep saying so for as long as the PR is open -- each rebase discarding a green
-the PR had already earned. SKILL.md caps that at ``RESYNC_CAP`` re-syncs and then
+A STALE answer tells a caller to re-check on a local rebase, and on a base that
+moves every minute it can keep saying so for as long as the PR is open -- each
+pushed rebase discarding a green the PR had already earned. SKILL.md pushes only a
+re-check that went red, caps those at ``RESYNC_CAP`` re-syncs and then
 hands the PR to a person, so with ``--pr`` this script counts the re-sync comments
 the loop itself posted and reports exit ``EXIT_CAP_SPENT`` once the cap is spent.
 The count is the PR's own comment history because a loop wakes with no memory:
@@ -679,7 +681,8 @@ def summarize(base="main", pr="", head="HEAD", runner=None):
         base_head = _rev_parse(base_ref, _run)
         head_sha = _rev_parse(head, _run)
         # The base this head was tested on top of. kirocrew-prepare-pr rebases before
-        # every push, so the merge base IS the base tip at trigger time.
+        # every push and keeps a clean re-check local, so the merge base IS the base
+        # tip the latest green was measured on.
         rc, out, _ = _run(["git", "merge-base", head_sha, base_ref])
         if rc != 0 or not out:
             raise EnvError("cannot compute the merge base of {} and {}".format(head, base_ref))
@@ -796,8 +799,8 @@ def main(argv=None):
             err(
                 "CAP SPENT: this PR has been re-synced {} time(s) since its last "
                 "reset, the limit is {}, and origin/{} has moved again in {} file(s) "
-                "it touches. Do NOT rebase: each one discards a green the PR already "
-                "earned. Report which files the base keeps moving in and hand the PR "
+                "it touches. Do NOT rebase: each pushed re-sync discards a green the PR "
+                "already earned. Report which files the base keeps moving in and hand the PR "
                 'to a person. To hand it back, a member of the project comments "{}" '
                 "on the PR, which grants another {}; do not delete the re-sync "
                 "comments, which are the record this count reads.".format(
@@ -813,8 +816,9 @@ def main(argv=None):
             err(
                 "STALE: origin/{} gained {} commit(s) touching {} file(s) this PR also "
                 "touches, so this head's green was not measured against them. Rebase "
-                "onto origin/{}, re-run the scoped tests for the overlapping files, "
-                "and push.".format(
+                "onto origin/{} locally and run the gates and the related tests. "
+                "Push only on a conflict or a red this PR causes; a clean re-check "
+                "stays local.".format(
                     args.base, summary["commits"], len(summary["overlap"]), args.base
                 )
             )

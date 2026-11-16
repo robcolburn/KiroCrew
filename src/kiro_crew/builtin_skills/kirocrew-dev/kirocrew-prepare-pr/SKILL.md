@@ -67,8 +67,8 @@ All five, together:
    label green. `readiness: maintainer review` is not a failure to fix: the
    remaining gate is a human one, so report it rather than pushing.
 2. Mergeable: no conflicts, not draft, not `CHANGES_REQUESTED`.
-3. **The green still describes today's base** — `green_age.py --pr <n>` exits 0.
-   Exit 30 means the rollup is green about a tree nobody merges; exit 2 satisfies
+3. **The green still describes today's base** — `green_age.py --pr <n>` exits 0,
+   or its 30 got a green local re-check (Phase 3 step 5); exit 2 satisfies
    this criterion no more than it blocks it, so report it and let the user rule.
 4. One clean commit on a feature branch (when the profile sets `single_commit`).
 5. **Every raised concern answered on the PR** — see "Dispositions" below. A
@@ -441,9 +441,9 @@ full suites are CI's job and the Phase 3 poll is the authority on them.
 ### Phase 3 — Push & check
 
 **Once the PR is open, only five things justify a new push:** a CI red, a review
-finding, **a defect in the diff this PR already carries**, **`green_age.py` exit
-30**, or a rebase onto a base that now carries the red-main fix or clears a
-conflict. Anything else — an improvement, a new surface, an adjacent fix — goes to
+finding, **a defect in the diff this PR already carries**, **a `green_age.py` 30
+whose re-check this PR turned red**, or a rebase onto a base that now carries the red-main
+fix or clears a conflict. Anything else — an improvement, a new surface, an adjacent fix — goes to
 a follow-up branch.
 
 **Do not push while the previous head still has runs in flight** — amend into the
@@ -520,21 +520,22 @@ comes after a record, never instead of one:
 5. **Check the green, then poll.** Each cycle,
    `python3 $SKILL_DIR/scripts/green_age.py --pr <n>` first. **0** → nothing to do.
    **2** → keep polling, and after **three consecutive** 2s report the reason and
-   hand the PR over. **30** → re-sync through **Phase 1**, run only the related
-   tests for the files the line names, push with the SHA-pinned lease, and post ONE
+   hand the PR over. **30** → re-sync through **Phase 1** locally, then run Phase
+   2's gates and the related tests for the PR's files and the moved ones.
+   **Green: do NOT push**: keep the rebase local and report it
+   (`references/rationale.md`). **A conflict or a red this PR causes** (red on
+   `origin/<base>` too: *When main is red*): fix it, push with the SHA-pinned lease, and post ONE
    comment: `Rebased: main moved in <files> since this head went green (<old-base> -> <new-base>); CI re-running.`
    Exit 30 does NOT override the no-push-while-runs-are-in-flight rule above.
    **31** → the re-sync cap is spent: do NOT rebase, report which files the base
    keeps moving in, and hand the PR to the user. The script decides that from the
-   count of the `Rebased: main moved in` comments posted by the PR's author or by
-   a member of the project, so after three
-   green-age re-syncs on one PR it stops being your judgement call. Each re-sync
-   discards a green the PR had already earned, which is the cost the cap exists to
-   bound. **The way back is a member of the project commenting `Re-sync budget
-   reset`**, which restarts the count and grants another three. The PR's author
-   cannot: the loop drives a PR as its author, so a budget it could re-arm bounds
-   nothing. The account you run as may be such a member, so **ask for the reset,
-   never post one** — one you wrote is the cap deciding nothing. Do not clear the
+   count of `Rebased: main moved in` comments by the author or a project
+   member, so after three
+   green-age re-syncs on one PR it stops being your judgement call. **The way back
+   is a member of the project commenting `Re-sync budget reset`**, which restarts
+   the count and grants another three; the PR's author cannot. The account you
+   run as may be such a member, so **ask for the reset,
+   never post one**. Do not clear the
    count by deleting the `Rebased: main moved in` comments either; they are the
    record it is read from.
 
