@@ -11231,6 +11231,32 @@
       "shortcut_hint_mac": "⌃⇧M でミュート切り替え",
       "mute_short": "ミュート",
       "unmute_short": "ミュート解除"
+    },
+    "globalChatSearch": {
+      "title": "すべてのチャットを検索",
+      "placeholder": "すべてのチャットのメッセージを検索…",
+      "filter_bot": "Bot",
+      "any_bot": "すべての Bot",
+      "filter_who": "送信者",
+      "who_any": "すべて",
+      "who_me": "自分",
+      "who_bot": "Bot",
+      "filter_when": "期間",
+      "when_any": "すべての期間",
+      "when_today": "今日",
+      "when_week": "過去 7 日間",
+      "when_month": "過去 30 日間",
+      "hint_min": "{{min}} 文字以上入力して検索",
+      "searching": "検索中…",
+      "no_results": "一致するメッセージはありません",
+      "error": "検索に失敗しました。もう一度お試しください。",
+      "open_failed": "そのチャットを開けませんでした",
+      "results_label": "検索結果",
+      "role_you": "あなた",
+      "role_bot": "Bot",
+      "keyboard_hint": "↑ ↓ で移動 · Enter で開く · Esc で閉じる",
+      "scan_note": "{{total}} 件中、最新の {{searched}} 件のチャットを検索しました",
+      "more_matches_other": "このチャットに一致がさらに {{count}} 件"
     }
   },
   "hooks": {

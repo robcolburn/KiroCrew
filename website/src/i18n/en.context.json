@@ -1413,6 +1413,16 @@
     "pages.developer.featurePreviewsTab.decisions_provider_saved_refused": "Small tag beside the name of a refused model still saved in the settings, where In use would sit: it is the saved choice, and the administrator does not allow it.",
     "pages.developer.featurePreviewsTab.decisions_egress": "The egress sentence beside the main switch: what leaves the machine while it is on, and that it goes to the decision model the reader picks below.",
     "components.crewPrFacts.read": "On the work board, after a pull request's state tags: the time the app itself last looked the pull request up on GitHub ('read at 19:22'); {{time}} is a clock time.",
-    "components.relayCrews.new_crew": "Small tag after a Team Crew's name in the Crew switcher: this Crew was just shared with the reader and they have not looked at it yet. An adjective about the Crew, not a button that creates one."
+    "components.relayCrews.new_crew": "Small tag after a Team Crew's name in the Crew switcher: this Crew was just shared with the reader and they have not looked at it yet. An adjective about the Crew, not a button that creates one.",
+    "components.globalChatSearch.filter_bot": "Label before a dropdown in the Search all chats dialog that narrows results to chats run by one bot (an AI agent). Short: one word.",
+    "components.globalChatSearch.filter_who": "Label before a dropdown in the Search all chats dialog that narrows results by who wrote the message: the person, or the Bot. Short, like 'Written by'.",
+    "components.globalChatSearch.filter_when": "Label before a dropdown in the Search all chats dialog that narrows results by how recently the chat was active. Short.",
+    "components.globalChatSearch.who_me": "Option in the 'Written by' dropdown: only messages the person using the app wrote. First person, like 'Me'.",
+    "components.globalChatSearch.who_bot": "Option in the 'Written by' dropdown: only messages the bot (AI agent) wrote.",
+    "components.globalChatSearch.role_you": "Screen-reader label on the icon beside a search result the person wrote.",
+    "components.globalChatSearch.role_bot": "Screen-reader label on the icon beside a search result the bot (AI agent) wrote.",
+    "components.globalChatSearch.keyboard_hint": "Footer hint in the Search all chats dialog. Arrow keys move between results, Enter opens one, Esc closes the dialog. Keep the key names as the keyboard shows them.",
+    "components.globalChatSearch.more_matches_one": "Under a chat's results in Search all chats: how many more messages in that same chat match but are not listed. Singular form.",
+    "components.globalChatSearch.more_matches_other": "Under a chat's results in Search all chats: how many more messages in that same chat match but are not listed. Plural form."
   }
 }

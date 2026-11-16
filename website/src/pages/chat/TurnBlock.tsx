@@ -5,6 +5,7 @@ import type { DisplayItem, TurnItem } from './types'
 import { uniqueRowKeys } from '../../chat-core/transcript/rowKeys'
 import { useStableMessageKey } from '../../chat-core/transcript/useStableMessageKey'
 import { useLanguageGeneration } from '../../i18n/useLanguageGeneration'
+import { useJumpReveal } from '../../hooks/JumpRevealContext'
 import { useSearchHighlight } from '../../hooks/SearchHighlightContext'
 import { ExpandStepsContext } from '../../hooks/useToolCallsStartExpanded'
 import { isWorkflowRunTool } from './WorkflowRunCard'
@@ -626,10 +627,43 @@ function TurnBlock({ turn, renderItem, collapseAll = false, appToolCallIds = EMP
     }
     return false
   }, [items, term, currentMessageIdx, fold.rows])
+  // The message a jump just highlighted opens the fold the same way, so the
+  // reader lands on a row they can see.
+  const { ts: revealTs, claimScroll } = useJumpReveal()
+  const jumpInFold = useMemo(() => {
+    if (!revealTs) return false
+    for (const i of fold.rows) {
+      const it = items[i]
+      if (it.kind === 'single' ? it.msg.ts === revealTs : it.kind === 'group' && it.msgs.some(m => m.ts === revealTs)) return true
+    }
+    return false
+  }, [items, revealTs, fold.rows])
+  const jumpInTurn = useMemo(
+    () => !!revealTs && items.some(it => it.kind === 'single' ? it.msg.ts === revealTs : it.msgs.some(m => m.ts === revealTs)),
+    [items, revealTs],
+  )
   // Held in a ref so an inline parent callback cannot re-fire this effect.
   const setOpenRef = useRef(setOpen)
   setOpenRef.current = setOpen
-  useEffect(() => { if (matchInFold) setOpenRef.current(true) }, [matchInFold])
+  useEffect(() => { if (matchInFold || jumpInFold) setOpenRef.current(true) }, [matchInFold, jumpInFold])
+  // The jump scrolls to this whole turn, which can be taller than the viewport;
+  // bring the highlighted row itself into view, once any fold hiding it has
+  // opened.
+  // shortcut: waits out the 200 ms fold transition on a timer; move to the row's
+  // transitionend if the fold's timing ever changes.
+  useEffect(() => {
+    if (!jumpInTurn || !revealTs) return
+    const t = setTimeout(() => {
+      // The transcript's own row, not the measuring farm's off-screen copy.
+      const rows = document.querySelectorAll<HTMLElement>('[data-jump-target]')
+      const row = Array.from(rows).find(el => el.dataset.jumpTarget === revealTs && !el.closest('[data-farm-index]'))
+      if (!row) return
+      // The jump's settle poll centres the whole turn each frame; end it first.
+      claimScroll()
+      row.scrollIntoView({ block: 'center' })
+    }, 250)
+    return () => clearTimeout(t)
+  }, [jumpInTurn, revealTs, claimScroll])
 
   const candidateSet = useMemo(() => new Set(candidates), [candidates])
   const count = fold.rows.size

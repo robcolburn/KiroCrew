@@ -183,6 +183,33 @@ if TYPE_CHECKING:
         _reset_all_sessions,
         api_sessions_restart,
     )
+    from kiro_crew.dashboard.handlers.sessions_parts.memory_route import (  # noqa: F401
+        _memory_sampler,
+        api_sessions_memory,
+    )
+    from kiro_crew.dashboard.session_memory import SessionMemorySampler  # noqa: F401
+    from kiro_crew.dashboard.handlers.sessions_parts.message_search import (  # noqa: F401
+        _BAD_TIME,
+        _ROW_FIELDS,
+        MAX_HITS_PER_SESSION,
+        MAX_SESSIONS,
+        ROLE_FILTERS,
+        SNIPPET_LEAD,
+        SNIPPET_MAX,
+        SNIPPET_TRAIL,
+        _epoch_param,
+        _excerpt,
+        _keeps_session,
+        _limit_param,
+        _iso_epoch,
+        _read_chain,
+        _redacted,
+        _search,
+        api_sessions_search_messages,
+        MessageQuery,
+        message_hits,
+        message_query,
+    )
     import kiro_crew.dashboard.handlers as _h  # noqa: F401
     from kiro_crew import agent_spec_pins  # noqa: F401
     from kiro_crew import hooks  # noqa: F401
@@ -233,6 +260,12 @@ if TYPE_CHECKING:
     from kiro_crew.history_search import SearchRows  # noqa: F401
     from kiro_crew.history_search import search_candidate_cap  # noqa: F401
     from kiro_crew.history_search import search_coverage  # noqa: F401
+    from kiro_crew.history_search import SearchNeedle  # noqa: F401
+    from kiro_crew.history_search import needles_match_text  # noqa: F401
+    from kiro_crew.history_search import parse_search_query  # noqa: F401
+    from kiro_crew.history_search import snippet_needle_tiers  # noqa: F401
+    from kiro_crew.history_search import split_title_scope  # noqa: F401
+    from kiro_crew.history_search import tiered_first_hit  # noqa: F401
     from kiro_crew.kiro_cli import chat_agent_engines_at  # noqa: F401
     from kiro_crew.kiro_cli import pin_kiro_cli  # noqa: F401
     from kiro_crew.label_guard import PROSE_OPENERS  # noqa: F401
@@ -290,7 +323,6 @@ from kiro_crew.dashboard.kiro_readiness import (
     reject_if_kiro_unverified,
     track_kiro_identity,
 )
-from kiro_crew.dashboard.session_memory import SessionMemorySampler
 from kiro_crew.dashboard.state import DashboardState
 from kiro_crew.executors import subprocess_executor
 from kiro_crew.kiro_prerequisite import identity_stamp_mismatch, spawn_supervised_oneshot
@@ -301,35 +333,6 @@ from kiro_crew.sandbox import (
 )
 
 logger = logging.getLogger("kiro_crew.dashboard.handlers.sessions")
-
-# One sampler per process: it carries the CPU jiffy baseline and the rolling load
-# window, both of which are meaningless if rebuilt per request (a fresh baseline
-# always reports CPU as unknown, and a fresh window is always empty).
-_memory_sampler = SessionMemorySampler()
-
-
-async def api_sessions_memory(request: web.Request) -> web.Response:
-    """GET /api/sessions/memory — per-session and per-task memory footprint."""
-    state: DashboardState = request.app["state"]
-    # Built on the loop, not in the sampling thread: it walks live slot objects.
-    # Pure dict work, so it costs nothing here. Guarded because `state` is a
-    # MagicMock in much of the suite, whose attribute call returns a mock rather
-    # than a dict — the sampler must receive a real mapping or nothing.
-    # Built on the loop, not in the sampling thread: it walks live slot objects,
-    # and it is pure dict work. `hasattr` because a stub state in the suite may not
-    # carry the method at all; validating the VALUE is `_spend_for_session`'s job,
-    # so it is not repeated here — one owner for that rule.
-    aliases = state.spend_slot_by_session() if hasattr(state, "spend_slot_by_session") else None
-    payload = await _memory_sampler.sample(
-        state.sessions,
-        getattr(state, "subagents", None),
-        get_slot=state.get_slot,
-        spend_slot_by_session=aliases,
-        mcp_gateway=getattr(state, "_mcp_gateway_manager", None),
-        breakdown=True,
-    )
-    return web.json_response(payload)
-
 
 _health_cache: dict[str, Any] = {}
 _health_cache_ts: float = 0.0
@@ -1951,6 +1954,8 @@ _OWNERS = (
     "kiro_crew.dashboard.handlers.sessions_parts.live_turn",
     "kiro_crew.dashboard.handlers.sessions_parts.tool_policy",
     "kiro_crew.dashboard.handlers.sessions_parts.restart",
+    "kiro_crew.dashboard.handlers.sessions_parts.message_search",
+    "kiro_crew.dashboard.handlers.sessions_parts.memory_route",
 )
 for _owner in _OWNERS:
     _importlib.import_module(_owner)
