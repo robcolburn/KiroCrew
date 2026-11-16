@@ -23529,7 +23529,12 @@
       "use_in_tool_title": "Usar em uma ferramenta",
       "use_in_tool_tip": "Cole isto nas configurações de uma ferramenta, como o ambiente de um servidor MCP. A ferramenta recebe o valor ao ser executada; o valor em si nunca aparece lá.",
       "advanced_title": "Avançado",
-      "api_call_label": "Chamada de API"
+      "api_call_label": "Chamada de API",
+      "rotate_by_label": "Rotacionar até (opcional)",
+      "rotate_by_hint": "Mostra \"Rotação pendente\" depois desta data. Para rotacionar, salve aqui um novo valor com o mesmo nome. Se salvar sem data, o lembrete é removido.",
+      "rotate_by_note": "Rotacionar até {{date}}",
+      "rotation_due": "Rotação pendente",
+      "rotation_due_aria": "Rotação pendente para {{name}}: a data de rotação {{date}} já passou"
     }
   },
   "store": {

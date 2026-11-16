@@ -23529,7 +23529,12 @@
       "use_in_tool_title": "Utiliser dans un outil",
       "use_in_tool_tip": "Colle ceci dans les réglages d’un outil, par exemple l’environnement d’un serveur MCP. L’outil reçoit la valeur quand il s’exécute\u202f; la valeur elle-même n’y apparaît jamais.",
       "advanced_title": "Avancé",
-      "api_call_label": "Appel d’API"
+      "api_call_label": "Appel d’API",
+      "rotate_by_label": "Renouveler avant le (facultatif)",
+      "rotate_by_hint": "Affiche « Renouvellement requis » après cette date. Pour renouveler, enregistre ici une nouvelle valeur sous le même nom. Sans date, le rappel est supprimé.",
+      "rotate_by_note": "Renouveler avant le {{date}}",
+      "rotation_due": "Renouvellement requis",
+      "rotation_due_aria": "Renouvellement requis pour {{name}} : la date de renouvellement {{date}} est passée"
     }
   },
   "store": {

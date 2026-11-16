@@ -22411,7 +22411,12 @@
       "use_in_tool_title": "在工具中使用",
       "use_in_tool_tip": "把它粘贴到工具的设置里，例如 MCP 服务器的环境变量。工具运行时才拿到值，值本身不会出现在那里。",
       "advanced_title": "高级",
-      "api_call_label": "API 调用"
+      "api_call_label": "API 调用",
+      "rotate_by_label": "轮换期限（可选）",
+      "rotate_by_hint": "超过此日期后会显示“需要轮换”。要轮换，在此用相同名称保存新值。不填日期保存会移除提醒。",
+      "rotate_by_note": "在 {{date}} 前轮换",
+      "rotation_due": "需要轮换",
+      "rotation_due_aria": "{{name}} 需要轮换：轮换期限 {{date}} 已过"
     }
   },
   "store": {

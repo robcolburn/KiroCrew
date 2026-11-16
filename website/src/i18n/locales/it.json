@@ -23529,7 +23529,12 @@
       "use_in_tool_title": "Usa in uno strumento",
       "use_in_tool_tip": "Incolla questo nelle impostazioni di uno strumento, come l’ambiente di un server MCP. Lo strumento riceve il valore quando viene eseguito; il valore non compare mai lì.",
       "advanced_title": "Avanzate",
-      "api_call_label": "Chiamata API"
+      "api_call_label": "Chiamata API",
+      "rotate_by_label": "Ruota entro il (facoltativo)",
+      "rotate_by_hint": "Mostra «Rotazione scaduta» dopo questa data. Per ruotare, salva qui un nuovo valore con lo stesso nome. Se salvi senza data, il promemoria viene rimosso.",
+      "rotate_by_note": "Ruota entro il {{date}}",
+      "rotation_due": "Rotazione scaduta",
+      "rotation_due_aria": "Rotazione scaduta per {{name}}: la data di rotazione {{date}} è passata"
     }
   },
   "store": {

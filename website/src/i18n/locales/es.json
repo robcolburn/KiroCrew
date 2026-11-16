@@ -23529,7 +23529,12 @@
       "use_in_tool_title": "Usar en una herramienta",
       "use_in_tool_tip": "Pégalo en la configuración de una herramienta, como el entorno de un servidor MCP. La herramienta recibe el valor al ejecutarse; el valor nunca aparece allí.",
       "advanced_title": "Avanzado",
-      "api_call_label": "Llamada a la API"
+      "api_call_label": "Llamada a la API",
+      "rotate_by_label": "Rotar antes del (opcional)",
+      "rotate_by_hint": "Muestra \"Rotación pendiente\" después de esta fecha. Para rotarlo, guarda aquí un valor nuevo con el mismo nombre. Si lo guardas sin fecha, se quita el recordatorio.",
+      "rotate_by_note": "Rotar antes del {{date}}",
+      "rotation_due": "Rotación pendiente",
+      "rotation_due_aria": "Rotación pendiente para {{name}}: la fecha de rotación {{date}} ya pasó"
     }
   },
   "store": {
