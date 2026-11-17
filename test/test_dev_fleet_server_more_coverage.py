@@ -758,13 +758,23 @@ async def test_live_worktree_path_none_without_systemd(monkeypatch):
     assert await live._live_worktree_path(fresh=True) is None
 
 
+def _checkout(root: Path) -> Path:
+    """A directory ``live_target.validate`` accepts: an executable venv entry point
+    and ``src/kiro_crew``."""
+    kcbin = root / ".venv" / "bin" / "kirocrew"
+    kcbin.parent.mkdir(parents=True)
+    kcbin.write_text("#!/bin/sh\n")
+    kcbin.chmod(0o755)
+    (root / "src" / "kiro_crew").mkdir(parents=True)
+    return root
+
+
 @pytest.mark.asyncio
-async def test_live_worktree_path_falls_back_to_execstart(monkeypatch):
+async def test_live_worktree_path_falls_back_to_execstart(monkeypatch, tmp_path):
     """An older unit with no WorkingDirectory is read off ExecStart's path=."""
-    # A fabricated, space-free path: the regex the product uses truncates at the
-    # first space, so a tmp_path containing one would make this assert the wrong
-    # thing on some runners.
-    checkout = Path("/opt/kirocrew-checkouts/co")
+    # The regex the product uses truncates at the first space, so the checkout
+    # name has none.
+    checkout = _checkout(tmp_path / "co")
     exe = checkout / ".venv" / "bin" / "kirocrew"
     monkeypatch.setattr(live.live_target, "read_target", lambda: None)
     monkeypatch.setattr(live.sys, "platform", "linux")
@@ -782,14 +792,69 @@ async def test_live_worktree_path_falls_back_to_execstart(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_live_worktree_path_prefers_working_directory(monkeypatch, tmp_path):
+    checkout = _checkout(tmp_path / "co")
     monkeypatch.setattr(live.live_target, "read_target", lambda: None)
     monkeypatch.setattr(live.sys, "platform", "linux")
     monkeypatch.setattr(live.shutil, "which", lambda name: "/bin/systemctl")
-    seen = _run_cmd_queue(monkeypatch, [(0, f"{tmp_path}\n", "")])
+    seen = _run_cmd_queue(monkeypatch, [(0, f"{checkout}\n", "")])
 
-    assert await live._live_worktree_path(fresh=True) == str(tmp_path.resolve())
+    assert await live._live_worktree_path(fresh=True) == str(checkout.resolve())
     # The ExecStart fallback is not consulted when WorkingDirectory answers.
     assert len(seen) == 1
+
+
+def _installer_unit_host(monkeypatch, tmp_path, exec_start: Path) -> tuple[Path, list[list[str]]]:
+    """A systemd host with no pointer whose ``kirocrew.service`` is the installer's.
+
+    That unit sets ``WorkingDirectory`` to the home directory, which is not a
+    checkout. Returns the home directory and the ``systemctl`` argv log."""
+    home = tmp_path / "home"
+    home.mkdir()
+    unit_dir = tmp_path / "xdg" / "systemd" / "user"
+    unit_dir.mkdir(parents=True)
+    (unit_dir / "kirocrew.service").write_text("[Service]\n")
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setattr(live.live_target, "read_target", lambda: None)
+    monkeypatch.setattr(live.sys, "platform", "linux")
+    monkeypatch.setattr(live.shutil, "which", lambda name: "/bin/systemctl")
+    seen = _run_cmd_queue(
+        monkeypatch,
+        [
+            (0, f"{home}\n", ""),
+            (0, f"ExecStart={{ path={exec_start} ; argv[]={exec_start} gateway }}", ""),
+        ],
+    )
+    return home, seen
+
+
+@pytest.mark.asyncio
+async def test_live_worktree_path_is_the_running_checkout_when_the_unit_names_home(
+    monkeypatch, tmp_path
+):
+    """The home directory that the installer's unit names is never the live row:
+    with no checkout in the unit, the running checkout answers."""
+    running = _checkout(tmp_path / "running")
+    home, seen = _installer_unit_host(
+        monkeypatch, tmp_path, tmp_path / "home" / ".local" / "bin" / "kirocrew"
+    )
+    monkeypatch.setattr(live, "_running_checkout", lambda: running)
+
+    got = await live._live_worktree_path(fresh=True)
+
+    assert got == str(running)
+    assert got != str(home.resolve())
+    assert [cmd[3] for cmd in seen] == ["kirocrew.service", "kirocrew.service"]
+
+
+@pytest.mark.asyncio
+async def test_live_worktree_path_reads_execstart_when_the_unit_names_home(monkeypatch, tmp_path):
+    """A WorkingDirectory that is not a checkout goes on to ExecStart's path=,
+    which the installer's unit points into the checkout's venv."""
+    checkout = _checkout(tmp_path / "co")
+    _installer_unit_host(monkeypatch, tmp_path, checkout / ".venv" / "bin" / "kirocrew")
+    monkeypatch.setattr(live, "_running_checkout", lambda: None)
+
+    assert await live._live_worktree_path(fresh=True) == str(checkout.resolve())
 
 
 @pytest.mark.asyncio
@@ -845,7 +910,7 @@ def test_dropin_path_honours_xdg_config_home(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
     got = live._dropin_path()
     assert got.name == "make-live.conf"
-    assert got.parent.name == f"{live._LIVE_GATEWAY_UNIT}.d"
+    assert got.parent.name == f"{live._live_gateway_unit()}.d"
     assert got.is_relative_to(tmp_path / "xdg")
 
 
@@ -855,7 +920,7 @@ def test_dropin_path_falls_back_to_home_config(monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
     assert live._dropin_path() == (
-        home / ".config" / "systemd" / "user" / f"{live._LIVE_GATEWAY_UNIT}.d" / "make-live.conf"
+        home / ".config" / "systemd" / "user" / f"{live._live_gateway_unit()}.d" / "make-live.conf"
     )
 
 

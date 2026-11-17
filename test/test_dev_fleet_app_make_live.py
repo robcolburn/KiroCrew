@@ -535,15 +535,15 @@ async def test_make_live_write_failure_does_not_latch(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_live_worktree_path_reads_working_directory_with_spaces(monkeypatch):
+async def test_live_worktree_path_reads_working_directory_with_spaces(monkeypatch, tmp_path):
     """_live_worktree_path resolves via `systemctl show --property=
     WorkingDirectory --value`, which (unlike the ExecStart path= regex) is NOT
     truncated at spaces — so a checkout path containing a space resolves whole."""
-    spacey = "/home/u/my worktrees/kirocrew-wt-feat"
+    spacey = _mk_make_live_wt(tmp_path / "my worktrees", venv=True, dist=True)
 
     async def fake_run_cmd(cmd, **kw):
         assert "--property=WorkingDirectory" in cmd and "--value" in cmd
-        return (0, spacey + "\n", "")
+        return (0, f"{spacey}\n", "")
 
     monkeypatch.setattr(live_mod, "sys", MagicMock(platform="linux"))
     monkeypatch.setattr(
@@ -553,14 +553,13 @@ async def test_live_worktree_path_reads_working_directory_with_spaces(monkeypatc
     monkeypatch.setattr(live_mod, "_LIVE_CHECK_AT", 0.0, raising=False)
     monkeypatch.setattr(live_mod, "_LIVE_WORKTREE", None, raising=False)
     got = await mod._live_worktree_path()
-    assert got == str(Path(spacey).resolve())
+    assert got == str(spacey.resolve())
 
 
 @pytest.mark.asyncio
 async def test_live_worktree_path_falls_back_to_execstart(monkeypatch, tmp_path):
     """When WorkingDirectory is empty, fall back to parsing ExecStart's path=."""
-    checkout = tmp_path / "kirocrew-wt-feat"
-    (checkout / ".venv" / "bin").mkdir(parents=True)
+    checkout = _mk_make_live_wt(tmp_path, venv=True, dist=True)
     exe = checkout / ".venv" / "bin" / "kirocrew"
 
     async def fake_run_cmd(cmd, **kw):
@@ -809,7 +808,7 @@ async def test_live_user_unit_status_ok_and_missing(monkeypatch):
     assert await mod._live_user_unit_status() == "ok"
 
     async def cat_missing(cmd, **kw):
-        return (1, "", "No files found for kirocrew-gateway.service.")
+        return (1, "", "No files found for kirocrew.service.")
 
     monkeypatch.setattr(runtime_mod, "_run_cmd", cat_missing)
     assert await mod._live_user_unit_status() == "no_user_unit"

@@ -87,6 +87,22 @@ def _running_checkout() -> Path | None:
     return Path(own) if own else None
 
 
+def _service_checkout(raw: str | None) -> str | None:
+    """*raw* resolved, when ``live_target.validate`` accepts it as a checkout; else None.
+
+    A service definition can name a directory that is not a checkout: the unit that
+    ``kirocrew service install`` writes sets ``WorkingDirectory`` to the home
+    directory. Reporting that as live would hide the checkout the gateway runs
+    from. Blocking (it stats the path), so callers run it off the loop.
+    """
+    if not raw:
+        return None
+    try:
+        return str(live_target.validate(raw))
+    except live_target.InvalidTarget:
+        return None
+
+
 def _staged_target() -> str | None:
     """The pointer target when a cutover is staged but NOT yet in effect.
 
@@ -124,7 +140,11 @@ _GATEWAY_START_ID_CACHE: tuple[float, str | None] | None = None
 # The single in-flight read. A read can spawn two `systemctl` scopes, so
 # concurrent health requests await this one task instead of each starting one.
 _GATEWAY_START_ID_INFLIGHT: asyncio.Task[str | None] | None = None
-_LIVE_GATEWAY_UNIT = "kirocrew-gateway.service"
+# The live gateway's systemd user unit, in lookup order. ``kirocrew.service`` is
+# the unit that the setup guide and the user-scope remedy of
+# ``kirocrew service install`` write; ``kirocrew-gateway.service`` is a name a
+# host can give its unit by hand. See :func:`_live_gateway_unit`.
+_LIVE_GATEWAY_UNITS = ("kirocrew.service", "kirocrew-gateway.service")
 # The launchd counterpart of the live systemd unit. Same agent
 # `kirocrew service install` writes (kiro_crew.service.common.LAUNCHD_LABEL);
 # duplicated as a literal rather than imported so this module keeps importing
@@ -132,12 +152,43 @@ _LIVE_GATEWAY_UNIT = "kirocrew-gateway.service"
 _LIVE_GATEWAY_LABEL = "dev.kirocrew.gateway"
 
 
+def _user_unit_dir() -> Path:
+    """The systemd user unit directory: ``$XDG_CONFIG_HOME/systemd/user``.
+
+    Falls back to ``~/.config`` when the variable is unset. systemd --user reads
+    units under ``$XDG_CONFIG_HOME`` when it is set, so a literal ``~/.config``
+    would be the WRONG directory on such a host."""
+    xdg = os.environ.get("XDG_CONFIG_HOME")
+    base = Path(xdg) if xdg else (Path.home() / ".config")
+    return base / "systemd" / "user"
+
+
+def _live_gateway_unit() -> str:
+    """The systemd user unit the live gateway runs as.
+
+    The first name in ``_LIVE_GATEWAY_UNITS`` whose unit file is in
+    :func:`_user_unit_dir`, else the first name. This is a file stat only, so
+    the fleet poll starts no ``systemctl`` to choose the name. The stat only
+    picks which unit to ask about: ``systemctl --user cat`` in the backend's
+    ``status()`` still decides whether the manager knows that unit.
+    """
+    unit_dir = _user_unit_dir()
+    for name in _LIVE_GATEWAY_UNITS:
+        try:
+            if (unit_dir / name).is_file():
+                return name
+        except OSError:
+            continue
+    return _LIVE_GATEWAY_UNITS[0]
+
+
 def _gateway_unit_name() -> str:
     """Resolve the systemd unit of the gateway THIS backend belongs to.
 
     Inside a pod (config home under ``.kirocrew-pods/<name>``) the owning unit
-    is the pod template instance — restarting the hardcoded live unit from a
-    pod would bounce the user's LIVE gateway across planes.
+    is the pod template instance — restarting the live unit from a pod would
+    bounce the user's LIVE gateway across planes. Outside a pod it is
+    :func:`_live_gateway_unit`.
     """
     try:
         from kiro_crew.config.loader import config_dir
@@ -147,7 +198,7 @@ def _gateway_unit_name() -> str:
             return f"kirocrew-pod@{home.name}.service"
     except Exception:  # noqa: BLE001 — fall through to the live unit
         pass
-    return _LIVE_GATEWAY_UNIT
+    return _live_gateway_unit()
 
 
 def _gateway_label() -> str:
@@ -399,13 +450,10 @@ def _in_pod() -> bool | None:
 def _dropin_path() -> Path:
     """Absolute path of the make-live systemd drop-in for the live unit.
 
-    Honours ``$XDG_CONFIG_HOME`` (systemd --user reads units there when set)
-    and falls back to ``~/.config`` — a literal ``~/.config`` would be the
-    WRONG directory on a host that sets XDG_CONFIG_HOME, and the override
-    would silently never take effect."""
-    xdg = os.environ.get("XDG_CONFIG_HOME")
-    base = Path(xdg) if xdg else (Path.home() / ".config")
-    return base / "systemd" / "user" / f"{_LIVE_GATEWAY_UNIT}.d" / "make-live.conf"
+    Under :func:`_user_unit_dir`, beside the unit file of
+    :func:`_live_gateway_unit`, so the override applies to the unit the live
+    gateway actually runs as."""
+    return _user_unit_dir() / f"{_live_gateway_unit()}.d" / "make-live.conf"
 
 
 #: A path/value cannot be safely serialised into a service definition.
@@ -458,14 +506,14 @@ def _dropin_content(worktree: Path, kcbin: Path) -> str:
     replacement — systemd otherwise APPENDS, and a Type=simple service with
     two ExecStart values is a fatal unit error. ``~`` is NOT expanded inside
     ``Environment=``, so the operator bin dir is materialised to an absolute
-    path here (a literal ``~/.local/bin`` would corrupt PATH).
+    path here (a literal ``~/.local/bin`` would corrupt PATH). The ``PATH``
+    comes from ``gateway_service.cutover_path``, so the unit's own entries stay
+    on it.
 
     Every interpolated value passes through ``_sd_value`` so a worktree path
     with spaces, ``%`` specifiers, or quotes is escaped (and a control-char
     path rejected) rather than silently splitting/expanding the directive."""
-    venv_bin = worktree / ".venv" / "bin"
-    local_bin = Path.home() / ".local" / "bin"
-    path_env = ":".join([str(venv_bin), str(local_bin), "/usr/local/bin", "/usr/bin", "/bin"])
+    path_env = ":".join(gateway_service.cutover_path(worktree / ".venv" / "bin"))
     return (
         "[Service]\n"
         f"WorkingDirectory={_sd_value(str(worktree))}\n"

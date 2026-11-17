@@ -567,9 +567,9 @@ async def test_gateway_pointer_flows_call_no_filesystem_primitive_on_the_loop_th
     while the gateway-side flows run — the live-target read (``pointer_state``), the
     service-manager resolution behind it and the cutover itself."""
     # Fixture work first: it resolves paths on this very thread, which the traps
-    # below must not count.
-    expected_live = str(tmp_path.resolve())
+    # below must not count. The unit names a checkout, as a cutover's drop-in does.
     wt = _mk_make_live_wt(tmp_path, venv=True, dist=True)
+    expected_live = str(wt.resolve())
 
     which_threads: list[int] = []
 
@@ -578,7 +578,7 @@ async def test_gateway_pointer_flows_call_no_filesystem_primitive_on_the_loop_th
         return "/usr/bin/systemctl"
 
     async def fake_run_cmd(cmd, **kw):
-        return (0, f"{tmp_path}\n", "")
+        return (0, f"{wt}\n", "")
 
     monkeypatch.setattr(live_mod, "sys", MagicMock(platform="linux"))
     monkeypatch.setattr(live_mod, "shutil", MagicMock(which=_which))

@@ -386,7 +386,7 @@ def _stub_make_live(
     monkeypatch.setattr(live_mod, "_in_pod", lambda: in_pod)
     monkeypatch.setattr(live_mod, "_live_user_unit_status", AsyncMock(return_value=unit_status))
     sandbox_root = Path(wt).parent
-    sandbox_dropin = sandbox_root / "_systemd" / f"{mod._LIVE_GATEWAY_UNIT}.d" / "make-live.conf"
+    sandbox_dropin = sandbox_root / "_systemd" / f"{mod._live_gateway_unit()}.d" / "make-live.conf"
     _assert_sandboxed(sandbox_dropin, "_dropin_path", sandbox_root)
     monkeypatch.setattr(live_mod, "_dropin_path", lambda: sandbox_dropin)
     monkeypatch.setattr(runtime_mod, "_run_cmd", AsyncMock(return_value=(0, "", "")))

@@ -905,7 +905,24 @@ def test_gateway_unit_resolves_live_outside_pods(monkeypatch, tmp_path):
     home = tmp_path / ".kirocrew"
     home.mkdir(parents=True)
     monkeypatch.setenv("KIROCREW_HOME", str(home))
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    assert mod._gateway_unit_name() == "kirocrew.service"
+
+
+def test_gateway_unit_finds_the_live_unit_file_the_host_has(monkeypatch, tmp_path):
+    """A host whose user unit file is ``kirocrew-gateway.service`` gets that name and
+    the make-live drop-in beside it; ``kirocrew.service`` wins when both files exist."""
+    home = tmp_path / ".kirocrew"
+    home.mkdir(parents=True)
+    monkeypatch.setenv("KIROCREW_HOME", str(home))
+    unit_dir = tmp_path / "xdg" / "systemd" / "user"
+    unit_dir.mkdir(parents=True)
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    (unit_dir / "kirocrew-gateway.service").write_text("[Service]\n")
     assert mod._gateway_unit_name() == "kirocrew-gateway.service"
+    assert mod._dropin_path() == unit_dir / "kirocrew-gateway.service.d" / "make-live.conf"
+    (unit_dir / "kirocrew.service").write_text("[Service]\n")
+    assert mod._gateway_unit_name() == "kirocrew.service"
 
 
 @pytest.mark.asyncio

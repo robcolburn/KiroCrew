@@ -72,6 +72,7 @@ import asyncio
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import IO, Awaitable, Callable, Protocol, TypeVar
 
@@ -160,6 +161,46 @@ def reject_unsafe(raw: str) -> str:
     if _CTRL_RE.search(raw):
         raise _UnsafeTargetValue(repr(raw))
     return raw
+
+
+def _running_venv_bin() -> str | None:
+    """The ``.venv/bin`` that holds this process's interpreter, or None.
+
+    For a gateway started from a checkout, this is the venv bin of that checkout,
+    which the unit's ``PATH``, the previous cutover or ``live_target.maybe_reexec``
+    put first on ``PATH``. Path arithmetic only: no filesystem call."""
+    bin_dir = Path(sys.executable).parent
+    return str(bin_dir) if bin_dir.name == "bin" and bin_dir.parent.name == ".venv" else None
+
+
+def cutover_path(venv_bin: Path) -> list[str]:
+    """The ``PATH`` entries, in order, that a cutover gives the restarted gateway.
+
+    The target's *venv_bin* first, then each entry of this process's own
+    ``PATH``, then the operator bin dir and the system bin dirs. A cutover runs
+    in the gateway process, which the live service started, so this ``PATH``
+    holds the service's own entries (a version manager's ``node``, a toolbox): a
+    fixed list would take them away from the restarted gateway. An entry that
+    comes again keeps its first place. An inherited entry that is not absolute is
+    dropped, because it names a directory relative to the working directory of
+    the process that searches it, which for the gateway is the target checkout.
+    An inherited entry with a control character is dropped too: no service
+    definition can carry it, and the renderers would refuse the whole cutover.
+    The venv bin of the checkout that the cutover replaces (:func:`_running_venv_bin`)
+    is dropped as well, so the ``PATH`` does not grow by one entry per cutover.
+    """
+    tail = [str(Path.home() / ".local" / "bin"), *platform_compat.POSIX_DEFAULT_BIN_DIRS]
+    replaced = _running_venv_bin()
+    inherited = [
+        entry
+        for entry in os.environ.get("PATH", "").split(":")
+        if entry.startswith("/") and not _CTRL_RE.search(entry) and entry != replaced
+    ]
+    kept: list[str] = []
+    for entry in [str(venv_bin), *inherited, *tail]:
+        if entry not in kept:
+            kept.append(entry)
+    return kept
 
 
 def atomic_write_text(path: Path, content: str) -> None:
@@ -265,6 +306,11 @@ class SystemdBackend:
             return False
         return bool(await _off_loop(self._which, "systemctl"))
 
+    async def _unit_name(self) -> str:
+        # The live unit's name comes from a stat of the user unit directory (and a
+        # pod check reads the config home), so it resolves off the loop too.
+        return await _off_loop(self._unit)
+
     async def status(self) -> str:
         if not await self._available():
             return "no_systemd"
@@ -272,7 +318,7 @@ class SystemdBackend:
         # install` SYSTEM unit is not controllable with a --user drop-in, and
         # staging against it would "succeed" while bouncing nothing.
         rc, _out, _err = await self._run(
-            ["systemctl", "--user", "cat", self._unit()], timeout=5
+            ["systemctl", "--user", "cat", await self._unit_name()], timeout=5
         )
         return "ok" if rc == 0 else "no_user_unit"
 
@@ -280,7 +326,7 @@ class SystemdBackend:
         if not await self._available():
             return False
         rc, _out, _err = await self._run(
-            ["systemctl", "--user", "is-active", self._unit()], timeout=5
+            ["systemctl", "--user", "is-active", await self._unit_name()], timeout=5
         )
         return rc == 0
 
@@ -292,7 +338,7 @@ class SystemdBackend:
         if not await self._available():
             return None
         rc, out, _err = await self._run(
-            ["systemctl", "--user", "show", self._unit(),
+            ["systemctl", "--user", "show", await self._unit_name(),
              "--property=ExecMainStartTimestampMonotonic", "--value"],
             timeout=5,
         )
@@ -310,10 +356,11 @@ class SystemdBackend:
 
         ``reset-failed`` first (best-effort): ``StartLimitBurst`` counts every
         start, so planned restarts would otherwise spend the crash-loop budget."""
-        await self._run(["systemctl", "--user", "reset-failed", self._unit()], timeout=5)
+        unit = await self._unit_name()
+        await self._run(["systemctl", "--user", "reset-failed", unit], timeout=5)
         rc, _out, stderr = await self._run(
             ["systemd-run", "--user", "--collect",
-             "systemctl", "--user", "restart", self._unit()],
+             "systemctl", "--user", "restart", unit],
             timeout=10,
         )
         # Redact the FULL stream, then keep the TAIL (the tool prints its error
@@ -338,13 +385,15 @@ class SystemdBackend:
             return None
 
     async def stage(self, worktree: Path, kcbin: Path) -> tuple[bool, str, str]:
-        dropin = self._dropin_path()
         try:
             content = self._dropin_content(worktree, kcbin)
         except _UnsafeTargetValue as exc:
             return False, "unsafe_path", f"unsafe value in unit directive: {exc}"
 
         def _write() -> None:
+            # Resolved here, off the loop: the path names the live unit, which a
+            # stat of the user unit directory picks.
+            dropin = self._dropin_path()
             dropin.parent.mkdir(parents=True, exist_ok=True)
             atomic_write_text(dropin, content)
 
@@ -563,16 +612,13 @@ class LaunchdBackend:
         Sets the working directory and a venv-first PATH as well as the binary,
         mirroring the three directives the systemd drop-in overrides. A
         binary-only swap would leave PATH-resolved subprocesses re-invoking the
-        OLD install while the gateway ran the new one.
+        OLD install while the gateway ran the new one. The PATH comes from
+        :func:`cutover_path`, so the agent's own entries stay on it.
         """
         return render_live_program(
             str(kcbin),
             working_dir=str(worktree),
-            path_prefix=[
-                str(worktree / ".venv" / "bin"),
-                str(Path.home() / ".local" / "bin"),
-                "/usr/local/bin", "/usr/bin", "/bin",
-            ],
+            path_prefix=cutover_path(worktree / ".venv" / "bin"),
         )
 
     def snapshot(self) -> str | None:

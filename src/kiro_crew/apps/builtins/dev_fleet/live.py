@@ -62,7 +62,6 @@ from kiro_crew.apps.builtins.dev_fleet.live_plan import (
     _undo_binding_holds,
 )
 from kiro_crew.apps.builtins.dev_fleet.live_service import (
-    _LIVE_GATEWAY_UNIT,
     _foreground_backend,
     _foreground_eligible,
     _gateway_backend,
@@ -70,8 +69,10 @@ from kiro_crew.apps.builtins.dev_fleet.live_service import (
     _gateway_start_id,
     _in_pod,
     _launchd_live_worktree,
+    _live_gateway_unit,
     _live_user_unit_status,
     _running_checkout,
+    _service_checkout,
     _staged_cancel_available_local,
     _staged_target,
 )
@@ -466,6 +467,10 @@ async def _service_live_worktree() -> str | None:
         )
     if manager != "systemd":
         return None
+    # The live unit, not ``_gateway_unit_name()`` (in a pod, the pod's own unit). A
+    # stat of the user unit directory picks it, so it resolves off the loop too.
+    off = asyncio.get_running_loop().run_in_executor
+    unit = await off(subprocess_executor(), _live_gateway_unit)
     # Prefer WorkingDirectory: make-live always writes it alongside ExecStart,
     # and the baseline unit sets it too. ``--value`` prints the bare path with
     # no ``WorkingDirectory=`` prefix and, crucially, NO truncation at spaces —
@@ -480,7 +485,7 @@ async def _service_live_worktree() -> str | None:
             "systemctl",
             "--user",
             "show",
-            _LIVE_GATEWAY_UNIT,
+            unit,
             "--property=WorkingDirectory",
             "--value",
         ],
@@ -488,28 +493,26 @@ async def _service_live_worktree() -> str | None:
     )
     if rc == 0 and out.strip():
         path = out.strip()
-    else:
-        # Fallback: parse ExecStart's ``path=`` when WorkingDirectory is empty
-        # (an older unit that predates the WorkingDirectory= directive).
-        rc, out, _err = await runtime._run_cmd(
-            ["systemctl", "--user", "show", _LIVE_GATEWAY_UNIT, "-p", "ExecStart"],
-            timeout=5,
-        )
-        if rc == 0 and out:
-            m = re.search(r"path=([^ ;]+)", out)
-            if m:
-                exe = Path(m.group(1))
-                # <checkout>/.venv/bin/kirocrew -> <checkout>
-                if ".venv" in exe.parts:
-                    path = str(exe.parents[2])
-
-    def _normalise() -> str | None:
-        try:
-            return str(Path(path).resolve()) if path else None
-        except OSError:
-            return None
-
-    return await asyncio.get_running_loop().run_in_executor(subprocess_executor(), _normalise)
+    # Only a checkout answers (``_service_checkout``): the installer's unit sets
+    # WorkingDirectory to the home directory.
+    found = await off(subprocess_executor(), _service_checkout, path)
+    if found is not None:
+        return found
+    # Fallback: parse ExecStart's ``path=`` (an older unit that predates the
+    # WorkingDirectory= directive, or one whose WorkingDirectory is not a checkout).
+    path = None
+    rc, out, _err = await runtime._run_cmd(
+        ["systemctl", "--user", "show", unit, "-p", "ExecStart"],
+        timeout=5,
+    )
+    if rc == 0 and out:
+        m = re.search(r"path=([^ ;]+)", out)
+        if m:
+            exe = Path(m.group(1))
+            # <checkout>/.venv/bin/kirocrew -> <checkout>
+            if ".venv" in exe.parts:
+                path = str(exe.parents[2])
+    return await off(subprocess_executor(), _service_checkout, path)
 
 
 # --- gateway service detection + restart ---
@@ -550,7 +553,10 @@ async def _gateway_service_reason() -> str | None:
     if await _gateway_service_active():
         return None
     status = await _live_user_unit_status()
-    reason = _make_live_status_error(status)
+    # The message names the live unit, which a stat picks: render it off the loop.
+    reason = await asyncio.get_running_loop().run_in_executor(
+        subprocess_executor(), _make_live_status_error, status
+    )
     if status in {"no_agent", "no_user_unit"}:
         # The pointer read goes through the broker in the backend. An outage there
         # is "unknown", not "no worktree": the hint below is advisory, and raising
@@ -680,13 +686,14 @@ async def _restart_gateway() -> dict:
                 }
 
         # Neither the service backend nor the foreground fallback can drive the
-        # restart — surface the specific reason plus the manual remedy.
+        # restart — surface the specific reason plus the manual remedy. The reason
+        # names the live unit, which a stat picks, so it renders off the loop.
+        reason = await asyncio.get_running_loop().run_in_executor(
+            subprocess_executor(), _make_live_status_error, status
+        )
         return {
             "ok": False,
-            "error": (
-                f"{_make_live_status_error(status)}"
-                f" — run `{_manual_restart_command()}` to apply the build"
-            ),
+            "error": f"{reason} — run `{_manual_restart_command()}` to apply the build",
         }
 
 
@@ -1393,6 +1400,11 @@ async def _make_live_inner(
                     fg_err,
                 )
                 plan = {**plan, "restart": "manual", "manual_restart": _manual_restart_command()}
+            # The notice names the live unit, which a stat picks: render it off the loop.
+            notice = await asyncio.get_running_loop().run_in_executor(
+                subprocess_executor(),
+                lambda: _staged_notice(real.name, unit_status, desktop_app=desktop_app),
+            )
             return {
                 "ok": True,
                 "cutover": True,
@@ -1400,7 +1412,7 @@ async def _make_live_inner(
                 "target": str(real),
                 "plan": plan,
                 "manual_restart": _manual_restart_command(),
-                "notice": _staged_notice(real.name, unit_status, desktop_app=desktop_app),
+                "notice": notice,
             }
         assert svc is not None  # can_restart implies a backend
 
@@ -1467,7 +1479,7 @@ __all__ = (
     "_GATEWAY_SERVICE_TTL",
     "_LIVE_CHECK_AT",
     "_LIVE_GATEWAY_LABEL",
-    "_LIVE_GATEWAY_UNIT",
+    "_LIVE_GATEWAY_UNITS",
     "_LIVE_TTL",
     "_LIVE_WORKTREE",
     "_MAKE_LIVE_COMMITTED",
@@ -1487,6 +1499,7 @@ __all__ = (
     "_gateway_unit_name",
     "_in_pod",
     "_launchd_live_worktree",
+    "_live_gateway_unit",
     "_live_user_unit_status",
     "_live_worktree_path",
     "_make_live",
@@ -1561,6 +1574,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _GATEWAY_START_ID_INFLIGHT,
         _GATEWAY_START_ID_TTL,
         _LIVE_GATEWAY_LABEL,
+        _LIVE_GATEWAY_UNITS,
         _SD_CTRL_RE,
         _SD_NEEDS_QUOTE_RE,
         _cached_gateway_start_id,
@@ -1574,6 +1588,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _own_checkout_path,
         _sd_value,
         _UnsafeUnitValue,
+        _user_unit_dir,
     )
 
 if TYPE_CHECKING:  # names it serves from outside the owner family, from their homes
