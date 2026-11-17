@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import stat
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -27,7 +28,7 @@ from kiro_crew.portability_archive import (
     import_size_problem,
     manifest_is_memory_only,
 )
-from kiro_crew.snapshot import EXPORT_MANIFEST_VERSION
+from kiro_crew.snapshot import EXPORT_MANIFEST_VERSION, _staging_is_pinned
 from kiro_crew.zip_vet import ZipInventoryRejected, vet_zip_inventory
 
 
@@ -151,8 +152,110 @@ def validate_import_zip(zip_path: Path) -> tuple[bool, str, dict]:
 _UNREADABLE_STORE = "<the whole cron store was unreadable>"
 
 
+#: Job-record fields that widen what a job may do when it fires: an approval mode,
+#: a working folder, environment, an agent order, a channel and a model. A job from
+#: another install loses them on restore; the loader's empty defaults take over.
+_FOREIGN_JOB_FIELDS = (
+    "approval_mode",
+    "project_path",
+    "env",
+    "secret_env",
+    "execution_context",
+    "agent_sequence",
+    "channel",
+    "model",
+)
+
+
+def _installed_agent_names() -> frozenset[str]:
+    """Names of the agents installed here; none when the agents folder cannot be read.
+
+    Read from the agents folder the way an import's own template check reads it, not
+    through the roster: building the roster loads this install's settings, which a
+    restore must not do before it has replaced them.
+    """
+    try:
+        from kiro_crew.portability_templates import _installed_template_names
+
+        return frozenset(_installed_template_names())
+    except Exception:  # noqa: BLE001 -- an unreadable folder keeps no agent_id
+        return frozenset()
+
+
+def _hold_back_foreign_skills(snap: Path, mc: Path, *, allow_unpinned: bool = False) -> bool:
+    """Leave the archive's ``skills/`` out of the staged copy over a live skills folder.
+
+    True when the tree was removed from the staged copy: this install has a skills
+    folder with content and the archive carries one. An install with none takes the
+    archive's as it always did. Only the staged copy is touched.
+
+    The staging folder is one other processes can write to, so the delete is made
+    through descriptors (:func:`pinned_fs.remove_tree_pinned`): each ancestor is opened
+    without following a link and the tree is removed relative to the descriptor, so a
+    root or ancestor swapped for a link is refused instead of followed into the data
+    home. The tree is also refused when it turns out to be the live one. A platform that
+    cannot pin deletes by name only when *allow_unpinned* says that was accepted (the
+    restore's ``--allow-unpinned-staging``; the dashboard import always accepts it) and
+    otherwise raises ``OSError`` with nothing deleted.
+    """
+    staged, live = snap / "skills", mc / "skills"
+    if not staged.is_dir() or not live.is_dir() or not any(live.iterdir()):
+        return False
+    try:
+        pinned = _staging_is_pinned(allow_unpinned=allow_unpinned, what="skills hold-back")
+    except pinned_fs.PinnedPathRefusal as exc:
+        raise OSError(str(exc)) from exc
+    if not pinned:
+        shutil.rmtree(staged)
+        return True
+
+    root_before = os.lstat(snap)
+
+    def not_the_live_tree(root_fd: int, _tree: pinned_fs.PinnedTree) -> str | None:
+        # Asked of descriptors, not of paths. The staging root is opened without
+        # following a link and must be the very directory seen before the walk; the
+        # tree opened must be that root's own ``skills`` entry; and it must not be the
+        # live one. A root or ancestor swapped for a link fails one of the three.
+        try:
+            snap_fd = os.open(snap, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        except OSError as exc:
+            return f"the staging root cannot be opened without following a link: {exc}"
+        try:
+            root_now = os.fstat(snap_fd)
+            named = os.stat("skills", dir_fd=snap_fd, follow_symlinks=False)
+        except OSError as exc:
+            return f"the staged skills folder cannot be read from the staging root: {exc}"
+        finally:
+            os.close(snap_fd)
+        if (root_now.st_dev, root_now.st_ino) != (root_before.st_dev, root_before.st_ino):
+            return "the staging root changed while the skills folder was being removed"
+        opened = os.fstat(root_fd)
+        ident = (opened.st_dev, opened.st_ino)
+        if ident != (named.st_dev, named.st_ino):
+            return "the staged skills folder is not the directory that was opened"
+        there = os.stat(live)
+        if ident == (there.st_dev, there.st_ino):
+            return "the staged skills folder is the live skills folder"
+        return None
+
+    outcome = pinned_fs.remove_tree_pinned(
+        os.path.realpath(staged),
+        what="staged skills folder",
+        approve=not_the_live_tree,
+        refusal=OSError,
+    )
+    if not outcome.removed:
+        raise OSError(f"the staged skills folder was not removed: {outcome.reason}")
+    return True
+
+
 def _sanitize_imported_crons(
-    crons_path: Path, *, drop_malformed: bool = True
+    crons_path: Path,
+    *,
+    drop_malformed: bool = True,
+    hold_all: bool = False,
+    known_agents: frozenset[str] | None = None,
+    extra_agents: frozenset[str] = frozenset(),
 ) -> tuple[list[str], list[str]]:
     """Make an imported cron store safe to load and safe to run.
 
@@ -201,8 +304,16 @@ def _sanitize_imported_crons(
        name resolves against whatever the target already has there. Both become an
        ambush if they start running on their own. Disabling keeps the restore — the
        jobs, their schedules and their history are all still there — while making
-       the first run an explicit human action. Message-only jobs are untouched:
-       they prompt an agent, they do not execute anything on the host.
+       the first run an explicit human action. A message-only job is untouched
+       unless ``hold_all`` is set: it prompts an agent, it does not execute anything
+       on the host by itself.
+
+    ``hold_all`` is for an archive from another install whose crons were not picked.
+    EVERY job is then restored paused, message-only ones too, and loses the fields in
+    :data:`_FOREIGN_JOB_FIELDS` (the loader's defaults apply), because a message job
+    starts an agent turn that honours them: only the exact string ``auto`` in
+    ``approval_mode`` switches auto-approve on. ``agent_id`` is kept only when it is in
+    *known_agents* (default: the agents installed here).
     """
     # The store is resolved ONCE for the read and published by an atomic replace
     # in the same pinned directory. A by-name read followed by a by-name rewrite is
@@ -222,7 +333,15 @@ def _sanitize_imported_crons(
         except IsADirectoryError:
             # Not a file at all: left alone exactly as the by-name `is_file()` did.
             return [], []
-        return _sanitize_cron_text(text, crons_path, dir_fd, drop_malformed=drop_malformed)
+        return _sanitize_cron_text(
+            text,
+            crons_path,
+            dir_fd,
+            drop_malformed=drop_malformed,
+            hold_all=hold_all,
+            known_agents=known_agents,
+            extra_agents=extra_agents,
+        )
     finally:
         if dir_fd is not None:
             os.close(dir_fd)
@@ -288,7 +407,14 @@ def _publish_staged_cron_store(crons_path: Path, dir_fd: int | None, data: objec
 
 
 def _sanitize_cron_text(
-    text: str | None, crons_path: Path, dir_fd: int | None, *, drop_malformed: bool = True
+    text: str | None,
+    crons_path: Path,
+    dir_fd: int | None,
+    *,
+    drop_malformed: bool = True,
+    hold_all: bool = False,
+    known_agents: frozenset[str] | None = None,
+    extra_agents: frozenset[str] = frozenset(),
 ) -> tuple[list[str], list[str]]:
     """Apply the three rules of :func:`_sanitize_imported_crons` to the bytes read once."""
     try:
@@ -365,8 +491,27 @@ def _sanitize_cron_text(
                 _log_cron_denial("settings_import", reason)
                 continue
 
+        # Foreign archive, crons not picked: reset what widens the job. A job whose
+        # own fields held none of it is unchanged and not rewritten for this.
+        reset_any = False
+        if hold_all:
+            agent = job.get("agent_id")
+            # Looked up only when a job names an agent: reading the agents folder is
+            # not free, and an archive of message-only jobs without one never needs it.
+            if isinstance(agent, str) and agent not in extra_agents and known_agents is None:
+                known_agents = _installed_agent_names()
+            agent_ok = isinstance(agent, str) and (
+                agent in extra_agents or agent in (known_agents or ())
+            )
+            fields = _FOREIGN_JOB_FIELDS + (() if agent_ok else ("agent_id",))
+            for field in fields:
+                if field in job:
+                    del job[field]
+                    changed = True
+                    reset_any = True
+
         # Rule 3: anything that EXECUTES arrives paused, awaiting a human.
-        if (command or script) and not job.get("user_paused", False):
+        if (command or script or hold_all) and not job.get("user_paused", False):
             job["user_paused"] = True
             job["user_pause_requested"] = True
             job["enabled"] = False
@@ -374,9 +519,12 @@ def _sanitize_cron_text(
             paused.append(_name_of(job))
             _log_cron_denial(
                 "settings_import",
-                "Error: an imported job that runs a command or script is "
-                "restored paused until it is enabled by hand",
+                "Error: an imported job is restored paused until it is enabled by hand",
             )
+        elif reset_any:
+            # Already paused in the archive, but its settings were just removed: it is
+            # named like the others so the owner learns it will not run as written.
+            paused.append(_name_of(job))
         kept.append(job)
 
     if changed:

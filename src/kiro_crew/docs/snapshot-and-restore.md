@@ -403,6 +403,8 @@ as they are and prints a line saying so, while the rest of `memory` is replaced.
 | `--dry-run` | List what would be restored and write nothing |
 | `--list-components` | Show the component names and what each covers |
 | `--force` | Restore even though a gateway is listening |
+| `--include-crons` | Install the bundle's cron jobs as written and enabled. Without it every job is restored paused, with its approval mode, project folder, environment, channel, model and agent order reset, and each job is named in the restore summary |
+| `--include-skills` | In replace mode, install the bundle's skills over a live skills folder. Without it the live skills are kept; a machine with none takes the bundle's |
 | `--allow-unpinned-staging` | Permit path-based restore when descriptor-pinned traversal is unavailable. |
 
 After a restore, run `kirocrew restart` so the gateway picks up the new state.
