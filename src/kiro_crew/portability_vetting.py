@@ -177,9 +177,38 @@ def _installed_agent_names() -> frozenset[str]:
     try:
         from kiro_crew.portability_templates import _installed_template_names
 
-        return frozenset(_installed_template_names())
+        names = set(_installed_template_names())
     except Exception:  # noqa: BLE001 -- an unreadable folder keeps no agent_id
-        return frozenset()
+        names = set()
+    # The crew aliases of the live config: a cron may name one as its agent_id. A
+    # read-only read of the document; an unreadable one adds none.
+    try:
+        from kiro_crew.config.loader import read_config_for_update
+
+        agents = read_config_for_update().get("agents")
+        if isinstance(agents, dict):
+            names.update(k for k in agents if isinstance(k, str))
+    except Exception:  # noqa: BLE001 -- an unreadable config keeps no alias
+        pass
+    return frozenset(names)
+
+
+def _has_user_skills(live: Path) -> bool:
+    """Whether the live skills folder holds anything but Kiro Crew's own.
+
+    Not counted: the core skill copies the gateway registers at startup (named by
+    ``deploy._SKILLS_DIR`` and carrying the managed marker) and ``auto``.
+    """
+    from kiro_crew import deploy
+
+    core = {p.name for p in deploy._SKILLS_DIR.iterdir() if p.is_dir()}
+    for entry in live.iterdir():
+        if entry.name == "auto" or (
+            entry.name in core and (entry / deploy._MANAGED_MARKER).exists()
+        ):
+            continue
+        return True
+    return False
 
 
 def _hold_back_foreign_skills(snap: Path, mc: Path, *, allow_unpinned: bool = False) -> bool:
@@ -199,7 +228,7 @@ def _hold_back_foreign_skills(snap: Path, mc: Path, *, allow_unpinned: bool = Fa
     otherwise raises ``OSError`` with nothing deleted.
     """
     staged, live = snap / "skills", mc / "skills"
-    if not staged.is_dir() or not live.is_dir() or not any(live.iterdir()):
+    if not staged.is_dir() or not live.is_dir() or not _has_user_skills(live):
         return False
     try:
         pinned = _staging_is_pinned(allow_unpinned=allow_unpinned, what="skills hold-back")
