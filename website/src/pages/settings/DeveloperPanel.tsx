@@ -91,7 +91,7 @@ export function DeveloperPanel({ basePath }: { basePath?: string } = {}) {
 
         case 'feature-previews':
           // One page, one reading column: the grouped preview cards first, then
-          // the developer settings that are not previews, boxed the same way.
+          // the developer settings that are not previews, in the same group boxes.
           return (
             <div className="max-w-[720px]">
               <FeaturePreviewsSection />
@@ -99,17 +99,17 @@ export function DeveloperPanel({ basePath }: { basePath?: string } = {}) {
                   opt-in, off by default. Its own card because it is a server
                   setting, not a per-device switch. */}
               <SettingsSection title={i18nT('pages.settings.developerPanel.developer_tools')}>
-                <SettingsCard boxed>
+                <SettingsCard>
                   <div data-testid="developer-automatic-cards">
                     <AutomaticCardSetting active />
                   </div>
                 </SettingsCard>
               </SettingsSection>
               {/* The default agent's opt-in MCP sets (`DefaultMcpGrantsSection.tsx`). */}
-              <DefaultMcpGrantsSection boxed />
+              <DefaultMcpGrantsSection />
               {localGatewaySupported && (
                 <SettingsSection title={i18nT('pages.settings.developerPanel.gateway')}>
-                  <SettingsCard boxed>
+                  <SettingsCard>
                     {/* One row: the switch and the guide its "off" depends on. */}
                     <div>
                       <SettingsToggle

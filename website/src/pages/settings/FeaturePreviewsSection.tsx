@@ -45,7 +45,7 @@ import { LOCKED_FEATURE_PREVIEWS, useControlLocked } from '../../utils/editionLo
  * keys across fourteen catalogs buys no user-visible change.
  *
  * ONE ROW PER FEATURE, grouped by what the feature is about: each group is a
- * heading over one boxed card (`PreviewGroup`), and every direct child of that
+ * heading over one group box (`PreviewGroup`), and every direct child of that
  * card is one feature's row. Everything that belongs to a feature lives inside
  * its row: the headline, the sentence explaining what state it is in, its
  * toggle, and any ingress that only appears once it is on. A reader scanning the
@@ -160,7 +160,7 @@ export const FEATURE_PREVIEWS_HIGHLIGHT_ANCHOR = 'feature-previews-section'
 export const SHARED_CREW_RESTART_VERIFY_TIMEOUT_MS = 60_000
 
 /**
- * One group of preview rows: a heading over ONE boxed card, each direct child of
+ * One group of preview rows: a heading over ONE group box, each direct child of
  * the card a row. The whole group, heading included, is hidden while its box
  * holds no row (`:has` over the box's `:empty`): an LTS build withholds the flag
  * rows, and a config-backed card renders nothing until its read answers, so a
@@ -171,10 +171,10 @@ function PreviewGroup({ title, children }: { title?: string; children: ReactNode
     <div className="mt-6 first:mt-0 has-[[data-settings-box]:empty]:hidden">
       {title ? (
         <SettingsSection title={title}>
-          <SettingsCard boxed>{children}</SettingsCard>
+          <SettingsCard>{children}</SettingsCard>
         </SettingsSection>
       ) : (
-        <SettingsCard boxed>{children}</SettingsCard>
+        <SettingsCard>{children}</SettingsCard>
       )}
     </div>
   )
