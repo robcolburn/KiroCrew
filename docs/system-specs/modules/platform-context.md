@@ -937,7 +937,12 @@ Wired sites:
   `CredentialPolicy` Protocol; no `CONTRACT_VERSION` bump; `DefaultCredentialPolicy`
   returns `frozenset()` so standalone redaction is byte-identical.
 - `agent_parts/spec_build.py` and `agent.py` — `current_context().mcp_tooling.extra_mcp_servers()` merged
-  additively into the agent config build; the dynamic refresh also re-pins an
+  additively into the agent config build, each entry carrying the `env` the user
+  set on that server in `~/.kiro/crew/mcp.json` over the shipped keys
+  (`agent_materialization/mcp_sources.py`, `seed_edition_servers`), so every spec
+  derived from the build runs it with that env (withheld, as in the default spec,
+  when that env holds a `secret://` reference the gateway does not start); the
+  dynamic refresh also re-pins an
   existing entry's `command`/`args`, puts back any `env` key the edition ships
   that the entry lacks (a key the user set keeps the user's value), and keeps its
   other keys. A server first

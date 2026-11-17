@@ -5,7 +5,8 @@ first install (its program is installed later, or a newer edition adds one). The
 rebuild seeds the entry into ``mcpServers``; these tests pin that its ``@name``
 ref follows once, and that a ref the user then removes stays removed. The last tests
 pin that a same-named Kiro-global or store entry cannot replace or drop the
-edition's args/env, and that a spec that already lost the env gets it back.
+edition's args/env, that a spec that already lost the env gets it back, and that
+the store's env reaches the specs derived from the template too.
 """
 
 from __future__ import annotations
@@ -18,7 +19,12 @@ import pytest
 
 import kiro_crew.config.paths as paths_mod
 from kiro_crew import agent
-from kiro_crew.agent_files import AGENT_FILENAME
+from kiro_crew.agent_files import (
+    AGENT_FILENAME,
+    MATE_WORKER_AGENT_FILENAME,
+    RESEARCH_AGENT_FILENAME,
+    TEAM_LEAD_AGENT_FILENAME,
+)
 from kiro_crew.agent_materialization import guide_platform, mcp_aliases
 from kiro_crew.kiro_cli import SPEC_PERMISSIONS_MIN_VERSION
 
@@ -277,3 +283,76 @@ def test_a_key_removed_from_the_store_entry_leaves_the_spec(
 
     env = _spec(rebuildable)["mcpServers"][EXTRA]["env"]
     assert env == {**edition_env, "OTHER": "x"}
+
+
+def _write_store_env(env: dict[str, str]) -> None:
+    store = agent._user_dir() / "mcp.json"
+    store.parent.mkdir(parents=True, exist_ok=True)
+    entry = {"command": agent._KIROCREW_BIN, "env": env}
+    store.write_text(json.dumps({"mcpServers": {EXTRA: entry}}), encoding="utf-8")
+
+
+def _entries(rebuildable: Path, tmp_path: Path) -> dict[str, dict[str, Any]]:
+    """The edition entry in the default spec and in each spec derived from the template."""
+    paths = {
+        "default": rebuildable / AGENT_FILENAME,
+        "mate-worker": tmp_path / "mates" / "agents" / MATE_WORKER_AGENT_FILENAME,
+        "research": rebuildable / RESEARCH_AGENT_FILENAME,
+        "team-lead": rebuildable / TEAM_LEAD_AGENT_FILENAME,
+    }
+    return {
+        label: json.loads(path.read_text(encoding="utf-8"))["mcpServers"][EXTRA]
+        for label, path in paths.items()
+    }
+
+
+def test_a_store_entry_s_env_reaches_every_spec_derived_from_the_template(
+    rebuildable: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A Bot's worker, research and the team lead run the server as the default spec does.
+
+    They are built from ``build_agent_config``, not from the default spec, so the
+    store's env must reach them through the template's own edition entry.
+    """
+    edition_env = {"TOOL_PERSONALIZATION_ENABLED": "true", "EDITION_MODE": "full"}
+    edition = {"command": agent._KIROCREW_BIN, "args": _EDITION_ARGS, "env": edition_env}
+    _supply(monkeypatch, {EXTRA: edition})
+    store_env = {"USER_KEY": "mine", "TOOL_PERSONALIZATION_ENABLED": "false"}
+    _write_store_env(store_env)
+
+    agent.rebuild_agent_config()
+    for label, entry in _entries(rebuildable, tmp_path).items():
+        assert entry["env"] == {"EDITION_MODE": "full", **store_env}, label
+
+
+def test_a_store_path_is_emitted_in_every_derived_spec_as_in_the_default(
+    rebuildable: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A declared ``PATH`` is the effective one everywhere, never the bare declaration."""
+    edition = {"command": agent._KIROCREW_BIN, "args": _EDITION_ARGS, "env": _EDITION_ENV}
+    _supply(monkeypatch, {EXTRA: edition})
+    _write_store_env({"PATH": "/opt/edition-tools/bin"})
+
+    agent.rebuild_agent_config()
+    entries = _entries(rebuildable, tmp_path)
+    assert entries["default"]["env"]["PATH"] != "/opt/edition-tools/bin"
+    for label, entry in entries.items():
+        assert entry["env"]["PATH"] == entries["default"]["env"]["PATH"], label
+
+
+def test_a_store_secret_reference_is_withheld_in_every_derived_spec(
+    rebuildable: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An unrouted ``secret://`` value never launches with the literal reference."""
+    from kiro_crew.agent_materialization import mcp_sources
+    from kiro_crew.mcp_provenance import is_withheld_mute
+
+    monkeypatch.setattr(mcp_sources, "_gateway_routed_names", frozenset)
+    monkeypatch.setattr(mcp_sources, "_app_owned_mcp_keys", dict)
+    edition = {"command": agent._KIROCREW_BIN, "args": _EDITION_ARGS, "env": _EDITION_ENV}
+    _supply(monkeypatch, {EXTRA: edition})
+    _write_store_env({"TOKEN": "secret://edition-token"})
+
+    agent.rebuild_agent_config()
+    for label, entry in _entries(rebuildable, tmp_path).items():
+        assert is_withheld_mute(entry), label

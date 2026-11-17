@@ -507,6 +507,33 @@ def merge_mcp_sources(config: dict) -> McpSources:
     return McpSources(kirocrew_mcp, shared_mcp, extra_shared_mcp, managed_names, _replaced)
 
 
+def seed_edition_servers(mcp: dict) -> None:
+    """Add each edition server *mcp* does not name yet, with the store's env for it.
+
+    Every spec ``build_agent_config`` builds is seeded here, so one derived from it
+    (a Bot's worker, research, the team lead) runs an edition server with the env
+    the user set on it in ``~/.kiro/crew/mcp.json``, by the rule the default spec's
+    store merge applies above: the store's keys win, and a shipped key the store
+    leaves out is kept. That env is emitted as :func:`resolve_mcp_servers` emits
+    the default spec's, and withheld where it would be.
+    """
+    pending = {n: s for n, s in agent_mod._extra_mcp_servers().items() if n not in mcp}
+    if not pending:
+        return
+    store = user_json.load_mcp_servers(agent_mod._user_dir() / "mcp.json")
+    for name, shipped in pending.items():
+        entry = dict(shipped)
+        own = store.get(name)
+        store_env = own.get("env") if isinstance(own, dict) else None
+        if isinstance(store_env, dict):
+            shipped_env = shipped.get("env")
+            merged = {**(shipped_env if isinstance(shipped_env, dict) else {}), **store_env}
+            entry["env"] = emit_env(_expand_env_values(merged, server=name))
+            if _unrouted_secret_reference(name, entry, _gateway_routed_names, _app_owned_mcp_keys):
+                entry = _mute_withheld(entry)
+        mcp[name] = entry
+
+
 def _mute_withheld(entry: dict) -> dict:
     """*entry* muted in place, with the record that this rebuild muted it.
 
