@@ -422,6 +422,18 @@ async def api_auth_me(request: web.Request) -> web.Response:
         # this keeps its prompt rather than dropping one on no evidence.
         owner_ok = False
 
+    # Whether the caller is a Shared Crew teammate, decided by the module that
+    # holds the teammate boundary (``shared_crew.teammate_access``), so the
+    # dashboard locks the owner-only surfaces from the backend's own answer.
+    teammate = False
+    if not owner_ok:
+        try:
+            from kiro_crew.shared_crew.teammate_access import is_shared_crew_teammate
+
+            teammate = bool(is_shared_crew_teammate(request))
+        except Exception:  # pragma: no cover - defensive
+            teammate = False
+
     return web.json_response(
         {
             "user_id": user_id,
@@ -440,6 +452,9 @@ async def api_auth_me(request: web.Request) -> web.Response:
             # carries a token, a subject or an expiry -- both are one bit about
             # the request the caller just made.
             "owner_ok": owner_ok,
+            # Whether that caller is a Shared Crew teammate: the owner's
+            # dashboard except the owner-only surfaces. Never true with owner_ok.
+            "teammate": teammate,
             # The viewer's Shared Crew principal, as the auth middleware derived
             # it (``shared_crew.identity``): id, kind and display label only.
             # Unknown when no verified evidence named a person.

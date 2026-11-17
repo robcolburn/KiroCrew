@@ -25,11 +25,13 @@
  * another account, and that one window closes at its own next renewal.
  *
  * A window stops waiting for its Crew, and shows a notice in place of the
- * Crew's page, when renewal stops on CREW_OFFLINE or CREW_ACCESS_NOT_GRANTED,
- * or when the window reports the Crew unreachable (its retries ran out). The
- * renewal is stopped either way, so nothing retries behind the notice. Check
- * again is one fresh attempt through `restart`; a refusal puts the notice back.
- * Access refusals are noticed at the next renewal, up to 240 s after the change.
+ * Crew's page, when renewal stops on CREW_OFFLINE, CREW_ACCESS_NOT_GRANTED or
+ * REMOTE_ACCESS_DISABLED, or when the window reports the Crew unreachable (its
+ * retries ran out). The renewal is stopped either way, so nothing retries
+ * behind the notice. Check again is one fresh attempt through `restart`; a
+ * refusal puts the notice back. Access refusals are noticed at the next
+ * renewal, up to 240 s after the change. A pane's notice closes with Back to
+ * Local.
  */
 
 // The relay's endpoint ID grammar has one definition, in the window module.
@@ -124,7 +126,8 @@ function createRelayCrewOpener({ requestToken, openWindow, openPane, createRenew
   // only in the window and never logged.
   function showNotice(endpointId, entry, kind) {
     entry.notice = kind;
-    try { entry.win.showNotice(noticeText(kind, entry.crew && entry.crew.name)); } catch { /* window gone */ }
+    const text = noticeText(kind, entry.crew && entry.crew.name, { pane: !!entry.dashboard });
+    try { entry.win.showNotice(text); } catch { /* window gone */ }
     say(endpointId, `notice (${kind})`);
   }
 
@@ -188,6 +191,10 @@ function createRelayCrewOpener({ requestToken, openWindow, openPane, createRenew
       return { ok: false, error: "UNAVAILABLE" };
     }
     windows.set(endpointId, { win, holder, renewal, crew, dashboard: pane ? pane.dashboard : null });
+    // A new pane comes up in front of the dashboard, so it takes the keyboard as
+    // it opens, as an open pane does when opened again; the dashboard's bridge
+    // skips its own focus call once for it (relayCrewPaneBridge.ts).
+    if (pane) win.focus();
     say(endpointId, "opened");
     return { ok: true };
   }

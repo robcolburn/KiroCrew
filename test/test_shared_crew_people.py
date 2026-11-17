@@ -67,7 +67,9 @@ def test_the_view_joins_observed_people_with_session_creators():
     rows = [_row(ALICE), _row(BOB), _row(BOB), _row(None), _row(Principal.system("internal"))]
     view = people.people_view(ALICE, rows)
     found = _by_login(view)
-    assert set(found) == {"alice@example.com", "bob@example.com"}
+    # The owner was not seen, so a row labelled with this machine's name names them.
+    assert set(found) == {"", "alice@example.com", "bob@example.com"}
+    assert found[""]["is_owner"] is True and found[""]["sources"] == [people.SOURCE_OWNER]
     alice, bob = found["alice@example.com"], found["bob@example.com"]
     assert alice["sources"] == [people.SOURCE_OBSERVED, people.SOURCE_SESSION_CREATOR]
     assert alice["is_viewer"] is True and alice["devices"] == 1
@@ -80,7 +82,7 @@ def test_the_view_joins_observed_people_with_session_creators():
 def test_an_unknown_viewer_is_never_marked_as_a_row():
     people.observe(ALICE)
     view = people.people_view(Principal.unknown(), [])
-    assert [row["is_viewer"] for row in view["people"]] == [False]
+    assert [row["is_viewer"] for row in view["people"]] == [False, False]
 
 
 def test_usage_is_reported_when_a_source_is_wired_and_unavailable_when_it_fails():
@@ -99,3 +101,39 @@ def test_usage_is_reported_when_a_source_is_wired_and_unavailable_when_it_fails(
     view = people.people_view(ALICE, [])
     assert view["usage_available"] is False
     assert view["people"][0]["usage"] is None
+
+
+def test_each_row_names_how_its_person_was_identified():
+    import dataclasses
+
+    relayed = dataclasses.replace(BOB, provenance=Provenance.KIRO_RELAY)
+    people.observe(ALICE)
+    people.observe(relayed)
+    view = people.people_view(local_operator_principal("local-app"), [])
+    prov = {row["principal"]["id"]: row["provenance"] for row in view["people"]}
+    assert prov[ALICE.id] == "tailscale_serve"
+    assert prov[relayed.id] == "kiro_relay"
+    assert prov[local_operator_principal("local-app").id] == "local_operator"
+
+
+def test_a_teammate_sees_the_unseen_owner_as_a_row_labelled_with_the_machine_name():
+    from kiro_crew.shared_crew import owner
+
+    people.observe(ALICE)
+    view = people.people_view(ALICE, [])
+    owners = [row for row in view["people"] if row["is_owner"]]
+    assert len(owners) == 1
+    row = owners[0]
+    assert row["principal"]["id"] == owner.owner_principal().id
+    assert row["principal"]["display"]["name"] == owner.machine_name(token_subject="local-app")
+    assert row["sources"] == [people.SOURCE_OWNER] and row["is_viewer"] is False
+    assert row["first_seen_at"] is None and row["devices"] == 0
+
+
+def test_a_seen_owner_gets_no_second_row():
+    owner_row = local_operator_principal("local-app")
+    people.observe(owner_row)
+    people.observe(ALICE)
+    view = people.people_view(ALICE, [])
+    owners = [row for row in view["people"] if row["is_owner"]]
+    assert len(owners) == 1 and owners[0]["sources"] == [people.SOURCE_OBSERVED]

@@ -7954,11 +7954,15 @@
       "refusal_list_generic": "Impossible de charger tes crews d’équipe.",
       "try_again": "Réessayer",
       "request_id": "ID de requête : {{id}}",
-      "group_team_crews": "Crews d’équipe",
+      "group_team_crews": "Depuis ton compte Kiro",
       "opens_own_window": "S'ouvre dans sa propre fenêtre",
       "new_crew": "Nouveau",
       "seen_not_saved": "Impossible d’enregistrer que tu l’as vu. Il apparaîtra de nouveau comme nouveau.",
-      "open_crew_failed": "Impossible d’ouvrir {{name}}."
+      "open_crew_failed": "Impossible d’ouvrir {{name}}.",
+      "connect": "Connecter",
+      "chip_title": "{{name}} (Crew d’équipe)",
+      "close_pane": "Fermer {{name}}",
+      "connect_crew": "Connecter {{name}}"
     },
     "instancesViewport": {
       "connecting": "Connexion…",
@@ -8197,7 +8201,10 @@
       "pending_cancel_unsettled": "Connecté, mais la connexion lancée ici n’a pas pu être annulée. Elle reste ouverte jusqu’à son expiration.",
       "card_intro": "Utilisé uniquement par le backend Kiro Agent : ses agents s'exécutent avec ce compte Kiro. Kiro CLI conserve sa propre connexion kiro-cli ; se connecter ici ne la modifie pas.",
       "previous_sign_in_not_removed": "Connecté, mais la connexion précédente n’a pas pu être supprimée",
-      "previous_sign_in_not_removed_body": "Le nouveau compte est enregistré, mais celui que vous quittiez est toujours là et reste prioritaire. Déconnectez-vous de celui-ci, puis vérifiez la connexion affichée ici."
+      "previous_sign_in_not_removed_body": "Le nouveau compte est enregistré, mais celui que vous quittiez est toujours là et reste prioritaire. Déconnectez-vous de celui-ci, puis vérifiez la connexion affichée ici.",
+      "copy_link_failed": "Impossible de copier le lien. Sélectionne-le et copie-le à la main.",
+      "copy_code": "Copier le code",
+      "copy_code_failed": "Impossible de copier le code. Sélectionne-le et copie-le à la main."
     },
     "kiroPrerequisiteGate": {
       "setup_completion_not_recorded": "La fin de la configuration n’a pas été enregistrée",
@@ -10931,7 +10938,6 @@
       "reveal_copy": "Copier",
       "reveal_note": "Visible jusqu’à ce que tu la masques ou quittes cette page. {{productName}} note que tu l’as vue, jamais la valeur.",
       "reveal_gone": "Plus disponible ici : {{productName}} a redémarré ou 24 heures sont passées. La valeur est peut-être encore à son origine.",
-      "reveal_denied": "Seul le propriétaire du tableau de bord peut afficher cette valeur.",
       "reveal_failed": "Impossible d’afficher la valeur. Réessaie.",
       "reveal_not_kept": "Cette valeur n’a pas été gardée pour être affichée ici."
     },
@@ -11657,8 +11663,6 @@
       "copy_failed": "Copie impossible. Sélectionne le texte dans l'app et copie-le toi-même.",
       "more_actions": "Plus d'actions"
     },
-    "meetYourMatesIntro": {},
-    "startupVideoModal": {},
     "selectionActions": {
       "apps": "Apps",
       "apps_hint": "Envoyer le texte sélectionné à une app",
@@ -13262,7 +13266,14 @@
         "spec_choice_done_resuming": "Désormais, {{agent}} utilise {{file}}. Redémarrage de la session. Tu peux le changer plus tard avec kirocrew agent pin.",
         "spec_choice_done": "Désormais, {{agent}} utilise {{file}}. Renvoie ton message pour démarrer. Tu peux le changer plus tard avec kirocrew agent pin.",
         "spec_choice_failed": "Le choix n’a pas pu être enregistré",
-        "hidden_scratch_folder": "Le dossier de ce chat était un dossier temporaire d’une exécution précédente et ne peut plus être ouvert. Le chat utilise désormais le dossier par défaut."
+        "hidden_scratch_folder": "Le dossier de ce chat était un dossier temporaire d’une exécution précédente et ne peut plus être ouvert. Le chat utilise désormais le dossier par défaut.",
+        "copy_details_failed": "Copie impossible",
+        "host_sandbox_teammate_retryable": "Cette Crew n’a pas pu lancer ce chat à l’instant. Appuie sur Reprendre pour réessayer.",
+        "copy_details_done": "Copié",
+        "host_sandbox_teammate_unnamed": "L’ordinateur de cette Crew ne peut pas lancer de chats pour l’instant. Demande au propriétaire de la Crew de vérifier.",
+        "copy_details": "Copier les détails",
+        "copy_details_hint": "Copie uniquement le code d’erreur et l’heure",
+        "host_sandbox_teammate_named": "L’ordinateur de cette Crew ne peut pas lancer de chats pour l’instant. Demande à la personne sur {{owner}} de vérifier."
       },
       "folderPanel": {
         "clear_search": "Effacer la recherche",
@@ -14891,7 +14902,8 @@
       "jump_to_new_one": "{{count}} nouveau · Aller en bas",
       "jump_to_new_other": "{{count}} nouveaux · Aller en bas",
       "jump_to_new_many": "{{count}} nouveaux · Aller en bas",
-      "could_not_repair_images": "Impossible de réparer les images"
+      "could_not_repair_images": "Impossible de réparer les images",
+      "session_not_on_this_crew": "Cette conversation n’est plus dans cette Crew."
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -16371,17 +16383,17 @@
         "bridge_approvals_desc": "Quand une approbation d'outil s'ouvre, {{productName}} envoie une note à son sujet aux apps de chat que dessert le pont de notifications. La cloche du tableau de bord ne sonne pas pour elle et la note n'a pas encore de boutons : réponds donc à l'approbation dans le tableau de bord.",
         "bridge_approvals_desc_summary": "Prévient une app de chat connectée quand un outil a besoin d'une approbation.",
         "chat_runtime_sharing": "Partage du runtime ACP",
-        "chat_runtime_sharing_desc": "Les chats dont l'interrupteur ci-dessous est activé partagent un programme en arrière-plan et répondent en même temps\u202f: une longue réponse dans un chat ne fait jamais attendre les autres. Si le programme partagé s'arrête, tous ses chats redémarrent. Les chats ne voient jamais les messages des autres. Un programme exécute jusqu'à 10 chats par défaut. Les chats Kiro CLI, les chats KAS sur un moteur plus ancien et les chats dont l'interrupteur est désactivé gardent chacun leur programme. S'applique aux chats démarrés après le changement. Désactivé, chaque nouveau chat lance son propre programme, qui utilise plus de mémoire.",
+        "chat_runtime_sharing_desc": "Les chats dont l'interrupteur ci-dessous est activé partagent un programme en arrière-plan et répondent en même temps : une longue réponse dans un chat ne fait jamais attendre les autres. Si le programme partagé s'arrête, tous ses chats redémarrent. Les chats ne voient jamais les messages des autres. Un programme exécute jusqu'à 10 chats par défaut. Les chats Kiro CLI, les chats KAS sur un moteur plus ancien et les chats dont l'interrupteur est désactivé gardent chacun leur programme. S'applique aux chats démarrés après le changement. Désactivé, chaque nouveau chat lance son propre programme, qui utilise plus de mémoire.",
         "chat_runtime_sharing_harness_kas": "Discussions avec Kiro Agent",
-        "chat_runtime_sharing_harness_kas_desc": "Activé\u202f: les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé\u202f: chaque discussion a son propre programme.",
+        "chat_runtime_sharing_harness_kas_desc": "Activé : les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé : chaque discussion a son propre programme.",
         "chat_runtime_sharing_harness_codex": "Discussions avec OpenAI Codex",
-        "chat_runtime_sharing_harness_codex_desc": "Activé\u202f: les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé\u202f: chaque discussion a son propre programme.",
+        "chat_runtime_sharing_harness_codex_desc": "Activé : les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé : chaque discussion a son propre programme.",
         "chat_runtime_sharing_harness_claude": "Discussions avec Claude Code",
-        "chat_runtime_sharing_harness_claude_desc": "Activé\u202f: elles partagent un programme et utilisent moins de mémoire. Désactivé\u202f: chaque nouvelle discussion a le sien.",
+        "chat_runtime_sharing_harness_claude_desc": "Activé : elles partagent un programme et utilisent moins de mémoire. Désactivé : chaque nouvelle discussion a le sien.",
         "chat_runtime_sharing_harness_goose": "Discussions avec Goose",
-        "chat_runtime_sharing_harness_goose_desc": "Activé\u202f: les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé\u202f: chaque discussion a son propre programme.",
+        "chat_runtime_sharing_harness_goose_desc": "Activé : les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé : chaque discussion a son propre programme.",
         "chat_runtime_sharing_harness_deepseek": "Discussions avec DeepSeek Harness",
-        "chat_runtime_sharing_harness_deepseek_desc": "Activé\u202f: les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé\u202f: chaque discussion a son propre programme.",
+        "chat_runtime_sharing_harness_deepseek_desc": "Activé : les nouvelles discussions de ce harness partagent un programme en arrière-plan et utilisent moins de mémoire. Désactivé : chaque discussion a son propre programme.",
         "chat_runtime_sharing_harness_save_failed": "Impossible d’enregistrer l’interrupteur. Réessaie.",
         "chat_runtime_sharing_harness_load_failed": "Impossible de charger ces interrupteurs.",
         "chat_runtime_sharing_desc_summary": "Économise la mémoire de l'ordinateur en exécutant plusieurs chats dans un même programme en arrière-plan. Tu choisis quels types de chat le partagent. Ils répondent en même temps et ne voient pas les messages des autres. Désactivé, chaque nouveau chat retrouve son propre programme.",
@@ -18866,7 +18878,8 @@
       "action_failed": "Action échouée",
       "project_renamed_to": "Projet renommé en {{name}}",
       "plan_mode_label": "Mode de planification",
-      "yaml_workflows_hard_dag": "Les workflows YAML contournent le décomposeur LLM — <field/> est appliqué comme une contrainte DAG stricte."
+      "yaml_workflows_hard_dag": "Les workflows YAML contournent le décomposeur LLM — <field/> est appliqué comme une contrainte DAG stricte.",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "Retour",
@@ -19631,7 +19644,9 @@
         "what_you_d_get_in_version_plain": "Contenu de la {{version}}",
         "what_you_d_get_none": "Aucune entrée du journal des modifications entre ton build et cette mise à jour.",
         "version_label": "Version",
-        "named_update_available": "{{name}} {{version}} est disponible."
+        "named_update_available": "{{name}} {{version}} est disponible.",
+        "tagline_runs_on_host": "Gestion autonome d’agents · tourne sur {{host}} · open source",
+        "tagline_runs_on_crew_host": "Gestion autonome d’agents · tourne sur l’ordinateur de la Crew · open source"
       },
       "botChannelPanel": {
         "allowed_user_ids": "ID d'utilisateurs autorisés",
@@ -20182,7 +20197,6 @@
         "attach_screenshots": "Joindre des captures d’écran",
         "computer_use": "Computer Use",
         "computer_use_lets_the_agent_read_any_app_window": "L’utilisation de l’ordinateur permet à l’agent de lire n’importe quelle fenêtre d’application et d’y envoyer des clics et des frappes clavier. La plupart des clics sont transmis directement à l’application et laissent le pointeur tranquille, mais l’agent peut demander à déplacer le vrai pointeur lorsqu’une cible l’exige. Les champs de mot de passe ne sont jamais lus ; rien d’autre ne limite les applications qu’il peut piloter.",
-        "computer_use_not_available": "L’utilisation de l’ordinateur n’est pas disponible sur {{platform}}.",
         "could_not_check": "Vérification impossible",
         "could_not_load_computer_use_settings": "Impossible de charger les réglages de Computer Use.",
         "could_not_save_computer_use_settings": "Impossible d’enregistrer les paramètres d’utilisation de l’ordinateur.",
@@ -20210,7 +20224,14 @@
         "on_windows_keystrokes_take_your_keyboard_focus": "Sous Windows, les frappes prennent le focus du clavier et les clics par coordonnées déplacent votre curseur réel — cette plateforme n'a aucune voie d'entrée par application.",
         "the_app_lists_in_computer_use_json_could_not_be": "Les listes d’applications de computer_use.json n’ont pas pu être lues, elles apparaissent donc vides ici. L’agent continue de refuser toute action qui en dépend jusqu’à ce que le fichier soit du JSON valide.",
         "your_chat_sessions_were_restarted_so_this_takes": "Tes sessions de chat ont été redémarrées pour que cela prenne effet immédiatement — Kiro lit sa liste d’outils une seule fois par session, sinon un chat ouvert ne l’aurait pas prise en compte. Tes messages sont toujours là ; l’agent relit son contexte à ton prochain message.",
-        "your_chat_sessions_were_restarted": "Tes sessions de chat ont été redémarrées. Tes messages sont toujours là."
+        "your_chat_sessions_were_restarted": "Tes sessions de chat ont été redémarrées. Tes messages sont toujours là.",
+        "unavailable_on_host": "L’utilisation de l’ordinateur n’est pas disponible sur la machine qui héberge cette Crew ({{os}}).",
+        "os_linux": "Linux",
+        "os_windows": "Windows",
+        "technical_details": "Détails techniques",
+        "unavailable_on_host_other_os": "L’utilisation de l’ordinateur n’est pas disponible sur le système de la machine qui héberge cette Crew.",
+        "driver_failed_on_host": "L’utilisation de l’ordinateur n’a pas pu démarrer sur la machine qui héberge cette Crew ({{os}}) : son pilote ne s’est pas chargé.",
+        "os_macos": "macOS"
       },
       "crewmatesSection": {
         "reply_threads": "Fils de réponse sur les messages du chat d'un Bot",
@@ -21212,7 +21233,6 @@
         "credential_redaction_read_failed": "Impossible de lire le réglage de masquage.",
         "credential_redaction_write_failed": "Impossible d’enregistrer la modification. {{state}}",
         "credential_redaction_retry": "Réessayer",
-        "credential_redaction_owner_only": "Seul le propriétaire du tableau de bord peut lire ou modifier ce réglage.",
         "credential_redaction_still_on": "Le masquage est toujours activé.",
         "credential_redaction_still_off": "Le masquage est toujours désactivé.",
         "credential_redaction_ask_agent": "Ouvrir une discussion avec l’agent sur cette erreur",
@@ -21232,7 +21252,8 @@
         "rules_count_one": "{{n}} règle",
         "rules_count_many": "{{n}} règles",
         "rules_count_other": "{{n}} règles",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Réglages de la Crew"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "Associer le changement d'onglet de chat à Ctrl+chiffre au lieu de Option+chiffre. Option+chiffre ne change pas de chat tant qu'un champ de texte a le focus.",
@@ -21256,7 +21277,7 @@
         "auto_generate_skills_from_sessions": "Générer automatiquement des compétences à partir des sessions",
         "extra_skill_paths": "Chemins de compétences supplémentaires",
         "extra_skill_paths_description": "Dossiers d’où charger des compétences supplémentaires, un chemin par ligne. Les espaces autour d’un chemin et les lignes vides sont ignorés. Les compétences trouvées là sont en lecture seule, et une compétence de ton propre dossier de compétences l’emporte en cas de nom en double. Les modifications s’appliquent sans redémarrage.",
-        "extra_skill_paths_description_summary": "Un chemin de dossier par ligne.",
+        "extra_skill_paths_description_summary": "Un chemin de dossier par ligne. Les dossiers sont sur l’ordinateur qui fait tourner cette Crew.",
         "extra_skill_paths_placeholder": "Un dossier par ligne",
         "failed_to_save_extra_skill_paths": "Échec de l’enregistrement des chemins de compétences supplémentaires. Ton texte reste dans le champ.",
         "failed_to_save_skills_setting": "Échec de l’enregistrement du réglage des compétences",
@@ -21765,7 +21786,9 @@
         "recheck": "Vérifier à nouveau",
         "language": "Langue",
         "language_for_spoken_replies": "Langue des réponses vocales",
-        "language_provider_default": "Valeur par défaut du fournisseur"
+        "language_provider_default": "Valeur par défaut du fournisseur",
+        "no_speech_engine_on_named_host": "{{host}}, l’ordinateur de la Crew, n’a pas de moteur vocal intégré. Le propriétaire de la Crew peut en installer un, ou tu peux choisir un autre fournisseur.",
+        "no_speech_engine_on_crew_host": "L’ordinateur de la Crew n’a pas de moteur vocal intégré. Le propriétaire de la Crew peut en installer un, ou tu peux choisir un autre fournisseur."
       },
       "weComPanel": {
         "allow_all_bypass_note": "L’autorisation générale est activée : la liste de userid ci-dessus est ignorée. Elle est conservée pour ton retour en arrière.",
@@ -22652,7 +22675,6 @@
       "import_refused_text": "Ce fichier contient un texte qui ressemble à un mot de passe ou une clé, il ne peut donc pas être importé.",
       "slug_collision": "Ce Bot partage son nom court avec « {{name}} », dont le chat l'utilise déjà. Renommer conserve le nom court : supprime « {{self}} » puis recrée-le sous un nom dont le nom court est différent. Garde « {{name}} ».",
       "thread_open_failed": "Impossible d'ouvrir le chat de ce Bot.",
-      "owner_check_failed": "Impossible de vérifier si tu peux importer des Bots ici, donc « Importer depuis un fichier » est masqué.",
       "thread_owner_only": "Seul le propriétaire de ce Bot peut discuter avec lui.",
       "thread_repair_failed": "Impossible de reconnecter ce chat. Rouvre le Bot pour réessayer.",
       "title": "Bots",
@@ -22898,7 +22920,7 @@
       "profile_autocompact": "Résumer les anciens messages à",
       "profile_autocompact_inherited_hint": "Suit la valeur par défaut dans Réglages → Chat, actuellement {{pct}}",
       "profile_autocompact_inherited_harness": "{{backend}} résume ces chats selon son propre calendrier. Choisis un pourcentage pour résumer plus tôt.",
-      "profile_autocompact_hint": "Quand les chats de {{name}} remplissent cette part de la fenêtre de contexte du modèle, les anciens messages sont résumés. Plus bas coûte moins à chaque exécution de {{name}}\u202f; plus haut garde plus de détails.",
+      "profile_autocompact_hint": "Quand les chats de {{name}} remplissent cette part de la fenêtre de contexte du modèle, les anciens messages sont résumés. Plus bas coûte moins à chaque exécution de {{name}} ; plus haut garde plus de détails.",
       "profile_autocompact_thread_override": "Ce chat a son propre seuil, {{pct}}, qui reste en vigueur ici.",
       "profile_autocompact_read_failed": "Impossible de lire la valeur par défaut actuelle de ce chat.",
       "profile_autocompact_inherited_default": "Suit la valeur par défaut dans Réglages → Chat",
@@ -23543,7 +23565,7 @@
       "usage_kind_browser_signin": "Connexion dans le navigateur",
       "usage_signs_in_at": "Te connecte sur {{host}}",
       "use_in_tool_title": "Utiliser dans un outil",
-      "use_in_tool_tip": "Colle ceci dans les réglages d’un outil, par exemple l’environnement d’un serveur MCP. L’outil reçoit la valeur quand il s’exécute\u202f; la valeur elle-même n’y apparaît jamais.",
+      "use_in_tool_tip": "Colle ceci dans les réglages d’un outil, par exemple l’environnement d’un serveur MCP. L’outil reçoit la valeur quand il s’exécute ; la valeur elle-même n’y apparaît jamais.",
       "advanced_title": "Avancé",
       "api_call_label": "Appel d’API"
     }
@@ -24606,7 +24628,50 @@
     "preview_save_failed": "Impossible d’enregistrer le réglage de Crew partagée.",
     "preview_restart_failed": "Impossible de redémarrer la passerelle.",
     "raised_by": "Lancé par {{name}}",
-    "take_over_keeps_draft": "Prends la main pour écrire. Le brouillon de {{name}} lui reste."
+    "take_over_keeps_draft": "Prends la main pour écrire. Le brouillon de {{name}} lui reste.",
+    "hero_shared_ssm": "Partagée via Systems Manager",
+    "identity_shared": "Partagée",
+    "identity_via_ssm": "{{name}} via Systems Manager",
+    "ownerOnly": {
+      "invites": "Seul·e la personne sur {{owner}} peut inviter des personnes ou retirer leur accès.",
+      "terminal": "Seul·e la personne sur {{owner}} peut utiliser le Terminal.",
+      "remote_generic": "Seul·e le propriétaire de la Crew peut gérer des Crews distantes depuis cette Crew.",
+      "channel_row": "Seul·e le propriétaire de la Crew peut configurer ceci",
+      "webhooks": "Seul·e la personne sur {{owner}} peut créer ou révoquer des jetons de webhook.",
+      "channels_generic": "Seul·e le propriétaire de la Crew peut connecter ou modifier un canal de messagerie. Tu peux toujours lire et envoyer via ceux qui sont connectés.",
+      "secrets_generic": "Les secrets sont gérés par le propriétaire de la Crew.",
+      "redaction_generic": "Seul·e le propriétaire de la Crew peut modifier le masquage des identifiants.",
+      "reveal": "Seul·e la personne sur {{owner}} peut afficher cette valeur.",
+      "preview_generic": "Seul·e le propriétaire de la Crew peut activer ou désactiver l’aperçu Shared Crew.",
+      "channels": "Seul·e la personne sur {{owner}} peut connecter ou modifier un canal de messagerie. Tu peux toujours lire et envoyer via ceux qui sont connectés.",
+      "cron_secrets": "Seul·e la personne sur {{owner}} peut donner à une tâche planifiée l’accès aux secrets.",
+      "invites_generic": "Seul·e le propriétaire de la Crew peut inviter des personnes ou retirer leur accès.",
+      "phone": "Seul·e la personne sur {{owner}} peut connecter un téléphone à cette Crew.",
+      "admission": "Seul·e la personne sur {{owner}} peut changer qui peut accéder à cette Crew.",
+      "generic_generic": "Seul·e le propriétaire de la Crew peut modifier ceci.",
+      "secrets": "Les secrets sont gérés par la personne sur {{owner}}.",
+      "sign_in_link_generic": "Seul·e le propriétaire de la Crew peut créer des liens de connexion pour cette Crew.",
+      "remote": "Seul·e la personne sur {{owner}} peut gérer des Crews distantes depuis cette Crew.",
+      "preview": "Seul·e la personne sur {{owner}} peut activer ou désactiver l’aperçu Shared Crew.",
+      "webhooks_generic": "Seul·e le propriétaire de la Crew peut créer ou révoquer des jetons de webhook.",
+      "phone_generic": "Seul·e le propriétaire de la Crew peut connecter un téléphone à cette Crew.",
+      "terminal_generic": "Seul·e le propriétaire de la Crew peut utiliser le Terminal.",
+      "generic": "Seul·e la personne sur {{owner}} peut modifier ceci.",
+      "reveal_generic": "Seul·e le propriétaire de la Crew peut afficher cette valeur.",
+      "redaction": "Seul·e la personne sur {{owner}} peut modifier le masquage des identifiants.",
+      "channel_row_generic": "Seul·e le propriétaire de la Crew peut configurer ceci",
+      "admission_generic": "Seul·e le propriétaire de la Crew peut changer qui peut accéder à cette Crew.",
+      "sign_in_link": "Seul·e la personne sur {{owner}} peut créer des liens de connexion pour cette Crew.",
+      "cron_secrets_generic": "Seul·e le propriétaire de la Crew peut donner à une tâche planifiée l’accès aux secrets."
+    },
+    "identity_shared_here": "Partagée · {{n}} ici maintenant",
+    "identity_via_tailscale": "{{name}} via Tailscale",
+    "identity_title": "Ce que tu envoies ici est enregistré au nom de {{name}}.",
+    "group_via_kiro_login": "via Kiro Login",
+    "group_via_tailscale": "via Tailscale",
+    "group_via_ssm": "via Systems Manager",
+    "hero_shared_kiro_login": "Partagée via Kiro Login",
+    "identity_via_kiro_login": "{{name}} via Kiro Login"
   },
   "milestone": {
     "crew_mode": {

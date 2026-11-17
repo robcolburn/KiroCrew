@@ -7538,11 +7538,15 @@
       "refusal_list_generic": "チームクルーを読み込めませんでした。",
       "try_again": "もう一度試してください",
       "request_id": "リクエスト ID: {{id}}",
-      "group_team_crews": "チームクルー",
+      "group_team_crews": "Kiro アカウントから",
       "opens_own_window": "専用のウィンドウで開きます",
       "new_crew": "新規",
       "seen_not_saved": "確認済みとして保存できませんでした。また新規として表示されます。",
-      "open_crew_failed": "{{name}} を開けませんでした。"
+      "open_crew_failed": "{{name}} を開けませんでした。",
+      "connect": "接続",
+      "chip_title": "{{name}}（チーム Crew）",
+      "close_pane": "{{name}} を閉じる",
+      "connect_crew": "{{name}} に接続"
     },
     "instancesViewport": {
       "connecting": "接続中…",
@@ -7779,7 +7783,10 @@
       "pending_cancel_unsettled": "サインインしましたが、ここで開始したサインインをキャンセルできませんでした。タイムアウトするまで開いたままになります。",
       "card_intro": "Kiro Agent バックエンドのみが使用します。そのエージェントはこの Kiro アカウントとして動作します。Kiro CLI は独自の kiro-cli ログインを使い続けるため、ここでサインインしても変わりません。",
       "previous_sign_in_not_removed": "サインインしましたが、以前のサインインを削除できませんでした",
-      "previous_sign_in_not_removed_body": "新しいアカウントは保存されましたが、切り替え前のアカウントも残っており、そちらが優先されます。そのアカウントからサインアウトしてから、ここに表示されるサインインを確認してください。"
+      "previous_sign_in_not_removed_body": "新しいアカウントは保存されましたが、切り替え前のアカウントも残っており、そちらが優先されます。そのアカウントからサインアウトしてから、ここに表示されるサインインを確認してください。",
+      "copy_link_failed": "リンクをコピーできませんでした。選択して手動でコピーしてください。",
+      "copy_code": "コードをコピー",
+      "copy_code_failed": "コードをコピーできませんでした。選択して手動でコピーしてください。"
     },
     "kiroPrerequisiteGate": {
       "setup_completion_not_recorded": "セットアップの完了が記録されませんでした",
@@ -10447,7 +10454,6 @@
       "reveal_copy": "コピー",
       "reveal_note": "隠すかこのページを離れるまで表示されます。{{productName}} は表示したことだけを記録し、値は記録しません。",
       "reveal_gone": "ここではもう利用できません：{{productName}} が再起動したか、24 時間が過ぎました。値は元の場所にまだあるかもしれません。",
-      "reveal_denied": "この値を表示できるのはダッシュボードのオーナーだけです。",
       "reveal_failed": "値を表示できませんでした。もう一度お試しください。",
       "reveal_not_kept": "この値はここで表示するために保持されていません。"
     },
@@ -11141,8 +11147,6 @@
       "copy_failed": "コピーできませんでした。アプリ内のテキストを選択して自分でコピーしてください。",
       "more_actions": "その他の操作"
     },
-    "meetYourMatesIntro": {},
-    "startupVideoModal": {},
     "selectionActions": {
       "apps": "アプリ",
       "apps_hint": "選択したテキストをアプリに送る",
@@ -12698,7 +12702,14 @@
         "spec_choice_done_resuming": "今後 {{agent}} には {{file}} を使います。セッションを再開しています。後で kirocrew agent pin で変更できます。",
         "spec_choice_done": "今後 {{agent}} には {{file}} を使います。メッセージをもう一度送信して開始してください。後で kirocrew agent pin で変更できます。",
         "spec_choice_failed": "選択を保存できませんでした",
-        "hidden_scratch_folder": "このチャットのフォルダーは以前の実行で作られた一時フォルダーで、もう開けません。このチャットは既定のフォルダーで動作するようになりました。"
+        "hidden_scratch_folder": "このチャットのフォルダーは以前の実行で作られた一時フォルダーで、もう開けません。このチャットは既定のフォルダーで動作するようになりました。",
+        "copy_details_failed": "コピーできませんでした",
+        "host_sandbox_teammate_retryable": "この Crew は今このチャットを開始できませんでした。「再開」を押してもう一度試してください。",
+        "copy_details_done": "コピーしました",
+        "host_sandbox_teammate_unnamed": "この Crew のコンピューターは今チャットを開始できません。Crew のオーナーに確認を頼んでください。",
+        "copy_details": "詳細をコピー",
+        "copy_details_hint": "エラーコードと時刻だけをコピーします",
+        "host_sandbox_teammate_named": "この Crew のコンピューターは今チャットを開始できません。{{owner}} を使っている人に確認を頼んでください。"
       },
       "folderPanel": {
         "clear_search": "検索をクリア",
@@ -14207,7 +14218,8 @@
       "comments_sent_other": "{{count}}件のコメントを送信しました",
       "your_crewmate": "あなたの Bot",
       "jump_to_new_other": "新着 {{count}} 件 · 最新へ",
-      "could_not_repair_images": "画像を修復できませんでした"
+      "could_not_repair_images": "画像を修復できませんでした",
+      "session_not_on_this_crew": "その会話はもうこの Crew にありません。"
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -17904,7 +17916,8 @@
       "action_failed": "アクション失敗",
       "project_renamed_to": "プロジェクト名を {{name}} に変更しました",
       "plan_mode_label": "計画モード",
-      "yaml_workflows_hard_dag": "YAML ワークフローは LLM デコンポーザーをバイパスします — <field/> はハード DAG 制約として適用されます。"
+      "yaml_workflows_hard_dag": "YAML ワークフローは LLM デコンポーザーをバイパスします — <field/> はハード DAG 制約として適用されます。",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "戻る",
@@ -18621,7 +18634,9 @@
         "what_you_d_get_in_version_plain": "{{version}} の内容",
         "what_you_d_get_none": "このビルドとこの更新の間に変更履歴の項目はありません。",
         "version_label": "バージョン",
-        "named_update_available": "{{name}} {{version}} を利用できます。"
+        "named_update_available": "{{name}} {{version}} を利用できます。",
+        "tagline_runs_on_host": "自律型エージェント管理 · {{host}} で実行 · オープンソース",
+        "tagline_runs_on_crew_host": "自律型エージェント管理 · Crew のコンピューターで実行 · オープンソース"
       },
       "botChannelPanel": {
         "allowed_user_ids": "許可されたユーザー ID",
@@ -19154,7 +19169,6 @@
         "attach_screenshots": "スクリーンショットを添付",
         "computer_use": "コンピューター使用",
         "computer_use_lets_the_agent_read_any_app_window": "コンピューター使用により、エージェントは任意のアプリウィンドウを読み取り、クリックとキーストロークを送信できます。ほとんどのクリックはアプリに直接送信され、ポインターのままですが、エージェントはターゲットが必要な場合、実ポインターを移動するよう要求できます。パスワードフィールドは読み取り不可です。他に制限はありません。",
-        "computer_use_not_available": "コンピューター操作は {{platform}} では利用できません。",
         "could_not_check": "確認できませんでした",
         "could_not_load_computer_use_settings": "コンピューター使用設定を読み込めませんでした。",
         "could_not_save_computer_use_settings": "コンピューター使用設定を保存できませんでした。",
@@ -19182,7 +19196,14 @@
         "on_windows_keystrokes_take_your_keyboard_focus": "Windows では、キー入力はキーボードフォーカスを奪い、座標クリックは実際のカーソルを動かします。このプラットフォームにはアプリ単位の入力経路がありません。",
         "the_app_lists_in_computer_use_json_could_not_be": "computer_use.json のアプリリストが読み取れなかったため、ここに空で表示されています。ファイルが有効な JSON になるまで、エージェントはそれらに依存するすべてのアクションを拒否します。",
         "your_chat_sessions_were_restarted_so_this_takes": "チャットセッションが再起動されたため、すぐに反映されます。Kiro はセッションごとにツールリストを一度だけ読み取るため、オープンなチャットではそれを取得できなかったはずです。メッセージはまだそこにあります。エージェントは次のメッセージでコンテキストを再度読み取ります。",
-        "your_chat_sessions_were_restarted": "チャットセッションを再起動しました。メッセージはそのまま残っています。"
+        "your_chat_sessions_were_restarted": "チャットセッションを再起動しました。メッセージはそのまま残っています。",
+        "unavailable_on_host": "この Crew をホストしているマシン（{{os}}）ではコンピューター操作を使えません。",
+        "os_linux": "Linux",
+        "os_windows": "Windows",
+        "technical_details": "技術的な詳細",
+        "unavailable_on_host_other_os": "この Crew をホストしているマシンの OS ではコンピューター操作を使えません。",
+        "driver_failed_on_host": "この Crew をホストしているマシン（{{os}}）でコンピューター操作を開始できませんでした。ドライバーが読み込まれませんでした。",
+        "os_macos": "macOS"
       },
       "crewmatesSection": {
         "reply_threads": "Bot のチャットメッセージへの返信スレッド",
@@ -20154,7 +20175,6 @@
         "credential_redaction_read_failed": "マスキング設定を読み取れませんでした。",
         "credential_redaction_write_failed": "変更を保存できませんでした。{{state}}",
         "credential_redaction_retry": "再試行",
-        "credential_redaction_owner_only": "この設定を読み取り・変更できるのはダッシュボードの所有者だけです。",
         "credential_redaction_still_on": "マスキングは引き続きオンです。",
         "credential_redaction_still_off": "マスキングは引き続きオフです。",
         "credential_redaction_ask_agent": "このエラーについてエージェントとのチャットを開く",
@@ -20168,7 +20188,8 @@
         "rules_matched_other": "{{matched}} / {{n}} 件のルール",
         "categories_count_other": "{{n}} 件のカテゴリ",
         "rules_count_other": "{{n}} 件のルール",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Crew の設定"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "チャットタブの切り替えを Option+digit ではなく Ctrl+digit にバインドします。テキストフィールドにフォーカスがある間、Option+digit ではチャットは切り替わりません。",
@@ -20192,7 +20213,7 @@
         "auto_generate_skills_from_sessions": "セッションからスキルを自動生成",
         "extra_skill_paths": "追加のスキルパス",
         "extra_skill_paths_description": "追加のスキルを読み込むフォルダーを、1 行に 1 パスで指定します。パスの前後の空白と空行は無視されます。そこで見つかったスキルは読み取り専用で、名前が重複した場合は自分のスキルフォルダーのスキルが優先されます。変更は再起動なしで反映されます。",
-        "extra_skill_paths_description_summary": "1 行に 1 つのフォルダーパス。",
+        "extra_skill_paths_description_summary": "1 行に 1 つのフォルダーパス。フォルダーはこの Crew を実行しているコンピューター上にあります。",
         "extra_skill_paths_placeholder": "1 行に 1 フォルダー",
         "failed_to_save_extra_skill_paths": "追加のスキルパスを保存できませんでした。入力した内容はフィールドに残っています。",
         "failed_to_save_skills_setting": "スキル設定を保存できませんでした",
@@ -20701,7 +20722,9 @@
         "recheck": "再確認",
         "language": "言語",
         "language_for_spoken_replies": "音声で読み上げる返信の言語",
-        "language_provider_default": "プロバイダーの既定"
+        "language_provider_default": "プロバイダーの既定",
+        "no_speech_engine_on_named_host": "Crew のコンピューター {{host}} には音声エンジンが組み込まれていません。Crew のオーナーがそこにインストールするか、別のプロバイダーを選んでください。",
+        "no_speech_engine_on_crew_host": "Crew のコンピューターには音声エンジンが組み込まれていません。Crew のオーナーがそこにインストールするか、別のプロバイダーを選んでください。"
       },
       "weComPanel": {
         "allow_all_bypass_note": "すべて許可がオンになっています。上記のユーザーIDリストはスキップされます。戻すときのために保持されています。",
@@ -21560,7 +21583,6 @@
       "import_refused_text": "このファイルにはパスワードやキーのような文字列が含まれているため、インポートできません。",
       "slug_collision": "この Bot は「{{name}}」と短い名前が重複しており、チャットは後者が使用しています。名前を変更しても短い名前は変わりません。「{{self}}」を削除し、短い名前が異なる名前で作成し直してください。「{{name}}」は残してください。",
       "thread_open_failed": "この Bot のチャットを開けませんでした。",
-      "owner_check_failed": "ここで Bot をインポートできるか確認できなかったため、「ファイルからインポート」を非表示にしています。",
       "thread_owner_only": "この Bot とチャットできるのはオーナーだけです。",
       "thread_repair_failed": "このチャットに再接続できませんでした。Bot を再度開いてやり直してください。",
       "title": "Bot",
@@ -23480,7 +23502,50 @@
     "preview_save_failed": "共有 Crew の設定を保存できませんでした。",
     "preview_restart_failed": "ゲートウェイを再起動できませんでした。",
     "raised_by": "{{name}} さんの操作",
-    "take_over_keeps_draft": "引き継いで入力できます。{{name}} さんの下書きはそのまま残ります。"
+    "take_over_keeps_draft": "引き継いで入力できます。{{name}} さんの下書きはそのまま残ります。",
+    "hero_shared_ssm": "Systems Manager で共有中",
+    "identity_shared": "共有中",
+    "identity_via_ssm": "{{name}}（Systems Manager 経由）",
+    "ownerOnly": {
+      "invites": "人を招待したりアクセスを取り消したりできるのは{{owner}} を使っている人だけです。",
+      "terminal": "ターミナルを使えるのは{{owner}} を使っている人だけです。",
+      "remote_generic": "この Crew からリモート Crew を管理できるのはCrew のオーナーだけです。",
+      "channel_row": "これを設定できるのはCrew のオーナーだけです",
+      "webhooks": "Webhook トークンを作成・取り消しできるのは{{owner}} を使っている人だけです。",
+      "channels_generic": "メッセージチャネルを接続・変更できるのはCrew のオーナーだけです。接続済みのチャネルでの閲覧と送信は引き続きできます。",
+      "secrets_generic": "シークレットはCrew のオーナーが管理しています。",
+      "redaction_generic": "認証情報の秘匿設定を変更できるのはCrew のオーナーだけです。",
+      "reveal": "この値を表示できるのは{{owner}} を使っている人だけです。",
+      "preview_generic": "Shared Crew プレビューのオン・オフを切り替えられるのはCrew のオーナーだけです。",
+      "channels": "メッセージチャネルを接続・変更できるのは{{owner}} を使っている人だけです。接続済みのチャネルでの閲覧と送信は引き続きできます。",
+      "cron_secrets": "スケジュールされたジョブにシークレットへのアクセスを与えられるのは{{owner}} を使っている人だけです。",
+      "invites_generic": "人を招待したりアクセスを取り消したりできるのはCrew のオーナーだけです。",
+      "phone": "この Crew にスマートフォンを接続できるのは{{owner}} を使っている人だけです。",
+      "admission": "この Crew に誰がアクセスできるかを変えられるのは{{owner}} を使っている人だけです。",
+      "generic_generic": "これを変更できるのはCrew のオーナーだけです。",
+      "secrets": "シークレットは{{owner}} を使っている人が管理しています。",
+      "sign_in_link_generic": "この Crew のサインインリンクを作成できるのはCrew のオーナーだけです。",
+      "remote": "この Crew からリモート Crew を管理できるのは{{owner}} を使っている人だけです。",
+      "preview": "Shared Crew プレビューのオン・オフを切り替えられるのは{{owner}} を使っている人だけです。",
+      "webhooks_generic": "Webhook トークンを作成・取り消しできるのはCrew のオーナーだけです。",
+      "phone_generic": "この Crew にスマートフォンを接続できるのはCrew のオーナーだけです。",
+      "terminal_generic": "ターミナルを使えるのはCrew のオーナーだけです。",
+      "generic": "これを変更できるのは{{owner}} を使っている人だけです。",
+      "reveal_generic": "この値を表示できるのはCrew のオーナーだけです。",
+      "redaction": "認証情報の秘匿設定を変更できるのは{{owner}} を使っている人だけです。",
+      "channel_row_generic": "これを設定できるのはCrew のオーナーだけです",
+      "admission_generic": "この Crew に誰がアクセスできるかを変えられるのはCrew のオーナーだけです。",
+      "sign_in_link": "この Crew のサインインリンクを作成できるのは{{owner}} を使っている人だけです。",
+      "cron_secrets_generic": "スケジュールされたジョブにシークレットへのアクセスを与えられるのはCrew のオーナーだけです。"
+    },
+    "identity_shared_here": "共有中 · 今 {{n}} 人",
+    "identity_via_tailscale": "{{name}}（Tailscale 経由）",
+    "identity_title": "ここで送った内容は {{name}} として記録されます。",
+    "group_via_kiro_login": "Kiro Login 経由",
+    "group_via_tailscale": "Tailscale 経由",
+    "group_via_ssm": "Systems Manager 経由",
+    "hero_shared_kiro_login": "Kiro Login で共有中",
+    "identity_via_kiro_login": "{{name}}（Kiro Login 経由）"
   },
   "milestone": {
     "pr_watch": {

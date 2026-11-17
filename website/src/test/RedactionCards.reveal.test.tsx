@@ -135,7 +135,7 @@ describe('owner reveal', () => {
     vi.spyOn(api, 'revealRedactedValue').mockRejectedValue(new ApiError(403, 'no'))
     const { getByTestId } = openCard(cred())
     fireEvent.click(getByTestId('reveal-show'))
-    await waitFor(() => expect(getByTestId('reveal-denied').textContent).toContain('Only the dashboard owner'))
+    await waitFor(() => expect(getByTestId('reveal-denied').textContent).toContain("Only the Crew's owner can show this value."))
   })
 
   it('a record with no handle offers no Show', () => {

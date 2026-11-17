@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Bot } from 'lucide-react'
 import { api } from '../../api/client'
 import { crewLogProjectionsKey } from '../../hooks/useWebSocket'
-import { isOwnerOnlyRefusal } from '../sessionEnvironmentHooks'
+import { OWNER_GATE_REFUSAL_CODES, isOwnerOnlyRefusal } from '../../api/apiError'
 import AppIcon from '../AppIcon'
 import ContextBar, { contextTip, contextColor, composeContextReadout, contextPctClamped, fmtTokens } from '../ContextBar'
 import ErrorNotice from '../ErrorNotice'
@@ -243,7 +243,7 @@ function CacheHitRate({ slot }: { slot: string }) {
     refetchOnMount: 'always',
   })
   // A failed re-read says so too, rather than leaving the previous rate up as current.
-  if (error && !isOwnerOnlyRefusal(error)) {
+  if (error && !isOwnerOnlyRefusal(error, OWNER_GATE_REFUSAL_CODES)) {
     return (
       <div className="mt-2 pt-2 border-t border-border">
         {/* No hand-off: the composer draft below is unsaved. */}

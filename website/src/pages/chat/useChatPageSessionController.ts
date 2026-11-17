@@ -905,15 +905,29 @@ export function useChatPageSessionController({
     key: string
     activeSlot: string | null
     activeSlotChanged: boolean
+    /** The viewer moved on to another session, so the notice must not show. */
+    retired: boolean
     error: string
     deniedAt: number
   } | null>(null)
   // Equality at recovery time cannot distinguish "stayed on A" from A -> B -> A.
   // Latch the first committed change while a denied link is pending; returning
   // to the deadline's slot must not give the old deep link ownership again.
+  // Once the viewer moves from one session to another, the old link's notice
+  // no longer describes the screen (after a host switch the link never
+  // resolves), so it is retired, as a failed new-session banner is above. The
+  // page's own first landing from an empty screen keeps it: that is the
+  // moment the notice explains.
+  const prevActiveSlotRef = useRef(activeSlot)
   useEffect(() => {
+    const prev = prevActiveSlotRef.current
+    prevActiveSlotRef.current = activeSlot
     const denied = deniedSidRef.current
-    if (denied && activeSlot !== denied.activeSlot) denied.activeSlotChanged = true
+    if (!denied || activeSlot === denied.activeSlot) return
+    denied.activeSlotChanged = true
+    if (!prev || !activeSlot || prev === activeSlot) return
+    denied.retired = true
+    setSidError(current => current === denied.error ? '' : current)
   }, [activeSlot])
   // Gated on `connected` so the timer only runs while the gateway is reachable
   // — otherwise an offline tab would burn its 5s while the resolve effects
@@ -943,7 +957,8 @@ export function useChatPageSessionController({
           key: urlSlot,
           activeSlot: activeSlotRef.current,
           activeSlotChanged: false,
-          error: i18nT('pages.chatPage.session_not_found', { name: urlSlot }),
+          retired: false,
+          error: i18nT('pages.chatPage.session_not_on_this_crew'),
           deniedAt: Date.now(),
         }
         deniedSidRef.current = denied
@@ -959,8 +974,10 @@ export function useChatPageSessionController({
           staleTime: 0,
           gcTime: 0,
         }).then(row => row, () => null).then(row => {
-          // A slots frame carrying the key retired this verdict while it ran.
+          // A slots frame carrying the key retired this verdict while it ran,
+          // or the viewer moved on to another session.
           if (deniedSidRef.current !== denied) return
+          if (denied.retired) return
           if (row) {
             denied.error = i18nT('store.chatSlice.session_closed_find_in_older_sessions')
             setSidClosed({ key: row.key, title: row.title || row.key, error: denied.error })

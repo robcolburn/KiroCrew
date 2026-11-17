@@ -12,6 +12,7 @@ import { Btn } from '../../components/ui'
 import { api } from '../../api/client'
 import { ApiError } from '../../api/apiError'
 import { useSharedCrewPreviewSetting } from './sharedCrewPreviewSetting'
+import { OwnerOnlyNotice, useIsTeammate } from '../../components/OwnerOnlyNotice'
 import { PREVIEW_ARTIFACT_DEPLOY, PREVIEW_BRIDGE_APPROVALS, PREVIEW_CHAT_RUNTIME_SHARING, PREVIEW_CREW_OAUTH, PREVIEW_DASHBOARD_STALE_FIELDS, PREVIEW_DASHBOARD_STALE_WAKE, PREVIEW_EXPLORE, PREVIEW_FOLDER_CONDUCTOR, PREVIEW_REMOTE_CREW_CHAT, PREVIEW_SECRETS_VAULT, PREVIEW_SESSION_ENVIRONMENTS, PREVIEW_SESSION_HARNESS, PREVIEW_WEBHOOKS, PREVIEW_WORKER_GRILL, setPreviewFlag, setRemoteCrewChat } from '../../utils/previewFlags'
 import ErrorBoundary from '../../components/ErrorBoundary'
 import { KasBundleCard } from '../developer/KasBundleCard'
@@ -208,6 +209,7 @@ export function FeaturePreviewsSection() {
   const [restartFailed, setRestartFailed] = useState(false)
   const sharedCrewPreview = useSharedCrewPreviewSetting({ poll: gatewayRestarting })
   const sharedCrewSetting = sharedCrewPreview.setting
+  const previewLocked = useIsTeammate()
   // The stored choice and what this gateway started with disagree: a restart applies it.
   const sharedCrewNeedsRestart = !!sharedCrewSetting && (sharedCrewSetting.restart_required
     || (!sharedCrewSetting.env_override && sharedCrewSetting.enabled !== sharedCrewSetting.active))
@@ -301,6 +303,9 @@ export function FeaturePreviewsSection() {
             entry for that reason. The row shows whether or not the People tab
             does; a gateway without the route, or a caller who is not the owner,
             gets no row. */}
+        {/* The switch decides who may reach the Crew, so it stays the machine
+            owner's: a Shared Crew teammate gets the lock in its place. */}
+        {previewLocked && !sharedCrewPreview.visible && <OwnerOnlyNotice kind="preview" className="py-1" />}
         {sharedCrewPreview.visible && (
           <div>
             <SettingsToggle

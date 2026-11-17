@@ -10,7 +10,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { api, type ConfigPendingData } from '../../api/client'
 import { retryPolicy } from '../../api/queryClient'
-import { isOwnerOnlyRefusal } from '../../components/sessionEnvironmentHooks'
+import { OWNER_GATE_REFUSAL_CODES, isOwnerOnlyRefusal } from '../../api/apiError'
 
 export const CONFIG_PENDING_QUERY_KEY = ['config-pending'] as const
 
@@ -24,7 +24,7 @@ export function useConfigPending() {
     queryKey: CONFIG_PENDING_QUERY_KEY,
     queryFn: api.configPending,
     // A viewer who is not the owner gets the same refusal every time.
-    retry: (count, error) => !isOwnerOnlyRefusal(error) && retryPolicy(count, error),
+    retry: (count, error) => !isOwnerOnlyRefusal(error, OWNER_GATE_REFUSAL_CODES) && retryPolicy(count, error),
   })
 }
 

@@ -6,6 +6,7 @@ import { SecretField } from '../../components/SecretField'
 import { OptionalSdkCard } from './OptionalSdkCard'
 import { Btn } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyOrError } from '../../components/OwnerOnlyNotice'
 import { TagListEditor } from './SlackPanel'
 
 import { i18nT } from '../../i18n/t'
@@ -955,7 +956,7 @@ export function BotChannelPanel({ spec }: { spec: BotChannelSpec }) {
             and the unsaved `draft` are exactly what a failed save did not store —
             the hand-off unmounts this panel and would lose them. Same shape as
             SlackPanel's save row. */}
-        <ErrorNotice message={saveError} variant="inline" />
+        <OwnerOnlyOrError error={saveMut.error} kind="channels"><ErrorNotice message={saveError} variant="inline" /></OwnerOnlyOrError>
       </div>}
     </>
   )

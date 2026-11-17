@@ -13,7 +13,8 @@ import { api } from '../../api/client'
 import type { SetupPathCapability, TailnetDirect } from '../../api/sharedCrew'
 import { AVATAR_MAX_BYTES, AVATAR_TYPES, avatarPreviewUri, avatarUrl, fileToBase64, inviteErrorCode } from '../../api/sharedCrewInvites'
 import { ssmInviteFor, waitingSsmInvites, type SsmInvite } from '../../api/sharedCrewSsm'
-import { principalInitials, principalName, waitingInvites, type PeopleRow } from '../../api/sharedCrewUi'
+import { groupPeopleByPath, isHereNow, principalInitials, principalName, waitingInvites, type PeopleGroupKey, type PeopleRow } from '../../api/sharedCrewUi'
+import type { SharingPath } from '../../api/sharedCrewMode'
 import { SettingsCard, SettingsSection } from '../../components/settings'
 import { Badge, Btn, Input, PanelSectionHeader } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
@@ -48,28 +49,35 @@ function Avatar({ row, size = 32 }: { row: PeopleRow; size?: number }) {
   )
 }
 
-/** Here now: an open tab in presence, or the viewer, who is on this page. */
-function isHere(row: PeopleRow): boolean {
-  return !!row.live || !!row.is_viewer
-}
-
 function HereDot({ label }: { label: string }) {
   return <span className="inline-block w-2 h-2 rounded-full bg-ok shrink-0" role="img" aria-label={label} />
 }
 
 /** The connect card. `canInvite` is true only for the owner (the invite read
  *  answered): the owner gets the Invite… entry and the invite message, a
- *  teammate only the Crew link. */
-export function ShareHero({ direct, tailscale, people, canInvite }: {
+ *  teammate only the Crew link.
+ *
+ *  The status names a path only when that path is on (`sharingPaths`, from the
+ *  mode): a Crew shared over Kiro Login reads "Shared over Kiro Login", not
+ *  "Tailscale: Not set up". With no path on, or an older gateway that does not
+ *  say, it shows the Tailscale setup state as before. */
+export function ShareHero({ direct, tailscale, people, canInvite, sharingPaths }: {
   direct: TailnetDirect | undefined
   tailscale: SetupPathCapability | undefined
   people: PeopleRow[]
   canInvite: boolean
+  sharingPaths?: readonly SharingPath[]
 }) {
   const [copied, setCopied] = useState<boolean | null>(null)
   const active = tailnetDirectActive(direct)
-  const here = people.filter(isHere)
+  const here = people.filter(isHereNow)
   const [primary, ...fallbacks] = active ? direct.urls : []
+  // A path other than Tailscale that is on, named instead of Tailscale's setup
+  // state while Tailscale itself is not one of the paths sharing this Crew.
+  const otherPath = !sharingPaths || sharingPaths.includes('tailscale') ? ''
+    : sharingPaths.includes('kiro_login') ? i18nT('sharedCrew.hero_shared_kiro_login')
+      : sharingPaths.includes('ssm') ? i18nT('sharedCrew.hero_shared_ssm')
+        : ''
   const copy = async () => {
     let ok = false
     try { ok = await copyToClipboard(primary) } catch { ok = false }
@@ -86,6 +94,11 @@ export function ShareHero({ direct, tailscale, people, canInvite }: {
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-strong" data-testid="share-hero-state">
               <HereDot label={i18nT('sharedCrew.hero_shared')} />
               {i18nT('sharedCrew.hero_shared')}
+            </span>
+          ) : otherPath ? (
+            <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-strong" data-testid="share-hero-state">
+              <HereDot label={otherPath} />
+              {otherPath}
             </span>
           ) : (
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-text-strong" data-testid="share-hero-state">
@@ -158,7 +171,7 @@ function activityText(row: PeopleRow, usageAvailable: boolean): string {
   if (usageAvailable && (row.usage?.active ?? 0) > 0) {
     return i18nT('sharedCrew.activity_running', { n: fmtNumber(row.usage?.active ?? 0) })
   }
-  if (isHere(row)) return i18nT('sharedCrew.here_now_label')
+  if (isHereNow(row)) return i18nT('sharedCrew.here_now_label')
   if (row.last_seen_at) return i18nT('sharedCrew.last_seen', { when: fmtDateTime(row.last_seen_at * 1000) })
   return row.sources.includes('tailscale_share') ? i18nT('sharedCrew.invite_status_sent') : ''
 }
@@ -229,7 +242,7 @@ function PersonLine({ row, usageAvailable, invite, ssmInvite, canRemove, onEdit 
         )}
         {otherAccount && <span className="text-[12px] text-muted" data-testid="person-other-account">{i18nT('sharedCrew.invite_other_account', { email: otherAccount })}</span>}
       </div>
-      {isHere(row) && <HereDot label={i18nT('sharedCrew.here_now_label')} />}
+      {isHereNow(row) && <HereDot label={i18nT('sharedCrew.here_now_label')} />}
       {ssmInvite && !row.is_owner && !row.is_viewer
         ? <RevokeControl inviteId={ssmInvite.id} name={name} transport="ssm" state="member">{edit}</RevokeControl>
         : removable ? <RemovePerson invite={invite} name={name} member={!!row.member?.invite_id}>{edit}</RemovePerson> : edit}
@@ -353,9 +366,20 @@ function NotJoined({ invites, ssmInvites }: { invites: TailscaleInvite[]; ssmInv
   )
 }
 
+function groupLabel(key: PeopleGroupKey): string {
+  switch (key) {
+    case 'kiro_login': return i18nT('sharedCrew.group_via_kiro_login')
+    case 'tailscale': return i18nT('sharedCrew.group_via_tailscale')
+    case 'ssm': return i18nT('sharedCrew.group_via_ssm')
+    default: return i18nT('sharedCrew.unattributed')
+  }
+}
+
 /** "People · N": everyone connected or seen, then email invites nobody has
  *  accepted yet. N counts people; an invite is not one yet. A current member
- *  hides their own invite, so each person is one row. */
+ *  hides their own invite, so each person is one row. People are grouped by
+ *  how they came in (`groupPeopleByPath`): the owner first, then "via Kiro
+ *  Login", "via Tailscale", "via Systems Manager" and Unattributed. */
 export function PeopleList({ people, usageAvailable, notes = [], footer }: {
   people: PeopleRow[]
   usageAvailable: boolean
@@ -372,6 +396,18 @@ export function PeopleList({ people, usageAvailable, notes = [], footer }: {
   const waitingSsm = waitingSsmInvites(people, ssmInvites)
   const count = people.length
   const canRemove = !!invites.data
+  const grouped = groupPeopleByPath(people)
+  const line = (row: PeopleRow) => (
+    <PersonLine
+      key={row.principal.id}
+      row={row}
+      usageAvailable={usageAvailable}
+      invite={all.find(i => i.id === row.member?.invite_id)}
+      ssmInvite={ssmInviteFor(row, ssmInvites)}
+      canRemove={canRemove}
+      onEdit={setEditing}
+    />
+  )
   return (
     <SettingsSection title={i18nT('sharedCrew.people_title', { n: fmtNumber(count) })}>
       <SettingsCard>
@@ -381,19 +417,27 @@ export function PeopleList({ people, usageAvailable, notes = [], footer }: {
             ? <p className="text-[13px] text-muted">{i18nT('sharedCrew.people_seen_empty')}</p>
             : null
         ) : (
-          <ul className="flex flex-col divide-y divide-border" aria-label={i18nT('sharedCrew.people_title', { n: fmtNumber(count) })} data-testid="people-list">
-            {people.map(row => (
-              <PersonLine
-                key={row.principal.id}
-                row={row}
-                usageAvailable={usageAvailable}
-                invite={all.find(i => i.id === row.member?.invite_id)}
-                ssmInvite={ssmInviteFor(row, ssmInvites)}
-                canRemove={canRemove}
-                onEdit={setEditing}
-              />
-            ))}
-          </ul>
+          grouped ? (
+            <div className="flex flex-col" data-testid="people-list">
+              {grouped.owner.length > 0 && (
+                <ul className="flex flex-col divide-y divide-border" aria-label={i18nT('sharedCrew.crew_owner')}>
+                  {grouped.owner.map(line)}
+                </ul>
+              )}
+              {grouped.groups.map(group => (
+                <div key={group.key} className="flex flex-col" data-testid={`people-group-${group.key}`}>
+                  <PanelSectionHeader label={groupLabel(group.key)} count={fmtNumber(group.rows.length)} className="pt-3" />
+                  <ul className="flex flex-col divide-y divide-border" aria-label={groupLabel(group.key)}>
+                    {group.rows.map(line)}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border" aria-label={i18nT('sharedCrew.people_title', { n: fmtNumber(count) })} data-testid="people-list">
+              {people.map(line)}
+            </ul>
+          )
         )}
         <NotJoined invites={waiting} ssmInvites={waitingSsm} />
         {footer}

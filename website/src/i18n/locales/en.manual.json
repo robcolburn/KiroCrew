@@ -9205,7 +9205,6 @@
       },
       "computerUsePanel": {
         "computer_use_lets_the_agent_read_any_app_window": "Computer use lets the agent read any app window and send clicks and keystrokes into it. Most clicks are delivered straight to the app and leave your pointer alone, but the agent can ask to move the real pointer when a target needs it. Password fields are never read; nothing else limits which apps it may drive.",
-        "computer_use_not_available": "Computer use is not available on {{platform}}.",
         "could_not_check": "Could not check",
         "could_not_save_computer_use_settings": "Could not save computer-use settings.",
         "draw_a_cursor_that_glides_to_each_target_and_pul": "Draw a cursor that glides to each target and pulses when it clicks, so you can follow along on screen. Purely visual — it changes nothing about what the agent is allowed to do, and it only appears for clicks that move the real pointer.",
@@ -10163,7 +10162,6 @@
         "credential_redaction_read_failed": "Could not read the redaction setting.",
         "credential_redaction_write_failed": "Could not save the change. {{state}}",
         "credential_redaction_retry": "Retry",
-        "credential_redaction_owner_only": "Only the dashboard owner can read or change this setting.",
         "credential_redaction_still_on": "Redaction is still on.",
         "credential_redaction_still_off": "Redaction is still off.",
         "credential_redaction_ask_agent": "Open a chat with the agent about this error"

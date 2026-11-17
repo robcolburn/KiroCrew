@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { SettingsSection, SettingsCard } from '../../components/settings'
 import { Badge, Btn } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyNotice, useIsTeammate } from '../../components/OwnerOnlyNotice'
 import { api, type WebhooksView } from '../../api/client'
 import { i18nT } from '../../i18n/t'
 
@@ -20,6 +21,9 @@ import { i18nT } from '../../i18n/t'
  */
 export function WebhooksPanel() {
   const navigate = useNavigate()
+  // Webhook bearers outlive a Shared Crew teammate's access, so minting and
+  // revoking them stay the machine owner's; the endpoint's state stays readable.
+  const teammate = useIsTeammate()
 
   // Partial `api/client` mocks are common in this suite, so a missing method
   // must not throw on mount. Same defensive shape the other panels use.
@@ -73,6 +77,7 @@ export function WebhooksPanel() {
             <p className="text-[13px] text-muted">
               {i18nT('pages.settings.webhooksPanel.lets_an_outside_system_start_one_agent_turn')}
             </p>
+            {teammate && <OwnerOnlyNotice kind="webhooks" />}
             {!isLoading && !isError && tokenCount > 0 && (
               // Suppressed at zero: the badge already says "No tokens yet", and
               // "0 access tokens" under it just repeats that.

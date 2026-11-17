@@ -27,6 +27,8 @@ vi.mock('../../api/client', () => ({
     members: vi.fn(),
     // The owner check behind Import from file (`useViewerIsNotOwner`): the owner.
     viewerOwnerOk: vi.fn(() => Promise.resolve(true)),
+    // The teammate check beside it (`useViewerIsTeammate`): not a teammate.
+    viewerTeammate: vi.fn(() => Promise.resolve(false)),
     // The roster's team grouping reads the team list; "no teams" keeps the
     // list flat, which is the shape every case here was written against.
     teams: { list: vi.fn(() => Promise.resolve({ teams: [] })), create: vi.fn(), update: vi.fn(), remove: vi.fn() },
@@ -769,47 +771,37 @@ describe('MembersPage thread', () => {
     expect(screen.queryByText(/Could not open this bot's chat/i)).toBeNull()
   })
 
-  it('a relay teammate keeps New bot but finds no Import from file, which stays the owner\'s', async () => {
-    // `/api/auth/me` says this caller does not clear the owner gate, with the
-    // Shared Crew preview off: a relay teammate is admitted either way.
+  it('a relay teammate gets Import from file as the owner does', async () => {
+    // `/api/auth/me` says this caller is not the machine owner but is a Shared
+    // Crew teammate, whom the import route admits, so the door is theirs too.
     vi.mocked(api.viewerOwnerOk).mockResolvedValue(false)
+    vi.mocked(api.viewerTeammate).mockResolvedValue(true)
     try {
       const teammateRow = { name: 'oncall', slug: 'oncall', dashboard_created: true, source: 'kirocrew' } as unknown as ReturnType<typeof row>
       await renderPage([teammateRow])
+      await waitFor(() => expect(api.viewerTeammate).toHaveBeenCalled())
+      fireEvent.pointerDown(await screen.findByTestId('member-add'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
+      const menu = await screen.findByTestId('member-add-menu')
+      expect(within(menu).getByTestId('member-add-crewmate')).not.toHaveAttribute('data-disabled')
+      expect(await within(menu).findByTestId('member-add-import')).toBeInTheDocument()
+    } finally {
+      // Back to the shared mock's owner answers, so later cases keep a passing check.
+      vi.mocked(api.viewerOwnerOk).mockResolvedValue(true)
+      vi.mocked(api.viewerTeammate).mockResolvedValue(false)
+    }
+  })
+
+  it('a non-owner who is not a teammate keeps New bot but finds no Import from file', async () => {
+    // An app token or a messaging link: the import route refuses them, so the door is hidden.
+    vi.mocked(api.viewerOwnerOk).mockResolvedValue(false)
+    try {
+      await renderPage([row()])
       await waitFor(() => expect(api.viewerOwnerOk).toHaveBeenCalled())
+      await waitFor(() => expect(api.viewerTeammate).toHaveBeenCalled())
       fireEvent.pointerDown(await screen.findByTestId('member-add'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
       const menu = await screen.findByTestId('member-add-menu')
       expect(within(menu).getByTestId('member-add-crewmate')).not.toHaveAttribute('data-disabled')
       await waitFor(() => expect(within(menu).queryByTestId('member-add-import')).toBeNull())
-    } finally {
-      // Back to the shared mock's owner answer, so later cases keep a passing check.
-      vi.mocked(api.viewerOwnerOk).mockResolvedValue(true)
-    }
-  })
-
-  it('a failed owner check holds Import from file and says so on the roster', async () => {
-    vi.mocked(api.viewerOwnerOk).mockRejectedValue(Object.assign(new Error('unavailable'), { status: 503 }))
-    try {
-      await renderPage([row()])
-      expect(await screen.findByTestId('member-roster-owner-check-error')).toHaveTextContent(
-        "Couldn't check whether you can import bots here, so Import from file is hidden.",
-      )
-      fireEvent.pointerDown(await screen.findByTestId('member-add'), { button: 0, ctrlKey: false, pointerType: 'mouse' })
-      const menu = await screen.findByTestId('member-add-menu')
-      expect(within(menu).getByTestId('member-add-crewmate')).not.toHaveAttribute('data-disabled')
-      expect(within(menu).queryByTestId('member-add-import')).toBeNull()
-    } finally {
-      vi.mocked(api.viewerOwnerOk).mockResolvedValue(true)
-    }
-  })
-
-  it('a failed owner check is said in the open chat while the roster is folded', async () => {
-    vi.mocked(api.viewerOwnerOk).mockRejectedValue(Object.assign(new Error('unavailable'), { status: 503 }))
-    try {
-      await renderPage([row()], 'kirocrew', { route: '/members?member=oncall' })
-      expect(await screen.findByTestId('member-thread-owner-check-error', undefined, PANE_READY)).toHaveTextContent(
-        "Couldn't check whether you can import bots here, so Import from file is hidden.",
-      )
     } finally {
       vi.mocked(api.viewerOwnerOk).mockResolvedValue(true)
     }

@@ -615,6 +615,15 @@ screen_recording, responsible_hint}, limits{field: [min, max]}}`.
 - `limits` publishes the server's own ceilings so the panel's number inputs bound
   themselves rather than re-spelling them in TypeScript.
 
+Settings > Computer Use never shows `reason` as the message on an unsupported
+host. `reason` is untranslated developer prose. The panel picks translated copy
+from `platform` that names the Crew's host: `linux` gives "Computer use isn't
+available on the machine hosting this Crew (Linux).", `macos` and `windows` (where
+unsupported means the driver did not load) give "Computer use couldn't start on
+the machine hosting this Crew (<OS>): its driver did not load.", and any other id
+gives a generic line. The owner sees `reason` under a "Technical details"
+disclosure; a teammate does not see it (`ComputerUsePanel.test.tsx`).
+
 **`PUT /api/computer-use/config`** accepts any subset of `{enabled, allowed_apps,
 extra_denied_apps}` (→ keystone) and the seven display/budget fields (the five
 `_INT_LIMITS` knobs plus `attach_screenshot` and `cursor_motion` → `config.json`), and

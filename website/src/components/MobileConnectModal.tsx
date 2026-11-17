@@ -16,6 +16,7 @@ import { getMobileConnectRenderers } from './mobileConnectRenderers'
 import { TailnetDirectLink, tailnetDirectActive } from './TailnetDirectLink'
 import { useSharedCrewCapabilities } from '../hooks/sharedCrew/useSharedCrew'
 import { sharedCrewPreviewOn } from '../api/sharedCrewUi'
+import { OwnerOnlyNotice, OwnerOnlyOrError, useIsTeammate } from './OwnerOnlyNotice'
 
 /** Machine-readable code from a mint error's JSON body (same shape as the
  *  Settings card's helper): lets the UI blame configuration only when the
@@ -117,6 +118,7 @@ export default function MobileConnectModal({
   const direct = caps.capabilities.tailnet_direct
   // The direct link is a sharing surface: it shows only under the Shared Crew preview.
   const directActive = sharedCrewPreviewOn(caps.capabilities) && tailnetDirectActive(direct)
+  const teammate = useIsTeammate()
 
   const tokenSections = (
     <>
@@ -189,6 +191,12 @@ export default function MobileConnectModal({
             <Smartphone size={16} className="shrink-0" />
             {t('components.mobileConnect.use_kiro_crew_on_your_phone')}
           </div>
+          {teammate ? (
+            // Connecting a phone mints a sign-in in the owner's own name, so it
+            // stays the machine owner's: one calm lock, no retry, no hand-off,
+            // and no method section (each would only read or mint and be refused).
+            <OwnerOnlyNotice kind="phone" className="mt-3" />
+          ) : <>
           {caps.isError && (
             <div className="mb-4">
               <ErrorNotice
@@ -211,6 +219,7 @@ export default function MobileConnectModal({
               {tokenSections}
             </details>
           ) : tokenSections}
+          </>}
         </div>
       </div>
     </>
@@ -274,7 +283,9 @@ function TailnetQrSection({ onClose }: { onClose: () => void }) {
           Every notice passes onHandoff={onClose}: this modal is a fixed
           full-screen overlay, so without closing it the hand-off would land
           on a chat the user cannot see. */}
+      {/* An owner-only refusal is the lock, with no retry. */}
       {probeFailed && (
+        <OwnerOnlyOrError error={probeError} kind="phone" className="mb-2" askAgent onHandoff={onClose}>
         <div className="flex items-center justify-between gap-2 mb-2">
           <ErrorNotice
             variant="inline"
@@ -287,6 +298,7 @@ function TailnetQrSection({ onClose }: { onClose: () => void }) {
           />
           <Btn onClick={() => refetch()}>{t('components.mobileConnect.try_again')}</Btn>
         </div>
+        </OwnerOnlyOrError>
       )}
       {ready && !mintQr.data && (
         <div className="flex justify-center py-6">
@@ -335,7 +347,7 @@ function TailnetQrSection({ onClose }: { onClose: () => void }) {
         </div>
       )}
       {mintQr.isError && (
-        <ErrorNotice
+        <OwnerOnlyOrError error={mintQr.error} kind="phone" askAgent onHandoff={onClose}><ErrorNotice
           variant="inline"
           className="text-[11.5px] mb-2"
           message={t(
@@ -346,7 +358,7 @@ function TailnetQrSection({ onClose }: { onClose: () => void }) {
           report={findReport(mintQr.error?.message)}
           onHandoff={onClose}
           testId="mobile-connect-qr-error"
-        />
+        /></OwnerOnlyOrError>
       )}
       {status && blockedByPolicy && (
         <p className="w-full bg-bg-elevated border border-border rounded-lg px-3 py-2.5 mb-2 text-[12px] text-muted">
@@ -459,7 +471,7 @@ function LoginLinkSection({ standalone, onClose }: { standalone: boolean; onClos
            the journal keys on what `apiFailure` threw, so a lookup by the
            translated sentence would miss and the hand-off would carry no
            endpoint, status or backend `code`. */
-        <ErrorNotice
+        <OwnerOnlyOrError error={createLink.error} kind="phone" askAgent onHandoff={onClose}><ErrorNotice
           variant="inline"
           askAgent
           className="text-[11.5px] mt-2"
@@ -470,7 +482,7 @@ function LoginLinkSection({ standalone, onClose }: { standalone: boolean; onClos
             LINK_ERROR_KEYS[linkErrorCode(createLink.error) as keyof typeof LINK_ERROR_KEYS] ||
               'components.mobileConnect.could_not_create_a_link_try_again',
           )}
-        />
+        /></OwnerOnlyOrError>
       )}
       {createLink.data && (
         <p className="text-[11.5px] text-muted mt-2">

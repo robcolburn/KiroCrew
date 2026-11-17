@@ -7746,11 +7746,15 @@
       "refusal_list_generic": "तुम्हारे टीम क्रू लोड नहीं हो सके।",
       "try_again": "फिर कोशिश करो",
       "request_id": "अनुरोध आईडी: {{id}}",
-      "group_team_crews": "टीम क्रू",
+      "group_team_crews": "तुम्हारे Kiro खाते से",
       "opens_own_window": "अपनी अलग विंडो में खुलता है",
       "new_crew": "नया",
       "seen_not_saved": "यह सहेजा नहीं जा सका कि तुमने इसे देख लिया है। यह फिर से नया दिखेगा।",
-      "open_crew_failed": "{{name}} नहीं खुल सका।"
+      "open_crew_failed": "{{name}} नहीं खुल सका।",
+      "connect": "कनेक्ट करो",
+      "chip_title": "{{name}} (टीम Crew)",
+      "close_pane": "{{name}} बंद करो",
+      "connect_crew": "{{name}} से कनेक्ट करो"
     },
     "instancesViewport": {
       "connecting": "कनेक्ट हो रहा है…",
@@ -7988,7 +7992,10 @@
       "pending_cancel_unsettled": "साइन इन हो गया, लेकिन यहाँ शुरू किया गया साइन-इन रद्द नहीं किया जा सका। यह टाइम आउट होने तक खुला रहेगा।",
       "card_intro": "केवल Kiro Agent बैकएंड इसका उपयोग करता है: उसके एजेंट इस Kiro खाते के रूप में चलते हैं। Kiro CLI अपना kiro-cli लॉगइन ही रखता है, इसलिए यहाँ साइन इन करने से वह नहीं बदलता।",
       "previous_sign_in_not_removed": "साइन इन हो गया, लेकिन पिछला साइन-इन हटाया नहीं जा सका",
-      "previous_sign_in_not_removed_body": "नया खाता सहेज लिया गया है, लेकिन जिस खाते से तुम बदल रहे थे वह अभी भी मौजूद है और उसे प्राथमिकता मिलती है। उससे साइन आउट करो, फिर यहाँ दिखाया गया साइन-इन जाँचो।"
+      "previous_sign_in_not_removed_body": "नया खाता सहेज लिया गया है, लेकिन जिस खाते से तुम बदल रहे थे वह अभी भी मौजूद है और उसे प्राथमिकता मिलती है। उससे साइन आउट करो, फिर यहाँ दिखाया गया साइन-इन जाँचो।",
+      "copy_link_failed": "लिंक कॉपी नहीं हो सका। उसे चुनो और ख़ुद कॉपी करो।",
+      "copy_code": "कोड कॉपी करो",
+      "copy_code_failed": "कोड कॉपी नहीं हो सका। उसे चुनो और ख़ुद कॉपी करो।"
     },
     "kiroPrerequisiteGate": {
       "setup_completion_not_recorded": "सेटअप पूरा होना रिकॉर्ड नहीं हुआ",
@@ -10689,7 +10696,6 @@
       "reveal_copy": "कॉपी करो",
       "reveal_note": "जब तक तुम इसे छिपाओ या यह पेज न छोड़ो, यह दिखेगा। {{productName}} बस यह लिखता है कि तुमने इसे देखा, मान कभी नहीं।",
       "reveal_gone": "अब यहाँ उपलब्ध नहीं: {{productName}} रीस्टार्ट हुआ या 24 घंटे बीत गए। मान शायद अब भी अपने स्रोत पर हो।",
-      "reveal_denied": "केवल डैशबोर्ड का मालिक यह मान दिखा सकता है।",
       "reveal_failed": "मान नहीं दिखा सके। फिर से कोशिश करो।",
       "reveal_not_kept": "यह मान यहाँ दिखाने के लिए नहीं रखा गया था।"
     },
@@ -11399,8 +11405,6 @@
       "copy_failed": "कॉपी नहीं हो सका। ऐप में टेक्स्ट चुनो और खुद कॉपी करो।",
       "more_actions": "और कार्रवाइयाँ"
     },
-    "meetYourMatesIntro": {},
-    "startupVideoModal": {},
     "selectionActions": {
       "apps": "ऐप",
       "apps_hint": "चुना गया टेक्स्ट किसी ऐप को भेजें",
@@ -12980,7 +12984,14 @@
         "spec_choice_done_resuming": "अब से {{agent}} के लिए {{file}} इस्तेमाल होगी। सत्र फिर से शुरू हो रहा है। बाद में kirocrew agent pin से बदल सकते हो।",
         "spec_choice_done": "अब से {{agent}} के लिए {{file}} इस्तेमाल होगी। शुरू करने के लिए अपना संदेश फिर से भेजो। बाद में kirocrew agent pin से बदल सकते हो।",
         "spec_choice_failed": "चुनाव सहेजा नहीं जा सका",
-        "hidden_scratch_folder": "इस चैट का फ़ोल्डर पिछली बार चलाने से बना एक अस्थायी फ़ोल्डर था और अब इसे खोला नहीं जा सकता। अब यह चैट डिफ़ॉल्ट फ़ोल्डर में काम करती है।"
+        "hidden_scratch_folder": "इस चैट का फ़ोल्डर पिछली बार चलाने से बना एक अस्थायी फ़ोल्डर था और अब इसे खोला नहीं जा सकता। अब यह चैट डिफ़ॉल्ट फ़ोल्डर में काम करती है।",
+        "copy_details_failed": "कॉपी नहीं हो सका",
+        "host_sandbox_teammate_retryable": "यह Crew अभी यह चैट शुरू नहीं कर पाया। दोबारा कोशिश करने के लिए “फिर से शुरू करो” दबाओ।",
+        "copy_details_done": "कॉपी हो गया",
+        "host_sandbox_teammate_unnamed": "इस Crew का कंप्यूटर अभी चैट शुरू नहीं कर सकता। Crew के मालिक से इसे जाँचने को कहो।",
+        "copy_details": "विवरण कॉपी करो",
+        "copy_details_hint": "सिर्फ़ एरर कोड और समय कॉपी करता है",
+        "host_sandbox_teammate_named": "इस Crew का कंप्यूटर अभी चैट शुरू नहीं कर सकता। {{owner}} वाले व्यक्ति से इसे जाँचने को कहो।"
       },
       "folderPanel": {
         "clear_search": "खोज साफ़ करें",
@@ -14549,7 +14560,8 @@
       "your_crewmate": "तुम्हारा Bot",
       "jump_to_new_one": "{{count}} नया · नवीनतम पर जाओ",
       "jump_to_new_other": "{{count}} नए · नवीनतम पर जाओ",
-      "could_not_repair_images": "छवियाँ ठीक नहीं की जा सकीं"
+      "could_not_repair_images": "छवियाँ ठीक नहीं की जा सकीं",
+      "session_not_on_this_crew": "वह बातचीत अब इस Crew पर नहीं है।"
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -18385,7 +18397,8 @@
       "action_failed": "कार्रवाई विफल",
       "project_renamed_to": "प्रोजेक्ट का नाम बदलकर {{name}} कर दिया गया",
       "plan_mode_label": "योजना मोड",
-      "yaml_workflows_hard_dag": "YAML वर्कफ़्लो LLM डीकंपोज़र को बायपास करते हैं — <field/> एक सख़्त DAG कंस्ट्रेंट के रूप में लागू किया जाता है।"
+      "yaml_workflows_hard_dag": "YAML वर्कफ़्लो LLM डीकंपोज़र को बायपास करते हैं — <field/> एक सख़्त DAG कंस्ट्रेंट के रूप में लागू किया जाता है।",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "वापस",
@@ -19126,7 +19139,9 @@
         "what_you_d_get_in_version_plain": "{{version}} में क्या है",
         "what_you_d_get_none": "तुम्हारे बिल्ड और इस अपडेट के बीच कोई चेंजलॉग प्रविष्टि नहीं है।",
         "version_label": "वर्ज़न",
-        "named_update_available": "{{name}} {{version}} उपलब्ध है।"
+        "named_update_available": "{{name}} {{version}} उपलब्ध है।",
+        "tagline_runs_on_host": "स्वायत्त एजेंट प्रबंधन · {{host}} पर चलता है · ओपन सोर्स",
+        "tagline_runs_on_crew_host": "स्वायत्त एजेंट प्रबंधन · Crew के कंप्यूटर पर चलता है · ओपन सोर्स"
       },
       "botChannelPanel": {
         "allowed_user_ids": "अनुमत उपयोगकर्ता ID",
@@ -19668,7 +19683,6 @@
         "attach_screenshots": "स्क्रीनशॉट जोड़ो",
         "computer_use": "Computer Use",
         "computer_use_lets_the_agent_read_any_app_window": "कंप्यूटर उपयोग से एजेंट किसी भी ऐप विंडो को पढ़ सकता है और उसमें क्लिक व कीस्ट्रोक भेज सकता है। ज़्यादातर क्लिक सीधे ऐप को भेजे जाते हैं और पॉइंटर को छूते नहीं, लेकिन ज़रूरत पड़ने पर एजेंट असली पॉइंटर हिलाने की अनुमति माँग सकता है। पासवर्ड फ़ील्ड कभी नहीं पढ़े जाते; इसके अलावा कोई सीमा नहीं है कि यह किन ऐप को चला सकता है।",
-        "computer_use_not_available": "{{platform}} पर कंप्यूटर उपयोग उपलब्ध नहीं है।",
         "could_not_check": "जाँच नहीं हो सकी",
         "could_not_load_computer_use_settings": "Computer Use की सेटिंग लोड नहीं हो सकी।",
         "could_not_save_computer_use_settings": "कंप्यूटर उपयोग की सेटिंग्स सहेजी नहीं जा सकीं।",
@@ -19696,7 +19710,14 @@
         "on_windows_keystrokes_take_your_keyboard_focus": "Windows पर, कीस्ट्रोक तुम्हारा कीबोर्ड फ़ोकस ले लेते हैं और निर्देशांक क्लिक तुम्हारे असली कर्सर को हिलाते हैं — इस प्लैटफ़ॉर्म पर प्रति-ऐप इनपुट मार्ग नहीं है।",
         "the_app_lists_in_computer_use_json_could_not_be": "computer_use.json में दी गई ऐप सूचियाँ पढ़ी नहीं जा सकीं, इसलिए यहाँ ख़ाली दिख रही हैं। जब तक फ़ाइल वैध JSON नहीं होती, एजेंट उन पर निर्भर हर कार्रवाई से इनकार करता रहेगा।",
         "your_chat_sessions_were_restarted_so_this_takes": "तुम्हारे चैट सत्र दोबारा शुरू किए गए हैं ताकि यह तुरंत लागू हो — Kiro हर सत्र में अपनी टूल सूची एक ही बार पढ़ता है, इसलिए खुली चैट इसे वरना उठा नहीं पाती। तुम्हारे मैसेज अब भी मौजूद हैं; एजेंट अगले मैसेज पर अपना कॉन्टेक्स्ट फिर पढ़ेगा।",
-        "your_chat_sessions_were_restarted": "तुम्हारे चैट सत्र फिर से शुरू किए गए। तुम्हारे संदेश अब भी मौजूद हैं।"
+        "your_chat_sessions_were_restarted": "तुम्हारे चैट सत्र फिर से शुरू किए गए। तुम्हारे संदेश अब भी मौजूद हैं।",
+        "unavailable_on_host": "इस Crew को चलाने वाली मशीन ({{os}}) पर कंप्यूटर उपयोग उपलब्ध नहीं है।",
+        "os_linux": "Linux",
+        "os_windows": "Windows",
+        "technical_details": "तकनीकी विवरण",
+        "unavailable_on_host_other_os": "इस Crew को चलाने वाली मशीन के ऑपरेटिंग सिस्टम पर कंप्यूटर उपयोग उपलब्ध नहीं है।",
+        "driver_failed_on_host": "इस Crew को चलाने वाली मशीन ({{os}}) पर कंप्यूटर उपयोग शुरू नहीं हो सका: उसका ड्राइवर लोड नहीं हुआ।",
+        "os_macos": "macOS"
       },
       "crewmatesSection": {
         "reply_threads": "Bot की चैट के संदेशों पर उत्तर थ्रेड",
@@ -20683,7 +20704,6 @@
         "credential_redaction_read_failed": "रिडैक्शन सेटिंग पढ़ी नहीं जा सकी।",
         "credential_redaction_write_failed": "परिवर्तन सहेजा नहीं जा सका। {{state}}",
         "credential_redaction_retry": "फिर कोशिश करो",
-        "credential_redaction_owner_only": "केवल डैशबोर्ड का मालिक ही यह सेटिंग पढ़ या बदल सकता है।",
         "credential_redaction_still_on": "रिडैक्शन अभी भी चालू है।",
         "credential_redaction_still_off": "रिडैक्शन अभी भी बंद है।",
         "credential_redaction_ask_agent": "इस त्रुटि के बारे में एजेंट से चैट खोलो",
@@ -20700,7 +20720,8 @@
         "categories_count_other": "{{n}} श्रेणियाँ",
         "rules_count_one": "{{n}} नियम",
         "rules_count_other": "{{n}} नियम",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Crew सेटिंग्स"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "चैट-टैब स्विचिंग को Option+अंक के बजाय Ctrl+अंक से बाइंड करें। जब किसी टेक्स्ट फ़ील्ड पर फ़ोकस हो, तब Option+अंक चैट नहीं बदलता।",
@@ -20724,7 +20745,7 @@
         "auto_generate_skills_from_sessions": "सेशन से स्किल स्वतः बनाएँ",
         "extra_skill_paths": "अतिरिक्त स्किल पाथ",
         "extra_skill_paths_description": "वे फ़ोल्डर जिनसे अतिरिक्त स्किल लोड होती हैं, हर पंक्ति में एक पाथ। पाथ के आसपास के स्पेस और खाली पंक्तियाँ अनदेखी की जाती हैं। वहाँ मिली स्किल केवल-पढ़ने योग्य हैं, और नाम दोहराने पर तुम्हारे अपने स्किल फ़ोल्डर की स्किल को प्राथमिकता मिलती है। बदलाव बिना पुनःआरंभ के लागू हो जाते हैं।",
-        "extra_skill_paths_description_summary": "हर पंक्ति में एक फ़ोल्डर पाथ।",
+        "extra_skill_paths_description_summary": "हर पंक्ति में एक फ़ोल्डर पाथ। फ़ोल्डर उस कंप्यूटर पर हैं जो यह Crew चलाता है।",
         "extra_skill_paths_placeholder": "हर पंक्ति में एक फ़ोल्डर",
         "failed_to_save_extra_skill_paths": "अतिरिक्त स्किल पाथ सहेजे नहीं जा सके। तुम्हारा टेक्स्ट फ़ील्ड में ही है।",
         "failed_to_save_skills_setting": "स्किल सेटिंग सहेजने में विफल",
@@ -21233,7 +21254,9 @@
         "recheck": "फिर से जाँचें",
         "language": "भाषा",
         "language_for_spoken_replies": "बोले गए उत्तरों की भाषा",
-        "language_provider_default": "प्रदाता का डिफ़ॉल्ट"
+        "language_provider_default": "प्रदाता का डिफ़ॉल्ट",
+        "no_speech_engine_on_named_host": "{{host}}, यानी Crew के कंप्यूटर में कोई बिल्ट-इन स्पीच इंजन नहीं है। Crew के मालिक वहाँ एक इंस्टॉल कर सकते हैं, या तुम कोई और प्रोवाइडर चुन सकते हो।",
+        "no_speech_engine_on_crew_host": "Crew के कंप्यूटर में कोई बिल्ट-इन स्पीच इंजन नहीं है। Crew के मालिक वहाँ एक इंस्टॉल कर सकते हैं, या तुम कोई और प्रोवाइडर चुन सकते हो।"
       },
       "weComPanel": {
         "allow_all_bypass_note": "सभी को अनुमति चालू है: ऊपर की userid सूची दरकिनार है। वापस बदलने के लिए यह सुरक्षित रखी गई है।",
@@ -22106,7 +22129,6 @@
       "import_refused_text": "इस फ़ाइल में ऐसा टेक्स्ट है जो पासवर्ड या कुंजी जैसा दिखता है, इसलिए आयात नहीं की जा सकती।",
       "slug_collision": "इस Bot का छोटा नाम \"{{name}}\" के समान है, जिसकी चैट पहले से इसका उपयोग करती है। नाम बदलने से छोटा नाम नहीं बदलता, इसलिए \"{{self}}\" को हटाओ और उसे ऐसे नाम से फिर बनाओ जिसका छोटा नाम अलग हो। \"{{name}}\" को रहने दो।",
       "thread_open_failed": "इस Bot की चैट नहीं खोली जा सकी।",
-      "owner_check_failed": "यह जाँचा नहीं जा सका कि तुम यहाँ Bot इंपोर्ट कर सकते हो या नहीं, इसलिए फ़ाइल से इंपोर्ट छिपा है।",
       "thread_owner_only": "इस Bot से सिर्फ़ इसका मालिक चैट कर सकता है।",
       "thread_repair_failed": "इस चैट को फिर से कनेक्ट नहीं किया जा सका। फिर से कोशिश करने के लिए Bot को दोबारा खोलो।",
       "title": "Bot",
@@ -24043,7 +24065,50 @@
     "preview_save_failed": "साझा Crew सेटिंग सहेजी नहीं जा सकी।",
     "preview_restart_failed": "गेटवे रीस्टार्ट नहीं हो सका।",
     "raised_by": "{{name}} ने शुरू किया",
-    "take_over_keeps_draft": "लिखने के लिए अपने हाथ में लो। {{name}} का ड्राफ़्ट उन्हीं के पास रहेगा।"
+    "take_over_keeps_draft": "लिखने के लिए अपने हाथ में लो। {{name}} का ड्राफ़्ट उन्हीं के पास रहेगा।",
+    "hero_shared_ssm": "Systems Manager से साझा",
+    "identity_shared": "साझा",
+    "identity_via_ssm": "{{name}} (Systems Manager से)",
+    "ownerOnly": {
+      "invites": "लोगों को बुलाना या उनकी पहुँच हटाना सिर्फ़ {{owner}} वाले व्यक्ति कर सकते हैं।",
+      "terminal": "टर्मिनल सिर्फ़ {{owner}} वाले व्यक्ति इस्तेमाल कर सकते हैं।",
+      "remote_generic": "इस Crew से रिमोट Crew सिर्फ़ Crew के मालिक संभाल सकते हैं।",
+      "channel_row": "इसे सिर्फ़ Crew के मालिक सेट कर सकते हैं",
+      "webhooks": "वेबहुक टोकन सिर्फ़ {{owner}} वाले व्यक्ति बना या रद्द कर सकते हैं।",
+      "channels_generic": "मैसेजिंग चैनल सिर्फ़ Crew के मालिक जोड़ या बदल सकते हैं। जुड़े हुए चैनलों से तुम पढ़ और भेज सकते हो।",
+      "secrets_generic": "सीक्रेट्स Crew के मालिक संभालते हैं।",
+      "redaction_generic": "क्रेडेंशियल छिपाने की सेटिंग सिर्फ़ Crew के मालिक बदल सकते हैं।",
+      "reveal": "यह वैल्यू सिर्फ़ {{owner}} वाले व्यक्ति दिखा सकते हैं।",
+      "preview_generic": "Shared Crew प्रीव्यू सिर्फ़ Crew के मालिक चालू या बंद कर सकते हैं।",
+      "channels": "मैसेजिंग चैनल सिर्फ़ {{owner}} वाले व्यक्ति जोड़ या बदल सकते हैं। जुड़े हुए चैनलों से तुम पढ़ और भेज सकते हो।",
+      "cron_secrets": "किसी शेड्यूल्ड जॉब को सीक्रेट्स की पहुँच सिर्फ़ {{owner}} वाले व्यक्ति दे सकते हैं।",
+      "invites_generic": "लोगों को बुलाना या उनकी पहुँच हटाना सिर्फ़ Crew के मालिक कर सकते हैं।",
+      "phone": "इस Crew से फ़ोन सिर्फ़ {{owner}} वाले व्यक्ति जोड़ सकते हैं।",
+      "admission": "इस Crew तक कौन पहुँच सकता है, यह सिर्फ़ {{owner}} वाले व्यक्ति बदल सकते हैं।",
+      "generic_generic": "इसे सिर्फ़ Crew के मालिक बदल सकते हैं।",
+      "secrets": "सीक्रेट्स {{owner}} वाले व्यक्ति संभालते हैं।",
+      "sign_in_link_generic": "इस Crew के साइन-इन लिंक सिर्फ़ Crew के मालिक बना सकते हैं।",
+      "remote": "इस Crew से रिमोट Crew सिर्फ़ {{owner}} वाले व्यक्ति संभाल सकते हैं।",
+      "preview": "Shared Crew प्रीव्यू सिर्फ़ {{owner}} वाले व्यक्ति चालू या बंद कर सकते हैं।",
+      "webhooks_generic": "वेबहुक टोकन सिर्फ़ Crew के मालिक बना या रद्द कर सकते हैं।",
+      "phone_generic": "इस Crew से फ़ोन सिर्फ़ Crew के मालिक जोड़ सकते हैं।",
+      "terminal_generic": "टर्मिनल सिर्फ़ Crew के मालिक इस्तेमाल कर सकते हैं।",
+      "generic": "इसे सिर्फ़ {{owner}} वाले व्यक्ति बदल सकते हैं।",
+      "reveal_generic": "यह वैल्यू सिर्फ़ Crew के मालिक दिखा सकते हैं।",
+      "redaction": "क्रेडेंशियल छिपाने की सेटिंग सिर्फ़ {{owner}} वाले व्यक्ति बदल सकते हैं।",
+      "channel_row_generic": "इसे सिर्फ़ Crew के मालिक सेट कर सकते हैं",
+      "admission_generic": "इस Crew तक कौन पहुँच सकता है, यह सिर्फ़ Crew के मालिक बदल सकते हैं।",
+      "sign_in_link": "इस Crew के साइन-इन लिंक सिर्फ़ {{owner}} वाले व्यक्ति बना सकते हैं।",
+      "cron_secrets_generic": "किसी शेड्यूल्ड जॉब को सीक्रेट्स की पहुँच सिर्फ़ Crew के मालिक दे सकते हैं।"
+    },
+    "identity_shared_here": "साझा · अभी {{n}} यहाँ",
+    "identity_via_tailscale": "{{name}} (Tailscale से)",
+    "identity_title": "तुम यहाँ जो भेजते हो वह {{name}} के नाम से दर्ज होता है।",
+    "group_via_kiro_login": "Kiro Login से",
+    "group_via_tailscale": "Tailscale से",
+    "group_via_ssm": "Systems Manager से",
+    "hero_shared_kiro_login": "Kiro Login से साझा",
+    "identity_via_kiro_login": "{{name}} (Kiro Login से)"
   },
   "milestones": {
     "notice_one": "पूरा हुआ: {{title}}",

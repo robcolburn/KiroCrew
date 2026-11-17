@@ -22,6 +22,7 @@ import {
   Network, GitBranch, Mail, ShieldAlert,
 } from 'lucide-react'
 import { useAppSelector } from '../../store'
+import { useViewerIsNotOwner } from '../../hooks/sharedCrew/useSharedCrew'
 import { SettingsSubNav } from '../../components/SettingsSubNav'
 import { SettingsSection, SettingsCard } from '../../components/settings'
 import { api, type DeniedCommandsData, type TailnetStatusData } from '../../api/client'
@@ -199,6 +200,7 @@ export function SecurityPanel({ basePath }: { basePath?: string } = {}) {
   // DeniedCommandsSection for the denied-commands list. A second notice in a
   // 192px rail would repeat the card's message without room to act on it.
   const status = useAppSelector(s => s.dashboard.status)
+  const { notOwner } = useViewerIsNotOwner()
   const { data: dc } = useQuery<DeniedCommandsData>({ queryKey: ['denied-commands'], queryFn: api.deniedCommands })
   const { data: cfg, isError: cfgError } = useQuery<KirocrewCfgShape>({ queryKey: ['kirocrewConfig'], queryFn: api.kirocrewConfig })
   // Same key and staleTime the card uses, so the rail adds no second request.
@@ -273,7 +275,10 @@ export function SecurityPanel({ basePath }: { basePath?: string } = {}) {
       key: section.key,
       label: i18nT(SECTION_LABEL_KEY[section.key]),
       icon: section.icon,
-      group: i18nT(SECTION_GROUP_KEY[section.group]),
+      // A teammate sees the Crew's settings, not their own: "Your settings" would misname them.
+      group: notOwner && section.group === 'yours'
+        ? i18nT('pages.settings.securityPanel.section_group_crew_settings')
+        : i18nT(SECTION_GROUP_KEY[section.group]),
       summary: summary ? (
         <span className="block text-[11px] text-muted tabular-nums truncate mt-px">{summary}</span>
       ) : undefined,

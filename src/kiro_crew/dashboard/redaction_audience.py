@@ -18,6 +18,10 @@ and a reader who is not the owner gets it redacted in full, whatever the setting
   chat turn a teammate sends among them, inherits the scope and runs redacted in full
   for every reader.
 
+Every one of those edges also hands a non-owner the plain copy of a host sandbox
+refusal row (``host_sandbox_refusal``), whatever the setting reads: that row's text
+is the machine owner's runbook for the host.
+
 A full pass here runs in a fresh :class:`contextvars.Context` under ``always_scan``,
 as the live log stream's does (``handlers.updates_streams._stream_safe``), so no seam
 or owner view the caller is inside stands it down.
@@ -34,6 +38,7 @@ from typing import Any, TypeVar
 from aiohttp import web
 
 from kiro_crew import redaction_seams
+from kiro_crew.dashboard import host_sandbox_refusal
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +139,22 @@ async def redaction_audience_middleware(
     from kiro_crew.security.redaction_switch import always_scan
 
     with always_scan():
-        return await handler(request)
+        response = await handler(request)
+    return _without_host_detail(response)
+
+
+def _without_host_detail(response: web.StreamResponse) -> web.StreamResponse:
+    """*response* with a host sandbox refusal row in its JSON body read as a non-owner
+    reads it (``host_sandbox_refusal``), whatever the redaction setting reads."""
+    if not isinstance(response, web.Response) or response.content_type != "application/json":
+        return response
+    body = response.body
+    if not isinstance(body, (bytes, bytearray)):
+        return response
+    shown = host_sandbox_refusal.body_for_non_owner(bytes(body))
+    if shown is not None:
+        response.body = shown
+    return response
 
 
 # ── websocket frames ──
@@ -300,6 +320,7 @@ def for_socket(ws: Any, text: str, *, owner: bool) -> str | None:
     if owner:
         return text
     try:
+        text = host_sandbox_refusal.text_for_non_owner(text)
         return _non_owner_text(ws, text, redaction_seams.published_off())
     except Exception:
         logger.warning("a frame for a non-owner socket could not be redacted; not sent")
@@ -321,6 +342,7 @@ def for_reader(text: str, *, owner: bool) -> str | None:
     if owner:
         return text
     try:
+        text = host_sandbox_refusal.text_for_non_owner(text)
         try:
             value = json.loads(text)
         except ValueError:
@@ -358,6 +380,7 @@ class SseEvents:
         """The events to write for the built event *event*, in order."""
         if self._owner:
             return [event]
+        event = host_sandbox_refusal.text_for_non_owner(event)
         off = redaction_seams.published_off()
         if not off and (self._stream is None or '"chunk"' not in event):
             return [*self.close(), event]

@@ -176,8 +176,9 @@ describe('SecurityPanel - credential redaction toggle', () => {
     renderWithProviders(<SecurityPanel />, { route: '/?section=redaction', queryDefaults: { retryDelay: 0 } })
     await screen.findByTestId('credential-redaction-owner-only')
     expect(api.credentialRedaction).toHaveBeenCalledTimes(1)
-    // A fact about the viewer, not a failure: no Retry, no switch -- but the
-    // hand-off every ErrorNotice carries is there, and says what it sends.
+    // A fact about the viewer, not a failure: the owner-only lock, with no Retry
+    // and no switch -- but the agent hand-off is there, and says what it sends.
+    expect(screen.getByTestId('credential-redaction-owner-only')).toHaveTextContent("Only the Crew's owner can change credential redaction.")
     expect(screen.queryByTestId('credential-redaction-retry')).toBeNull()
     expect(screen.queryByTestId('credential-redaction-read-failed')).toBeNull()
     expect(screen.queryByRole('switch')).toBeNull()

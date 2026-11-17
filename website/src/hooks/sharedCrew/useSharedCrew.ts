@@ -63,6 +63,15 @@ export function useViewerIsNotOwner() {
   return { notOwner: query.data === false, owner: query.data === true, failed: query.data === undefined && !!query.error, error: query.error, retry: query.refetch }
 }
 
+/** Whether this tab is a Shared Crew teammate, from `/api/auth/me`'s `teammate`
+ *  (`shared_crew.teammate_access`, the same rule that refuses them the
+ *  owner-only routes). `false` until the gateway says so, and on a failed read,
+ *  so the owner's view never waits on it; the backend still refuses the write. */
+export function useViewerIsTeammate(): boolean {
+  const query = useQuery({ queryKey: [...sharedCrewKeys.viewer, 'teammate'], queryFn: () => api.viewerTeammate(), staleTime: 60_000, retry: false })
+  return query.data === true
+}
+
 /** Whether this Crew shows who did what (bylines, decision attribution,
  *  presence), decided the way the session list decides it: only with the
  *  Shared Crew preview on and someone besides the owner joined

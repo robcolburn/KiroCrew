@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { SettingsSubNav, type SubNavItem } from '../../components/SettingsSubNav'
 import { SUBNAV_PARAM, parsePathSegments, toPathSegment } from '../../components/subNavParams'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyGate, OwnerOnlyOrError } from '../../components/OwnerOnlyNotice'
 import { SecretField } from '../../components/SecretField'
 import { Btn, Card, CardTitle, IconButton, Input } from '../../components/ui'
 import Tablist from '../../components/Tablist'
@@ -486,7 +487,7 @@ function ItemForm({
         </div>
         {/* No hand-off: navigation would discard the unsaved value. */}
         {save.isError && (
-          <ErrorNotice variant="inline" message={i18nT('settings.secrets.save_error', { error: (save.error as Error).message })} />
+          <OwnerOnlyOrError error={save.error} kind="secrets"><ErrorNotice variant="inline" message={i18nT('settings.secrets.save_error', { error: (save.error as Error).message })} /></OwnerOnlyOrError>
         )}
       </form>
     </Form>
@@ -694,10 +695,10 @@ function ManagedPane({
       )}
       {/* No hand-off while this editor holds an unsaved value. */}
       {setMutation.isError && (
-        <ErrorNotice variant="inline" askAgent={allowAgentHandoff && !value} message={i18nT('settings.secrets.save_error', { error: (setMutation.error as Error).message })} />
+        <OwnerOnlyOrError error={setMutation.error} kind="secrets" askAgent={allowAgentHandoff && !value}><ErrorNotice variant="inline" askAgent={allowAgentHandoff && !value} message={i18nT('settings.secrets.save_error', { error: (setMutation.error as Error).message })} /></OwnerOnlyOrError>
       )}
       {deleteMutation.isError && (
-        <ErrorNotice variant="inline" askAgent={allowAgentHandoff && !value} message={i18nT('settings.secrets.delete_error', { error: (deleteMutation.error as Error).message })} />
+        <OwnerOnlyOrError error={deleteMutation.error} kind="secrets" askAgent={allowAgentHandoff && !value}><ErrorNotice variant="inline" askAgent={allowAgentHandoff && !value} message={i18nT('settings.secrets.delete_error', { error: (deleteMutation.error as Error).message })} /></OwnerOnlyOrError>
       )}
     </div>
   )
@@ -865,7 +866,7 @@ function ItemPane({
       )}
       {/* No hand-off while the confirmation is open: leaving the pane drops it. */}
       {deleteMutation.isError && (
-        <ErrorNotice variant="inline" askAgent={allowAgentHandoff && !deleteConfirm} message={i18nT('settings.secrets.delete_error', { error: (deleteMutation.error as Error).message })} />
+        <OwnerOnlyOrError error={deleteMutation.error} kind="secrets" askAgent={allowAgentHandoff && !deleteConfirm}><ErrorNotice variant="inline" askAgent={allowAgentHandoff && !deleteConfirm} message={i18nT('settings.secrets.delete_error', { error: (deleteMutation.error as Error).message })} /></OwnerOnlyOrError>
       )}
       {/* Same hand-off rule as the delete error: withheld while any draft is
           open (allowAgentHandoff) or the confirmation is, which leaving drops. */}
@@ -1007,8 +1008,18 @@ function useSubNavSelect(basePath: string | undefined): (key: string) => void {
  *  consumes by name ("Used automatically by Kiro Crew") from the user's own
  *  entries; the pane shows one item, its `secret://` references and the
  *  actions on it. On a phone the rail is the view and a row pushes its pane
- *  (SettingsSubNav). `basePath` is the Settings host's path-navigation seam. */
+ *  (SettingsSubNav). `basePath` is the Settings host's path-navigation seam.
+ *  The vault is the machine owner's: a Shared Crew teammate sees the owner-only
+ *  lock in its place, and the vault is never read for them. */
 export function SecretsPanel({ basePath }: { basePath?: string } = {}) {
+  return (
+    <OwnerOnlyGate kind="secrets">
+      <SecretsVault basePath={basePath} />
+    </OwnerOnlyGate>
+  )
+}
+
+function SecretsVault({ basePath }: { basePath?: string }) {
   const queryClient = useQueryClient()
   const [managedDraftNames, setManagedDraftNames] = useState<Set<string>>(() => new Set())
   const [addDraft, setAddDraft] = useState(false)

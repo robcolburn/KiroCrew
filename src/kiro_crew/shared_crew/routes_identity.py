@@ -244,6 +244,8 @@ async def api_shared_crew_mode(request: web.Request) -> web.Response:
     refused = await _refusal(request)
     if refused is not None:
         return refused
+    from kiro_crew.dashboard.handlers.source_providers import is_host_owner_dashboard_request
+    from kiro_crew.dashboard.kiro_relay.ingress import RELAY_INGRESS_APP_KEY
     from kiro_crew.gateway_identity import gateway_id
     from kiro_crew.shared_crew.access import setup_paths_dict
     from kiro_crew.shared_crew.crew_mode import mode_view
@@ -251,6 +253,7 @@ async def api_shared_crew_mode(request: web.Request) -> web.Response:
     catalog = await _catalog_rows(request)
     creators = await asyncio.to_thread(lambda: _session_creators(_conversations(catalog)))
     crew_id = await asyncio.to_thread(gateway_id)
+    ingress = request.app.get(RELAY_INGRESS_APP_KEY)
     body = mode_view(
         viewer_principal(request),
         _observed_principals(),
@@ -258,6 +261,9 @@ async def api_shared_crew_mode(request: web.Request) -> web.Response:
         crew_id=crew_id,
         creators=creators,
         owner_id=_owner_id(request),
+        owner_label=owner_label.machine_name(),
+        viewer_is_owner=is_host_owner_dashboard_request(request),
+        relay_on=getattr(ingress, "enabled", False) is True,
     )
     return web.json_response(body)
 

@@ -17,6 +17,7 @@ import { Provider } from 'react-redux'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { createTestStore } from './helpers'
 import { sseSlots } from '../store/dashboardSlice'
+import { switchSlot } from '../store/chatSlice'
 import { ThemeProvider } from '../hooks/useTheme'
 import type { RootState } from '../store'
 import type { ChatSlot } from '../types'
@@ -130,7 +131,7 @@ describe('a full-key ?sid= link to a session that is not open', () => {
 
     const notice = screen.getByTestId('sid-error')
     expect(notice).toHaveTextContent(i18nT('store.chatSlice.session_closed_find_in_older_sessions'))
-    expect(screen.queryByText(new RegExp(`session "${CLOSED}" not found`, 'i'))).toBeNull()
+    expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
     expect(api.sessionMeta).toHaveBeenCalledWith(CLOSED)
 
     await act(async () => { fireEvent.click(resumeButton()!) })
@@ -143,7 +144,7 @@ describe('a full-key ?sid= link to a session that is not open', () => {
   it('keeps "not found" and offers nothing when the key has no transcript', async () => {
     await openPastDeadline(`/chat?sid=${CLOSED}`)
 
-    expect(screen.getByText(new RegExp(`session "${CLOSED}" not found`, 'i'))).toBeTruthy()
+    expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
     expect(resumeButton()).toBeNull()
   })
 
@@ -151,7 +152,7 @@ describe('a full-key ?sid= link to a session that is not open', () => {
     vi.mocked(api.sessionMeta).mockRejectedValueOnce(new Error('offline'))
     await openPastDeadline(`/chat?sid=${CLOSED}`)
 
-    expect(screen.getByText(new RegExp(`session "${CLOSED}" not found`, 'i'))).toBeTruthy()
+    expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
     expect(resumeButton()).toBeNull()
   })
 
@@ -166,6 +167,42 @@ describe('a full-key ?sid= link to a session that is not open', () => {
     await advance(50)
 
     expect(store.getState().chat.activeSlot).toBe(CLOSED)
+    expect(screen.queryByTestId('sid-error')).toBeNull()
+  })
+})
+
+/** After a host switch the old link never resolves, so once the viewer moves
+ *  from one session to another the notice describes nothing on screen. The
+ *  page's first landing from an empty screen keeps it. */
+describe('a not-found notice after the viewer moves on', () => {
+  const OTHER = 'chat-2-200'
+
+  it('stays through the first landing, then goes when the viewer switches session', async () => {
+    const store = await openPastDeadline(`/chat?sid=${CLOSED}`)
+    const notFound = i18nT('pages.chatPage.session_not_on_this_crew')
+    expect(screen.getByText(notFound)).toBeTruthy()
+    expect(screen.queryByText(new RegExp(CLOSED))).toBeNull()
+
+    await act(async () => { await store.dispatch(switchSlot(OPEN)) })
+    await advance(50)
+    expect(screen.getByText(notFound)).toBeTruthy()
+
+    await act(async () => { store.dispatch(sseSlots([slot(OPEN), slot(OTHER)])) })
+    await act(async () => { await store.dispatch(switchSlot(OTHER)) })
+    await advance(50)
+    expect(store.getState().chat.activeSlot).toBe(OTHER)
+    expect(screen.queryByText(notFound)).toBeNull()
+  })
+
+  it('does not show the notice when the probe answers after the viewer moved on', async () => {
+    let answer: (row: null) => void = () => {}
+    vi.mocked(api.sessionMeta).mockReturnValueOnce(new Promise(r => { answer = r }))
+    const store = await openPastDeadline(`/chat?sid=${CLOSED}`)
+    await act(async () => { await store.dispatch(switchSlot(OPEN)) })
+    await act(async () => { store.dispatch(sseSlots([slot(OPEN), slot(OTHER)])) })
+    await act(async () => { await store.dispatch(switchSlot(OTHER)) })
+    await act(async () => { answer(null) })
+    await advance(50)
     expect(screen.queryByTestId('sid-error')).toBeNull()
   })
 })

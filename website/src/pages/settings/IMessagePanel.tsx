@@ -5,6 +5,7 @@ import { IMessageIcon } from '../../components/IMessageIcon'
 import { SettingsSection, SettingsCard, SettingsInput, SettingsSelect, SettingsToggle } from '../../components/settings'
 import { Btn } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyOrError } from '../../components/OwnerOnlyNotice'
 import { TagListEditor } from './SlackPanel'
 import { api, type IMessageConfigData, type IMessageConfigSave } from '../../api/client'
 
@@ -353,7 +354,7 @@ export function IMessagePanel() {
             session folder) is exactly what a failed save did not store — the
             hand-off unmounts this panel and would lose it. Same shape as
             SlackPanel's save row. */}
-        <ErrorNotice message={error} variant="inline" />
+        <OwnerOnlyOrError error={saveMut.error} kind="channels"><ErrorNotice message={error} variant="inline" /></OwnerOnlyOrError>
       </div>}
     </>
   )

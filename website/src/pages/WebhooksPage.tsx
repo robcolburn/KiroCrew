@@ -41,6 +41,7 @@ import type {
 } from '../api/client'
 import AgentSelector, { type KiroCrewAgent } from '../components/AgentSelector'
 import ErrorNotice from '../components/ErrorNotice'
+import { OwnerOnlyOrError } from '../components/OwnerOnlyNotice'
 import { copyToClipboard, copyCode } from '../utils/clipboard'
 import { useScrollEdges } from '../hooks/useScrollEdges'
 import Tablist, { type TablistTab } from '../components/Tablist'
@@ -1440,12 +1441,12 @@ export default function WebhooksPage() {
               {/* Hand-off only while the new-source draft is empty (hasSourceDraft):
                   the token label / agent picker draft (label, newAgent) is page
                   state and would go with the navigation. */}
-              <ErrorNotice
+              <OwnerOnlyOrError error={mutationError} kind="webhooks" askAgent={!hasSourceDraft}><ErrorNotice
                 title={i18nT('pages.webhooksPage.that_action_did_not_go_through')}
                 message={mutationMessage}
                 askAgent={!hasSourceDraft}
                 testId="webhooks-mutation-error"
-              />
+              /></OwnerOnlyOrError>
             </div>
           )}
           {testResult && (

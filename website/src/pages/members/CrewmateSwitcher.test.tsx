@@ -231,6 +231,13 @@ describe('CrewmateSwitcher open list', () => {
     expect(screen.queryByTestId('crewmate-switcher-import')).toBeNull()
   })
 
+  it('offers New mate but no Import from file to a viewer who may not import', async () => {
+    setup({ canImport: false })
+    await open()
+    expect(screen.getByTestId('crewmate-switcher-create')).toBeInTheDocument()
+    expect(screen.queryByTestId('crewmate-switcher-import')).toBeNull()
+  })
+
   it('Import from file sits under New mate and opens the import dialog', async () => {
     const { onCreate } = setup()
     const list = await open()

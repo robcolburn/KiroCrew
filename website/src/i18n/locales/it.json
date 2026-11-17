@@ -7954,11 +7954,15 @@
       "refusal_list_generic": "Impossibile caricare le tue crew del team.",
       "try_again": "Riprova",
       "request_id": "ID richiesta: {{id}}",
-      "group_team_crews": "Crew del team",
+      "group_team_crews": "Dal tuo account Kiro",
       "opens_own_window": "Si apre in una finestra a sé",
       "new_crew": "Nuovo",
       "seen_not_saved": "Impossibile salvare che l’hai visto. Verrà mostrato di nuovo come nuovo.",
-      "open_crew_failed": "Impossibile aprire {{name}}."
+      "open_crew_failed": "Impossibile aprire {{name}}.",
+      "connect": "Connetti",
+      "chip_title": "{{name}} (Crew del team)",
+      "close_pane": "Chiudi {{name}}",
+      "connect_crew": "Connetti {{name}}"
     },
     "instancesViewport": {
       "connecting": "Connessione in corso…",
@@ -8197,7 +8201,10 @@
       "pending_cancel_unsettled": "Accesso effettuato, ma non è stato possibile annullare l’accesso avviato qui. Resta aperto fino alla scadenza.",
       "card_intro": "Usato solo dal backend Kiro Agent: i suoi agenti vengono eseguiti con questo account Kiro. Kiro CLI mantiene il proprio accesso kiro-cli, quindi accedere qui non lo modifica.",
       "previous_sign_in_not_removed": "Accesso effettuato, ma non è stato possibile rimuovere l’accesso precedente",
-      "previous_sign_in_not_removed_body": "Il nuovo account è salvato, ma quello da cui stavi passando è ancora presente e ha la precedenza. Esci da quell’account, poi controlla l’accesso mostrato qui."
+      "previous_sign_in_not_removed_body": "Il nuovo account è salvato, ma quello da cui stavi passando è ancora presente e ha la precedenza. Esci da quell’account, poi controlla l’accesso mostrato qui.",
+      "copy_link_failed": "Impossibile copiare il link. Selezionalo e copialo a mano.",
+      "copy_code": "Copia codice",
+      "copy_code_failed": "Impossibile copiare il codice. Selezionalo e copialo a mano."
     },
     "kiroPrerequisiteGate": {
       "setup_completion_not_recorded": "Il completamento della configurazione non è stato registrato",
@@ -10931,7 +10938,6 @@
       "reveal_copy": "Copia",
       "reveal_note": "Visibile finché non lo nascondi o lasci questa pagina. {{productName}} registra che l’hai visto, mai il valore.",
       "reveal_gone": "Non più disponibile qui: {{productName}} si è riavviato o sono passate 24 ore. Il valore potrebbe essere ancora alla sua origine.",
-      "reveal_denied": "Solo il proprietario della dashboard può mostrare questo valore.",
       "reveal_failed": "Impossibile mostrare il valore. Riprova.",
       "reveal_not_kept": "Questo valore non è stato conservato per mostrarlo qui."
     },
@@ -11657,8 +11663,6 @@
       "copy_failed": "Impossibile copiare. Seleziona il testo nell'app e copialo tu.",
       "more_actions": "Altre azioni"
     },
-    "meetYourMatesIntro": {},
-    "startupVideoModal": {},
     "selectionActions": {
       "apps": "App",
       "apps_hint": "Invia il testo selezionato a un'app",
@@ -13262,7 +13266,14 @@
         "spec_choice_done_resuming": "D’ora in poi {{agent}} usa {{file}}. Avvio di nuovo della sessione. Puoi cambiarlo in seguito con kirocrew agent pin.",
         "spec_choice_done": "D’ora in poi {{agent}} usa {{file}}. Invia di nuovo il messaggio per iniziare. Puoi cambiarlo in seguito con kirocrew agent pin.",
         "spec_choice_failed": "Impossibile salvare la scelta",
-        "hidden_scratch_folder": "La cartella di questa chat era una cartella temporanea di un’esecuzione precedente e non può più essere aperta. La chat ora lavora nella cartella predefinita."
+        "hidden_scratch_folder": "La cartella di questa chat era una cartella temporanea di un’esecuzione precedente e non può più essere aperta. La chat ora lavora nella cartella predefinita.",
+        "copy_details_failed": "Impossibile copiare",
+        "host_sandbox_teammate_retryable": "Questa Crew non è riuscita ad avviare questa chat poco fa. Premi Riprendi per riprovare.",
+        "copy_details_done": "Copiato",
+        "host_sandbox_teammate_unnamed": "Il computer di questa Crew non può avviare chat in questo momento. Chiedi al proprietario della Crew di controllare.",
+        "copy_details": "Copia dettagli",
+        "copy_details_hint": "Copia solo il codice di errore e l’ora",
+        "host_sandbox_teammate_named": "Il computer di questa Crew non può avviare chat in questo momento. Chiedi alla persona su {{owner}} di controllare."
       },
       "folderPanel": {
         "clear_search": "Cancella ricerca",
@@ -14891,7 +14902,8 @@
       "jump_to_new_one": "{{count}} nuovo · Vai in fondo",
       "jump_to_new_other": "{{count}} nuovi · Vai in fondo",
       "jump_to_new_many": "{{count}} nuovi · Vai in fondo",
-      "could_not_repair_images": "Impossibile riparare le immagini"
+      "could_not_repair_images": "Impossibile riparare le immagini",
+      "session_not_on_this_crew": "Quella conversazione non è più in questa Crew."
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -18866,7 +18878,8 @@
       "action_failed": "Azione non riuscita",
       "project_renamed_to": "Progetto rinominato in {{name}}",
       "plan_mode_label": "Modalità di pianificazione",
-      "yaml_workflows_hard_dag": "I workflow YAML aggirano il decompositore LLM — <field/> viene applicato come vincolo DAG rigido."
+      "yaml_workflows_hard_dag": "I workflow YAML aggirano il decompositore LLM — <field/> viene applicato come vincolo DAG rigido.",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "Indietro",
@@ -19631,7 +19644,9 @@
         "what_you_d_get_in_version_plain": "Cosa contiene la {{version}}",
         "what_you_d_get_none": "Non ci sono voci del changelog tra la tua build e questo aggiornamento.",
         "version_label": "Versione",
-        "named_update_available": "{{name}} {{version}} è disponibile."
+        "named_update_available": "{{name}} {{version}} è disponibile.",
+        "tagline_runs_on_host": "Gestione autonoma degli agenti · gira su {{host}} · open source",
+        "tagline_runs_on_crew_host": "Gestione autonoma degli agenti · gira sul computer della Crew · open source"
       },
       "botChannelPanel": {
         "allowed_user_ids": "ID utente consentiti",
@@ -20182,7 +20197,6 @@
         "attach_screenshots": "Allega screenshot",
         "computer_use": "Computer Use",
         "computer_use_lets_the_agent_read_any_app_window": "Il computer use permette all’agente di leggere qualsiasi finestra di un’app e di inviarle clic e pressioni di tasti. La maggior parte dei clic viene consegnata direttamente all’app e non tocca il tuo puntatore, ma l’agente può chiedere di spostare il puntatore reale quando un bersaglio lo richiede. I campi password non vengono mai letti; nient’altro limita quali app può pilotare.",
-        "computer_use_not_available": "L’uso del computer non è disponibile su {{platform}}.",
         "could_not_check": "Verifica non riuscita",
         "could_not_load_computer_use_settings": "Non è stato possibile caricare le impostazioni di Computer Use.",
         "could_not_save_computer_use_settings": "Impossibile salvare le impostazioni dell'uso del computer.",
@@ -20210,7 +20224,14 @@
         "on_windows_keystrokes_take_your_keyboard_focus": "Su Windows, i tasti premuti assumono il focus della tastiera e i clic per coordinate spostano il cursore reale: questa piattaforma non ha un percorso di input per singola app.",
         "the_app_lists_in_computer_use_json_could_not_be": "Non è stato possibile leggere gli elenchi di app in computer_use.json, quindi qui appaiono vuoti. L’agente continua a rifiutare ogni azione che dipende da essi fino a quando il file non è JSON valido.",
         "your_chat_sessions_were_restarted_so_this_takes": "Le tue sessioni di chat sono state riavviate perché questa modifica abbia effetto subito — Kiro legge l’elenco dei suoi strumenti una volta per sessione, quindi una chat aperta non l’avrebbe recepita. I tuoi messaggi sono ancora lì; l’agente rilegge il proprio contesto al tuo prossimo messaggio.",
-        "your_chat_sessions_were_restarted": "Le tue sessioni di chat sono state riavviate. I tuoi messaggi sono ancora lì."
+        "your_chat_sessions_were_restarted": "Le tue sessioni di chat sono state riavviate. I tuoi messaggi sono ancora lì.",
+        "unavailable_on_host": "L’uso del computer non è disponibile sulla macchina che ospita questa Crew ({{os}}).",
+        "os_linux": "Linux",
+        "os_windows": "Windows",
+        "technical_details": "Dettagli tecnici",
+        "unavailable_on_host_other_os": "L’uso del computer non è disponibile sul sistema operativo della macchina che ospita questa Crew.",
+        "driver_failed_on_host": "L’uso del computer non è partito sulla macchina che ospita questa Crew ({{os}}): il driver non si è caricato.",
+        "os_macos": "macOS"
       },
       "crewmatesSection": {
         "reply_threads": "Thread di risposta sui messaggi della chat di un Bot",
@@ -21212,7 +21233,6 @@
         "credential_redaction_read_failed": "Impossibile leggere l’impostazione di oscuramento.",
         "credential_redaction_write_failed": "Impossibile salvare la modifica. {{state}}",
         "credential_redaction_retry": "Riprova",
-        "credential_redaction_owner_only": "Solo il proprietario della dashboard può leggere o modificare questa impostazione.",
         "credential_redaction_still_on": "L’oscuramento è ancora attivo.",
         "credential_redaction_still_off": "L’oscuramento è ancora disattivato.",
         "credential_redaction_ask_agent": "Apri una chat con l’agente su questo errore",
@@ -21232,7 +21252,8 @@
         "rules_count_one": "{{n}} regola",
         "rules_count_many": "{{n}} regole",
         "rules_count_other": "{{n}} regole",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Impostazioni della Crew"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "Associa il cambio di scheda chat a Ctrl+cifra invece di Option+cifra. Option+cifra non cambia chat mentre un campo di testo ha il focus.",
@@ -21256,7 +21277,7 @@
         "auto_generate_skills_from_sessions": "Genera automaticamente skill dalle sessioni",
         "extra_skill_paths": "Percorsi extra delle skill",
         "extra_skill_paths_description": "Cartelle da cui caricare skill aggiuntive, un percorso per riga. Gli spazi attorno a un percorso e le righe vuote vengono ignorati. Le skill trovate lì sono di sola lettura, e una skill nella tua cartella delle skill ha la precedenza se il nome è duplicato. Le modifiche si applicano senza riavvio.",
-        "extra_skill_paths_description_summary": "Un percorso di cartella per riga.",
+        "extra_skill_paths_description_summary": "Un percorso di cartella per riga. Le cartelle sono sul computer che esegue questa Crew.",
         "extra_skill_paths_placeholder": "Una cartella per riga",
         "failed_to_save_extra_skill_paths": "Impossibile salvare i percorsi extra delle skill. Il tuo testo resta nel campo.",
         "failed_to_save_skills_setting": "Impossibile salvare l’impostazione delle skill",
@@ -21765,7 +21786,9 @@
         "recheck": "Controlla di nuovo",
         "language": "Lingua",
         "language_for_spoken_replies": "Lingua delle risposte vocali",
-        "language_provider_default": "Predefinito del provider"
+        "language_provider_default": "Predefinito del provider",
+        "no_speech_engine_on_named_host": "{{host}}, il computer della Crew, non ha un motore vocale integrato. Il proprietario della Crew può installarne uno, oppure puoi scegliere un altro provider.",
+        "no_speech_engine_on_crew_host": "Il computer della Crew non ha un motore vocale integrato. Il proprietario della Crew può installarne uno, oppure puoi scegliere un altro provider."
       },
       "weComPanel": {
         "allow_all_bypass_note": "«Consenti a tutti» è attivo: l’elenco di userid qui sopra viene ignorato. Viene conservato per quando tornerai indietro.",
@@ -22652,7 +22675,6 @@
       "import_refused_text": "Questo file contiene testo che sembra una password o una chiave, quindi non può essere importato.",
       "slug_collision": "Questo Bot condivide il nome breve con «{{name}}», la cui chat lo usa già. Rinominare mantiene il nome breve: elimina «{{self}}» e ricrealo con un nome che abbia un nome breve diverso. Tieni «{{name}}».",
       "thread_open_failed": "Impossibile aprire la chat di questo Bot.",
-      "owner_check_failed": "Impossibile verificare se puoi importare Bot qui, quindi «Importa da file» è nascosto.",
       "thread_owner_only": "Solo il proprietario di questo Bot può chattare con lui.",
       "thread_repair_failed": "Impossibile riconnettere questa chat. Riapri il Bot per riprovare.",
       "title": "Bot",
@@ -24606,7 +24628,50 @@
     "preview_save_failed": "Impossibile salvare l’impostazione della Crew condivisa.",
     "preview_restart_failed": "Impossibile riavviare il gateway.",
     "raised_by": "Avviato da {{name}}",
-    "take_over_keeps_draft": "Prendi il controllo per scrivere. La bozza di {{name}} resta sua."
+    "take_over_keeps_draft": "Prendi il controllo per scrivere. La bozza di {{name}} resta sua.",
+    "hero_shared_ssm": "Condivisa tramite Systems Manager",
+    "identity_shared": "Condivisa",
+    "identity_via_ssm": "{{name}} tramite Systems Manager",
+    "ownerOnly": {
+      "invites": "Solo la persona su {{owner}} può invitare persone o togliere loro l’accesso.",
+      "terminal": "Solo la persona su {{owner}} può usare il Terminale.",
+      "remote_generic": "Solo il proprietario della Crew può gestire le Crew remote da questa Crew.",
+      "channel_row": "Solo il proprietario della Crew può configurarlo",
+      "webhooks": "Solo la persona su {{owner}} può creare o revocare i token webhook.",
+      "channels_generic": "Solo il proprietario della Crew può collegare o modificare un canale di messaggistica. Puoi ancora leggere e inviare tramite quelli collegati.",
+      "secrets_generic": "I segreti li gestisce il proprietario della Crew.",
+      "redaction_generic": "Solo il proprietario della Crew può cambiare l’oscuramento delle credenziali.",
+      "reveal": "Solo la persona su {{owner}} può mostrare questo valore.",
+      "preview_generic": "Solo il proprietario della Crew può attivare o disattivare l’anteprima Shared Crew.",
+      "channels": "Solo la persona su {{owner}} può collegare o modificare un canale di messaggistica. Puoi ancora leggere e inviare tramite quelli collegati.",
+      "cron_secrets": "Solo la persona su {{owner}} può dare a un job pianificato l’accesso ai segreti.",
+      "invites_generic": "Solo il proprietario della Crew può invitare persone o togliere loro l’accesso.",
+      "phone": "Solo la persona su {{owner}} può collegare un telefono a questa Crew.",
+      "admission": "Solo la persona su {{owner}} può cambiare chi può raggiungere questa Crew.",
+      "generic_generic": "Solo il proprietario della Crew può cambiarlo.",
+      "secrets": "I segreti li gestisce la persona su {{owner}}.",
+      "sign_in_link_generic": "Solo il proprietario della Crew può creare link di accesso per questa Crew.",
+      "remote": "Solo la persona su {{owner}} può gestire le Crew remote da questa Crew.",
+      "preview": "Solo la persona su {{owner}} può attivare o disattivare l’anteprima Shared Crew.",
+      "webhooks_generic": "Solo il proprietario della Crew può creare o revocare i token webhook.",
+      "phone_generic": "Solo il proprietario della Crew può collegare un telefono a questa Crew.",
+      "terminal_generic": "Solo il proprietario della Crew può usare il Terminale.",
+      "generic": "Solo la persona su {{owner}} può cambiarlo.",
+      "reveal_generic": "Solo il proprietario della Crew può mostrare questo valore.",
+      "redaction": "Solo la persona su {{owner}} può cambiare l’oscuramento delle credenziali.",
+      "channel_row_generic": "Solo il proprietario della Crew può configurarlo",
+      "admission_generic": "Solo il proprietario della Crew può cambiare chi può raggiungere questa Crew.",
+      "sign_in_link": "Solo la persona su {{owner}} può creare link di accesso per questa Crew.",
+      "cron_secrets_generic": "Solo il proprietario della Crew può dare a un job pianificato l’accesso ai segreti."
+    },
+    "identity_shared_here": "Condivisa · {{n}} qui ora",
+    "identity_via_tailscale": "{{name}} tramite Tailscale",
+    "identity_title": "Quello che invii qui viene registrato come {{name}}.",
+    "group_via_kiro_login": "tramite Kiro Login",
+    "group_via_tailscale": "tramite Tailscale",
+    "group_via_ssm": "tramite Systems Manager",
+    "hero_shared_kiro_login": "Condivisa tramite Kiro Login",
+    "identity_via_kiro_login": "{{name}} tramite Kiro Login"
   },
   "milestone": {
     "crew_mode": {

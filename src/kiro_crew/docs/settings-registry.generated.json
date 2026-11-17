@@ -2088,7 +2088,7 @@
       "label": "Extra skill paths",
       "tab": "skills",
       "route": "/settings/skills?highlight=key%3Askills.extra_paths",
-      "description": "One folder path per line.",
+      "description": "One folder path per line. The folders are on the computer that runs this Crew.",
       "hint": "Folders to load extra skills from, one path per line. Spaces around a path and blank lines are ignored. Skills found there are read-only, and a skill in your own skills folder wins on a duplicate name. Changes apply without a restart.",
       "configKey": "skills.extra_paths"
     },

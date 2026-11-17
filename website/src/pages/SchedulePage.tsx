@@ -65,6 +65,7 @@ import { compareText, fmtDateTimeNumeric, fmtRelative, fmtTime } from '../i18n/f
 import { formatCadence } from '../utils/scheduleCadence'
 import { browserTimeZone, isValidTimeZone, jobZoneCaption } from '../utils/tz'
 import { guideConfirm, guidePick, guidePickControl } from '../uiLocations/targetRegistry'
+import { OwnerOnlyGate, OwnerOnlyOrError } from '../components/OwnerOnlyNotice'
 const RENDER_TZ_STORAGE_KEY = 'kirocrew.schedule.renderTz'
 
 /**
@@ -1558,6 +1559,8 @@ type CronScriptSource = {
 export function JobSecretsPanel({ job, onSaved }: { job: CronJob; onSaved: () => void }) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [failure, setFailure] = useState<unknown>(null) // kept so an owner-only refusal renders as the lock
+  const fail = (e: unknown) => { setFailure(e); setError(e instanceof Error ? e.message : i18nT('pages.schedulePage.failed')) }
   const pending = job.secret_env_pending ?? null
   const active = job.secret_env ?? {}
   // The script the approval would bless, loaded INSIDE the banner and keyed
@@ -1578,10 +1581,9 @@ export function JobSecretsPanel({ job, onSaved }: { job: CronJob; onSaved: () =>
   const grant = useMutation({
     mutationFn: (body: Parameters<typeof api.cronSecretsGrant>[1]) =>
       api.cronSecretsGrant(job.id, body),
-    onMutate: () => setError(null),
+    onMutate: () => { setError(null); setFailure(null) },
     onSuccess: () => onSaved(),
-    onError: (e: unknown) =>
-      setError(e instanceof Error ? e.message : i18nT('pages.schedulePage.failed')),
+    onError: fail,
   })
   const busy = grant.isPending
   const act = (body: Parameters<typeof api.cronSecretsGrant>[1]) => grant.mutate(body)
@@ -1590,11 +1592,12 @@ export function JobSecretsPanel({ job, onSaved }: { job: CronJob; onSaved: () =>
   // same arm-then-confirm gesture the page's Delete already uses.
   const revoke = useArmedDelete(async () => {
     setError(null)
+    setFailure(null)
     try {
       await api.cronSecretsGrant(job.id, { secret_env: {} })
       onSaved()
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : i18nT('pages.schedulePage.failed'))
+      fail(e)
     }
   })
   const revokeArmed = revoke.armedId === job.id
@@ -1729,7 +1732,7 @@ export function JobSecretsPanel({ job, onSaved }: { job: CronJob; onSaved: () =>
           )}
         </div>
       )}
-      <ErrorNotice message={error} askAgent />
+      <OwnerOnlyOrError error={failure} kind="cron_secrets" askAgent><ErrorNotice message={error} askAgent /></OwnerOnlyOrError>
     </div>
   )
 }
@@ -1867,7 +1870,7 @@ function JobDetailDialog({ job, prefill, prefillWrites, agents, defaultAgent, ro
             {/* No hand-off: JobForm draft */}
             <ErrorNotice message={panelError} testId="schedule-job-panel-error" />
             {job?.script && <ScriptSourcePanel jobId={job.id} />}
-            {job && job.script && <JobSecretsPanel job={job} onSaved={onSaved} />}
+            {job && job.script && <OwnerOnlyGate kind="cron_secrets"><JobSecretsPanel job={job} onSaved={onSaved} /></OwnerOnlyGate>}
             {/* The run's persisted `last_error` is an error by origin (the job
                 FAILED), so it takes the shared surface with the 'Last Error'
                 label as its title. `whitespace-pre-wrap` on the notice body

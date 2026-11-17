@@ -5,6 +5,7 @@ import { RefreshCw, Scale, CheckCircle2, AlertCircle, Bug, GitBranch, GitCommitH
 import { Progress } from '@/components/ui/progress'
 import { Card, CardTitle, Btn } from '../../components/ui'
 import { useBranding } from '../../hooks/useBranding'
+import { useCrewHost } from '../../hooks/sharedCrew/useCrewHost'
 import { useAppSelector } from '../../store'
 import { codeBrowserBranchUrl, codeBrowserCommitUrl } from '../../lib/codeBrowser'
 import SegmentedControl from '../../components/SegmentedControl'
@@ -176,6 +177,8 @@ export { AppAutoDownloadSwitch, GatewayAutoUpdateSwitch } from './AboutPanelUpda
 
 export function AboutPanel() {
   const { botName, avatar } = useBranding()
+  // A teammate's Crew does not run on their own machine: the tagline names the host.
+  const crewHost = useCrewHost()
   const gatewayVersion = useAppSelector(s => s.dashboard.status?.version) || ''
   const buildBranch = useAppSelector(s => s.dashboard.status?.branch) || ''
   const buildCommit = useAppSelector(s => s.dashboard.status?.commit) || ''
@@ -912,7 +915,11 @@ export function AboutPanel() {
                     <span className="w-1.5 h-1.5 rounded-full inline-block bg-muted" /> {i18nT('pages.settings.aboutPanel.not_checked_yet')}</span>
               )}
             </div>
-            <div className="text-[12.5px] text-muted mt-1">{i18nT('pages.settings.aboutPanel.autonomous_agent_management_runs_locally_open_so')}</div>
+            <div className="text-[12.5px] text-muted mt-1">{!crewHost.teammate
+              ? i18nT('pages.settings.aboutPanel.autonomous_agent_management_runs_locally_open_so')
+              : crewHost.ownerLabel
+                ? i18nT('pages.settings.aboutPanel.tagline_runs_on_host', { host: crewHost.ownerLabel })
+                : i18nT('pages.settings.aboutPanel.tagline_runs_on_crew_host')}</div>
             {/* The gateway's own line, only when it is not the build the shell
                 badge above names. The branch and commit chips live here in that
                 case — they are gateway stamps, so beside the shell badge they

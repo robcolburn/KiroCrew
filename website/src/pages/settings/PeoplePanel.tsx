@@ -27,11 +27,12 @@ import { capabilityUsable, membershipPointer, principalInitials, principalName, 
 import { SharedAccessSetup } from './SharedAccessSetup'
 import { ConsoleAccess, TeamConfigInvalid } from './PeopleModes'
 import { PeopleAdvanced } from './PeopleAdvanced'
+import { OwnerOnlyNotice, useIsTeammate } from '../../components/OwnerOnlyNotice'
 import { PeopleList, PersonalWaiting, ShareHero, useCanInvite, useOwnerRead } from './PeopleCrew'
 import { InviteEntry } from './TailscaleInvites'
 import { avatarUrl } from '../../api/sharedCrewInvites'
 import { effectiveMode } from '../../api/sharedCrewMode'
-import { useSharedCrewCapabilities, useSharedCrewMode, useSharedCrewPeople } from '../../hooks/sharedCrew/useSharedCrew'
+import { useSharedCrewCapabilities, useSharedCrewMode, useSharedCrewPeople, useViewerIsNotOwner } from '../../hooks/sharedCrew/useSharedCrew'
 import { fmtDateTime, fmtNumber } from '../../i18n/format'
 import { i18nT } from '../../i18n/t'
 
@@ -39,6 +40,7 @@ function sourceLabel(source: PeopleSource): string {
   switch (source) {
     case 'directory': return i18nT('sharedCrew.source_directory')
     case 'session_creator': return i18nT('sharedCrew.source_session_creator')
+    case 'owner': return i18nT('sharedCrew.crew_owner')
     default: return i18nT('sharedCrew.source_observed')
   }
 }
@@ -117,6 +119,10 @@ function PeopleContent({ capabilities, data, modeData }: {
   const pointer = membershipPointer(capabilities.membership_link)
   const canInvite = useCanInvite()
   const ownerRead = useOwnerRead()
+  const { notOwner } = useViewerIsNotOwner()
+  // Inviting and removing people is managing who may reach the Crew, which stays
+  // the machine owner's: a Shared Crew teammate is told who does it.
+  const inviteLock = useIsTeammate() ? <OwnerOnlyNotice kind="invites" /> : null
   // Someone other than the viewer already connected: sharing works, whatever the
   // setup paths say (Tailscale Serve set up by hand, for one).
   const othersSeen = (data?.people ?? []).some(row => !row.is_viewer)
@@ -127,6 +133,7 @@ function PeopleContent({ capabilities, data, modeData }: {
       <div className="flex flex-col gap-4" data-testid="people-personal">
         <SharedAccessSetup capabilities={capabilities} />
         <InviteEntry />
+        {inviteLock}
         <PersonalWaiting />
         {ownerRead && <PeopleAdvanced />}
       </div>
@@ -156,12 +163,13 @@ function PeopleContent({ capabilities, data, modeData }: {
   const adapters = modeData?.adapters ?? capabilities.setup_paths ?? {}
   const rows = data?.people ?? []
   const viewerOwns = ownerRead || rows.some(row => row.is_viewer && row.is_owner)
-  const hero = <ShareHero direct={capabilities.tailnet_direct} tailscale={adapters.tailscale} people={rows} canInvite={canInvite} />
+  const hero = <ShareHero direct={capabilities.tailnet_direct} tailscale={adapters.tailscale} people={rows} canInvite={canInvite} sharingPaths={modeData?.sharing_paths} />
   if (!data || !capabilityUsable(capabilities.attribution)) {
     const unnamed = attributionReason === 'platform_unprovable' || attributionReason === 'daemon_same_user'
     return (
       <div className="flex flex-col gap-4" data-testid="people-network-unattributed">
         {hero}
+        {inviteLock}
         <EmptyState
           icon={<Users size={20} />}
           title={i18nT(unnamed ? 'sharedCrew.people_unnamed_title' : 'sharedCrew.people_unavailable_title')}
@@ -180,11 +188,13 @@ function PeopleContent({ capabilities, data, modeData }: {
   return (
     <div className="flex flex-col gap-4" data-testid="people-panel">
       {hero}
+      {inviteLock}
       <PeopleList
         people={data.people}
         usageAvailable={usageAvailable}
         notes={[
-          !usageAvailable && i18nT('sharedCrew.usage_unavailable'),
+          // The owner's note: a teammate has nothing to do about it.
+          !usageAvailable && !notOwner && i18nT('sharedCrew.usage_unavailable'),
           attributionReason === 'daemon_not_found' && i18nT('sharedCrew.people_daemon_not_found'),
         ].filter((n): n is string => !!n)}
         footer={pointer === 'console' && (

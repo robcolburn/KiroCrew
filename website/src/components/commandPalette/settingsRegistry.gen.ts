@@ -3525,7 +3525,7 @@ export const SETTINGS_REGISTRY: SettingEntry[] =
     "id": "skills.extra-skill-paths",
     "label": "Extra skill paths",
     "labelKey": "pages.settings.skillsPanel.extra_skill_paths",
-    "description": "One folder path per line.",
+    "description": "One folder path per line. The folders are on the computer that runs this Crew.",
     "hint": "Folders to load extra skills from, one path per line. Spaces around a path and blank lines are ignored. Skills found there are read-only, and a skill in your own skills folder wins on a duplicate name. Changes apply without a restart.",
     "tab": "skills",
     "type": "input",

@@ -405,6 +405,30 @@ async def test_me_reports_owner_authorization_separately_from_token_acceptance()
 
 
 @pytest.mark.asyncio
+async def test_me_reports_a_shared_crew_teammate_from_teammate_access() -> None:
+    """``teammate`` is ``teammate_access.is_shared_crew_teammate``'s answer, never set
+    for the machine owner, so the dashboard locks the owner-only surfaces from it."""
+
+    class _State:
+        owner_id = "real-owner"
+
+    def _dashboard_request(user: str) -> web.Request:
+        request = _mk("GET", "/api/auth/me", user=user, app_keys={"state": _State()})
+        request["app"] = ""
+        return request
+
+    with patch("kiro_crew.shared_crew.teammate_access.is_shared_crew_teammate", return_value=True):
+        mate = _body(await h.api_auth_me(_dashboard_request("relay:abc")))
+        owner = _body(await h.api_auth_me(_dashboard_request("real-owner")))
+    assert mate["teammate"] is True and mate["owner_ok"] is False
+    assert owner["teammate"] is False and owner["owner_ok"] is True
+
+    with patch("kiro_crew.shared_crew.teammate_access.is_shared_crew_teammate", return_value=False):
+        stranger = _body(await h.api_auth_me(_dashboard_request("relay:abc")))
+    assert stranger["teammate"] is False
+
+
+@pytest.mark.asyncio
 async def test_me_reads_session_exp_from_the_validated_credential(
     state: RefreshStateManager,
 ) -> None:

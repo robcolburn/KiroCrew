@@ -7746,11 +7746,15 @@
       "refusal_list_generic": "তোমার টিম ক্রু লোড করা যায়নি।",
       "try_again": "আবার চেষ্টা করো",
       "request_id": "রিকোয়েস্ট আইডি: {{id}}",
-      "group_team_crews": "টিম ক্রু",
+      "group_team_crews": "তোমার Kiro অ্যাকাউন্ট থেকে",
       "opens_own_window": "নিজের উইন্ডোতে খোলে",
       "new_crew": "নতুন",
       "seen_not_saved": "তুমি এটা দেখেছ, সেটা সংরক্ষণ করা যায়নি। এটি আবার নতুন হিসেবে দেখাবে।",
-      "open_crew_failed": "{{name}} খোলা যায়নি।"
+      "open_crew_failed": "{{name}} খোলা যায়নি।",
+      "connect": "সংযোগ করো",
+      "chip_title": "{{name}} (টিম Crew)",
+      "close_pane": "{{name}} বন্ধ করো",
+      "connect_crew": "{{name}}-এ সংযোগ করো"
     },
     "instancesViewport": {
       "connecting": "কানেক্ট হচ্ছে…",
@@ -7988,7 +7992,10 @@
       "pending_cancel_unsettled": "সাইন ইন হয়েছে, কিন্তু এখানে শুরু করা সাইন-ইনটি বাতিল করা যায়নি। সময় শেষ না হওয়া পর্যন্ত এটি খোলা থাকবে।",
       "card_intro": "শুধু Kiro Agent ব্যাকএন্ড এটি ব্যবহার করে: এর এজেন্টগুলি এই Kiro অ্যাকাউন্ট হিসেবে চলে। Kiro CLI নিজের kiro-cli লগইনই রাখে, তাই এখানে সাইন ইন করলে সেটি বদলায় না।",
       "previous_sign_in_not_removed": "সাইন ইন হয়েছে, কিন্তু আগের সাইন-ইন সরানো যায়নি",
-      "previous_sign_in_not_removed_body": "নতুন অ্যাকাউন্ট সংরক্ষিত হয়েছে, কিন্তু আপনি যেটি থেকে বদলাচ্ছিলেন সেটি এখনও আছে এবং সেটিই অগ্রাধিকার পায়। সেটি থেকে সাইন আউট করুন, তারপর এখানে দেখানো সাইন-ইন পরীক্ষা করুন।"
+      "previous_sign_in_not_removed_body": "নতুন অ্যাকাউন্ট সংরক্ষিত হয়েছে, কিন্তু আপনি যেটি থেকে বদলাচ্ছিলেন সেটি এখনও আছে এবং সেটিই অগ্রাধিকার পায়। সেটি থেকে সাইন আউট করুন, তারপর এখানে দেখানো সাইন-ইন পরীক্ষা করুন।",
+      "copy_link_failed": "লিংক কপি করা গেল না। এটা সিলেক্ট করে নিজে কপি করো।",
+      "copy_code": "কোড কপি করো",
+      "copy_code_failed": "কোড কপি করা গেল না। এটা সিলেক্ট করে নিজে কপি করো।"
     },
     "kiroPrerequisiteGate": {
       "setup_completion_not_recorded": "সেটআপ সম্পূর্ণ হওয়ার তথ্য রেকর্ড করা হয়নি",
@@ -10689,7 +10696,6 @@
       "reveal_copy": "কপি করো",
       "reveal_note": "তুমি লুকানো বা এই পেজ ছেড়ে যাওয়া পর্যন্ত দেখা যাবে। {{productName}} শুধু লেখে যে তুমি এটি দেখেছ, মান কখনো নয়।",
       "reveal_gone": "এখানে আর পাওয়া যাচ্ছে না: {{productName}} রিস্টার্ট হয়েছে বা 24 ঘণ্টা কেটে গেছে। মানটি হয়তো এখনও তার উৎসে আছে।",
-      "reveal_denied": "শুধু ড্যাশবোর্ডের মালিক এই মান দেখাতে পারেন।",
       "reveal_failed": "মান দেখানো যায়নি। আবার চেষ্টা করো।",
       "reveal_not_kept": "এই মান এখানে দেখানোর জন্য রাখা হয়নি।"
     },
@@ -11399,8 +11405,6 @@
       "copy_failed": "কপি করা যায়নি। অ্যাপে লেখাটি নির্বাচন করে নিজে কপি করো।",
       "more_actions": "আরও কাজ"
     },
-    "meetYourMatesIntro": {},
-    "startupVideoModal": {},
     "selectionActions": {
       "apps": "অ্যাপ",
       "apps_hint": "নির্বাচিত লেখা একটি অ্যাপে পাঠান",
@@ -12980,7 +12984,14 @@
         "spec_choice_done_resuming": "এখন থেকে {{agent}}-এর জন্য {{file}} ব্যবহার হবে। সেশন আবার শুরু হচ্ছে। পরে kirocrew agent pin দিয়ে বদলাতে পারো।",
         "spec_choice_done": "এখন থেকে {{agent}}-এর জন্য {{file}} ব্যবহার হবে। শুরু করতে বার্তাটি আবার পাঠাও। পরে kirocrew agent pin দিয়ে বদলাতে পারো।",
         "spec_choice_failed": "পছন্দ সংরক্ষণ করা যায়নি",
-        "hidden_scratch_folder": "এই চ্যাটের ফোল্ডারটি আগের একবার চালানোর সময়ের একটি অস্থায়ী ফোল্ডার ছিল এবং এখন আর খোলা যায় না। এখন এই চ্যাট ডিফল্ট ফোল্ডারে কাজ করে।"
+        "hidden_scratch_folder": "এই চ্যাটের ফোল্ডারটি আগের একবার চালানোর সময়ের একটি অস্থায়ী ফোল্ডার ছিল এবং এখন আর খোলা যায় না। এখন এই চ্যাট ডিফল্ট ফোল্ডারে কাজ করে।",
+        "copy_details_failed": "কপি করা গেল না",
+        "host_sandbox_teammate_retryable": "এই Crew এইমাত্র এই চ্যাটটা শুরু করতে পারল না। আবার চেষ্টা করতে “পুনরায় শুরু করো” চাপো।",
+        "copy_details_done": "কপি হয়েছে",
+        "host_sandbox_teammate_unnamed": "এই Crew-এর কম্পিউটার এখন চ্যাট শুরু করতে পারছে না। Crew-এর মালিককে এটা দেখতে বলো।",
+        "copy_details": "বিস্তারিত কপি করো",
+        "copy_details_hint": "শুধু এরর কোড আর সময় কপি করে",
+        "host_sandbox_teammate_named": "এই Crew-এর কম্পিউটার এখন চ্যাট শুরু করতে পারছে না। {{owner}}-এর মানুষটিকে এটা দেখতে বলো।"
       },
       "folderPanel": {
         "clear_search": "অনুসন্ধান মুছুন",
@@ -14549,7 +14560,8 @@
       "your_crewmate": "তোমার Bot",
       "jump_to_new_one": "{{count}}টি নতুন · সর্বশেষে যান",
       "jump_to_new_other": "{{count}}টি নতুন · সর্বশেষে যান",
-      "could_not_repair_images": "ছবিগুলো মেরামত করা যায়নি"
+      "could_not_repair_images": "ছবিগুলো মেরামত করা যায়নি",
+      "session_not_on_this_crew": "সেই কথোপকথন আর এই Crew-এ নেই।"
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -18385,7 +18397,8 @@
       "action_failed": "কাজটি ব্যর্থ হয়েছে",
       "project_renamed_to": "প্রকল্পের নাম পরিবর্তন করে {{name}} করা হয়েছে",
       "plan_mode_label": "পরিকল্পনা মোড",
-      "yaml_workflows_hard_dag": "YAML ওয়ার্কফ্লো LLM ডিকম্পোজার এড়িয়ে যায় — <field/> কঠোর DAG শর্ত হিসেবে বলবৎ হয়।"
+      "yaml_workflows_hard_dag": "YAML ওয়ার্কফ্লো LLM ডিকম্পোজার এড়িয়ে যায় — <field/> কঠোর DAG শর্ত হিসেবে বলবৎ হয়।",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "ফিরুন",
@@ -19126,7 +19139,9 @@
         "what_you_d_get_in_version_plain": "{{version}}-এ কী আছে",
         "what_you_d_get_none": "তোমার বিল্ড আর এই আপডেটের মধ্যে কোনো চেঞ্জলগ এন্ট্রি নেই।",
         "version_label": "সংস্করণ",
-        "named_update_available": "{{name}} {{version}} পাওয়া যাচ্ছে।"
+        "named_update_available": "{{name}} {{version}} পাওয়া যাচ্ছে।",
+        "tagline_runs_on_host": "স্বয়ংক্রিয় এজেন্ট ব্যবস্থাপনা · {{host}}-এ চলে · ওপেন সোর্স",
+        "tagline_runs_on_crew_host": "স্বয়ংক্রিয় এজেন্ট ব্যবস্থাপনা · Crew-এর কম্পিউটারে চলে · ওপেন সোর্স"
       },
       "botChannelPanel": {
         "allowed_user_ids": "অনুমোদিত ইউজার ID",
@@ -19668,7 +19683,6 @@
         "attach_screenshots": "স্ক্রিনশট জুড়ে দাও",
         "computer_use": "Computer Use",
         "computer_use_lets_the_agent_read_any_app_window": "কম্পিউটার ব্যবহার এজেন্টকে যেকোনো অ্যাপ উইন্ডো পড়তে আর তাতে ক্লিক ও কীস্ট্রোক পাঠাতে দেয়। বেশিরভাগ ক্লিক সরাসরি অ্যাপেই পৌঁছে যায়, তোমার পয়েন্টারে হাত পড়ে না, তবে দরকার হলে এজেন্ট আসল পয়েন্টার সরানোর অনুমতি চাইতে পারে। পাসওয়ার্ড ফিল্ড কখনোই পড়া হয় না; কোন কোন অ্যাপ এটি চালাতে পারবে তার আর কোনো সীমা নেই।",
-        "computer_use_not_available": "{{platform}}-এ কম্পিউটার ব্যবহার উপলব্ধ নয়।",
         "could_not_check": "যাচাই করা গেল না",
         "could_not_load_computer_use_settings": "Computer Use-এর সেটিংস লোড করা যায়নি।",
         "could_not_save_computer_use_settings": "কম্পিউটার ব্যবহারের সেটিংস সংরক্ষণ করা যায়নি।",
@@ -19696,7 +19710,14 @@
         "on_windows_keystrokes_take_your_keyboard_focus": "Windows-এ কীস্ট্রোক আপনার কীবোর্ড ফোকাস নিয়ে নেয় এবং কোঅর্ডিনেট ক্লিক আপনার আসল কার্সার সরায় — এই প্ল্যাটফর্মে অ্যাপ-ভিত্তিক ইনপুট পথ নেই।",
         "the_app_lists_in_computer_use_json_could_not_be": "computer_use.json-এ থাকা অ্যাপের তালিকা পড়া যায়নি, তাই এখানে খালি দেখানো হচ্ছে। ফাইলটি বৈধ JSON না হওয়া পর্যন্ত এজেন্ট ওই তালিকার উপর নির্ভরশীল প্রতিটি কাজ করতেই অস্বীকার করবে।",
         "your_chat_sessions_were_restarted_so_this_takes": "তোমার চ্যাট সেশনগুলো আবার চালু করা হয়েছে যাতে এটা সঙ্গে সঙ্গেই কাজ করে — Kiro প্রতি সেশনে একবারই তার টুলের তালিকা পড়ে, তাই খোলা চ্যাট এটা টের পেত না। তোমার মেসেজ সবই আছে; পরের মেসেজেই এজেন্ট তার কনটেক্সট আবার পড়ে নেবে।",
-        "your_chat_sessions_were_restarted": "তোমার চ্যাট সেশনগুলো আবার চালু করা হয়েছে। তোমার বার্তাগুলো এখনও আছে।"
+        "your_chat_sessions_were_restarted": "তোমার চ্যাট সেশনগুলো আবার চালু করা হয়েছে। তোমার বার্তাগুলো এখনও আছে।",
+        "unavailable_on_host": "এই Crew চালানো মেশিনে ({{os}}) কম্পিউটার ব্যবহার পাওয়া যায় না।",
+        "os_linux": "Linux",
+        "os_windows": "Windows",
+        "technical_details": "প্রযুক্তিগত বিবরণ",
+        "unavailable_on_host_other_os": "এই Crew চালানো মেশিনের অপারেটিং সিস্টেমে কম্পিউটার ব্যবহার পাওয়া যায় না।",
+        "driver_failed_on_host": "এই Crew চালানো মেশিনে ({{os}}) কম্পিউটার ব্যবহার চালু হলো না: ড্রাইভার লোড হয়নি।",
+        "os_macos": "macOS"
       },
       "crewmatesSection": {
         "reply_threads": "Bot-এর চ্যাটের বার্তায় উত্তর থ্রেড",
@@ -20683,7 +20704,6 @@
         "credential_redaction_read_failed": "গোপন করার সেটিং পড়া যায়নি।",
         "credential_redaction_write_failed": "পরিবর্তন সংরক্ষণ করা যায়নি। {{state}}",
         "credential_redaction_retry": "আবার চেষ্টা করো",
-        "credential_redaction_owner_only": "শুধু ড্যাশবোর্ডের মালিকই এই সেটিং পড়তে বা বদলাতে পারে।",
         "credential_redaction_still_on": "গোপন করা এখনও চালু আছে।",
         "credential_redaction_still_off": "গোপন করা এখনও বন্ধ আছে।",
         "credential_redaction_ask_agent": "এই ত্রুটি নিয়ে এজেন্টের সঙ্গে চ্যাট খোলো",
@@ -20700,7 +20720,8 @@
         "categories_count_other": "{{n}}টি বিভাগ",
         "rules_count_one": "{{n}}টি নিয়ম",
         "rules_count_other": "{{n}}টি নিয়ম",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Crew সেটিংস"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "চ্যাট-ট্যাব পরিবর্তনকে Option+সংখ্যার বদলে Ctrl+সংখ্যার সঙ্গে বাঁধুন। কোনো টেক্সট ফিল্ডে ফোকাস থাকলে Option+সংখ্যা চ্যাট পরিবর্তন করে না।",
@@ -20724,7 +20745,7 @@
         "auto_generate_skills_from_sessions": "সেশন থেকে স্বয়ংক্রিয়ভাবে স্কিল তৈরি করুন",
         "extra_skill_paths": "অতিরিক্ত স্কিল পাথ",
         "extra_skill_paths_description": "যেসব ফোল্ডার থেকে অতিরিক্ত স্কিল লোড হবে, প্রতি লাইনে একটি পাথ। পাথের আশেপাশের স্পেস ও ফাঁকা লাইন উপেক্ষা করা হয়। সেখানে পাওয়া স্কিল শুধু পড়ার জন্য, আর নাম মিলে গেলে তোমার নিজের স্কিল ফোল্ডারের স্কিল অগ্রাধিকার পায়। পরিবর্তন রিস্টার্ট ছাড়াই কার্যকর হয়।",
-        "extra_skill_paths_description_summary": "প্রতি লাইনে একটি ফোল্ডার পাথ।",
+        "extra_skill_paths_description_summary": "প্রতি লাইনে একটি ফোল্ডার পাথ। ফোল্ডারগুলো সেই কম্পিউটারে আছে যেটা এই Crew চালায়।",
         "extra_skill_paths_placeholder": "প্রতি লাইনে একটি ফোল্ডার",
         "failed_to_save_extra_skill_paths": "অতিরিক্ত স্কিল পাথ সংরক্ষণ করা যায়নি। তোমার লেখা ফিল্ডেই আছে।",
         "failed_to_save_skills_setting": "স্কিল সেটিং সেভ করা যায়নি",
@@ -21233,7 +21254,9 @@
         "recheck": "আবার পরীক্ষা করুন",
         "language": "ভাষা",
         "language_for_spoken_replies": "কথিত উত্তরের ভাষা",
-        "language_provider_default": "প্রদানকারীর ডিফল্ট"
+        "language_provider_default": "প্রদানকারীর ডিফল্ট",
+        "no_speech_engine_on_named_host": "{{host}}, মানে Crew-এর কম্পিউটারে কোনো বিল্ট-ইন স্পিচ ইঞ্জিন নেই। Crew-এর মালিক সেখানে একটা ইনস্টল করতে পারেন, অথবা তুমি অন্য প্রোভাইডার বেছে নাও।",
+        "no_speech_engine_on_crew_host": "Crew-এর কম্পিউটারে কোনো বিল্ট-ইন স্পিচ ইঞ্জিন নেই। Crew-এর মালিক সেখানে একটা ইনস্টল করতে পারেন, অথবা তুমি অন্য প্রোভাইডার বেছে নাও।"
       },
       "weComPanel": {
         "allow_all_bypass_note": "সবাইকে অনুমতি চালু আছে: উপরের userid তালিকা এড়িয়ে যাওয়া হচ্ছে। আবার ফিরে গেলে কাজে লাগবে বলে তালিকাটা রেখে দেওয়া হয়েছে।",
@@ -22106,7 +22129,6 @@
       "import_refused_text": "এই ফাইলে পাসওয়ার্ড বা কী-এর মতো দেখতে লেখা আছে, তাই আমদানি করা যাবে না।",
       "slug_collision": "এই Bot-এর সংক্ষিপ্ত নাম \"{{name}}\"-এর সাথে মিলে যায়, যার চ্যাট ইতিমধ্যে এটি ব্যবহার করছে। নাম পরিবর্তন করলে সংক্ষিপ্ত নাম বদলায় না, তাই \"{{self}}\" মুছে এমন নামে আবার তৈরি করো যার সংক্ষিপ্ত নাম আলাদা। \"{{name}}\" রেখে দাও।",
       "thread_open_failed": "এই Bot-এর চ্যাট খোলা যায়নি।",
-      "owner_check_failed": "এখানে তুমি Bot ইমপোর্ট করতে পারো কি না তা যাচাই করা যায়নি, তাই ফাইল থেকে ইমপোর্ট লুকানো আছে।",
       "thread_owner_only": "এই Bot-এর সঙ্গে শুধু এর মালিক চ্যাট করতে পারে।",
       "thread_repair_failed": "এই চ্যাটটি পুনরায় সংযুক্ত করা যায়নি। আবার চেষ্টা করতে Bot-টিকে পুনরায় খোলো।",
       "title": "Bot",
@@ -24043,7 +24065,50 @@
     "preview_save_failed": "শেয়ার্ড Crew সেটিং সংরক্ষণ করা যায়নি।",
     "preview_restart_failed": "গেটওয়ে রিস্টার্ট করা যায়নি।",
     "raised_by": "{{name}} শুরু করেছেন",
-    "take_over_keeps_draft": "লিখতে নিজের হাতে নাও। {{name}}-এর খসড়া তাঁর কাছেই থাকবে।"
+    "take_over_keeps_draft": "লিখতে নিজের হাতে নাও। {{name}}-এর খসড়া তাঁর কাছেই থাকবে।",
+    "hero_shared_ssm": "Systems Manager দিয়ে শেয়ার করা",
+    "identity_shared": "শেয়ার করা",
+    "identity_via_ssm": "{{name}} (Systems Manager দিয়ে)",
+    "ownerOnly": {
+      "invites": "কাউকে আমন্ত্রণ জানানো বা অ্যাক্সেস সরানো শুধু {{owner}}-এর মানুষটি পারেন।",
+      "terminal": "টার্মিনাল শুধু {{owner}}-এর মানুষটি ব্যবহার করতে পারেন।",
+      "remote_generic": "এই Crew থেকে রিমোট Crew শুধু Crew-এর মালিক সামলাতে পারেন।",
+      "channel_row": "এটা শুধু Crew-এর মালিক সেট করতে পারেন",
+      "webhooks": "ওয়েবহুক টোকেন শুধু {{owner}}-এর মানুষটি বানাতে বা বাতিল করতে পারেন।",
+      "channels_generic": "মেসেজিং চ্যানেল শুধু Crew-এর মালিক যোগ বা বদলাতে পারেন। যুক্ত চ্যানেল দিয়ে তুমি পড়তে আর পাঠাতে পারবে।",
+      "secrets_generic": "সিক্রেট Crew-এর মালিক সামলান।",
+      "redaction_generic": "ক্রেডেনশিয়াল লুকানোর সেটিং শুধু Crew-এর মালিক বদলাতে পারেন।",
+      "reveal": "এই মান শুধু {{owner}}-এর মানুষটি দেখাতে পারেন।",
+      "preview_generic": "Shared Crew প্রিভিউ শুধু Crew-এর মালিক চালু বা বন্ধ করতে পারেন।",
+      "channels": "মেসেজিং চ্যানেল শুধু {{owner}}-এর মানুষটি যোগ বা বদলাতে পারেন। যুক্ত চ্যানেল দিয়ে তুমি পড়তে আর পাঠাতে পারবে।",
+      "cron_secrets": "নির্ধারিত কাজকে সিক্রেটের অ্যাক্সেস শুধু {{owner}}-এর মানুষটি দিতে পারেন।",
+      "invites_generic": "কাউকে আমন্ত্রণ জানানো বা অ্যাক্সেস সরানো শুধু Crew-এর মালিক পারেন।",
+      "phone": "এই Crew-এ ফোন শুধু {{owner}}-এর মানুষটি যোগ করতে পারেন।",
+      "admission": "এই Crew-এ কে আসতে পারবে তা শুধু {{owner}}-এর মানুষটি বদলাতে পারেন।",
+      "generic_generic": "এটা শুধু Crew-এর মালিক বদলাতে পারেন।",
+      "secrets": "সিক্রেট {{owner}}-এর মানুষটি সামলান।",
+      "sign_in_link_generic": "এই Crew-এর সাইন-ইন লিংক শুধু Crew-এর মালিক বানাতে পারেন।",
+      "remote": "এই Crew থেকে রিমোট Crew শুধু {{owner}}-এর মানুষটি সামলাতে পারেন।",
+      "preview": "Shared Crew প্রিভিউ শুধু {{owner}}-এর মানুষটি চালু বা বন্ধ করতে পারেন।",
+      "webhooks_generic": "ওয়েবহুক টোকেন শুধু Crew-এর মালিক বানাতে বা বাতিল করতে পারেন।",
+      "phone_generic": "এই Crew-এ ফোন শুধু Crew-এর মালিক যোগ করতে পারেন।",
+      "terminal_generic": "টার্মিনাল শুধু Crew-এর মালিক ব্যবহার করতে পারেন।",
+      "generic": "এটা শুধু {{owner}}-এর মানুষটি বদলাতে পারেন।",
+      "reveal_generic": "এই মান শুধু Crew-এর মালিক দেখাতে পারেন।",
+      "redaction": "ক্রেডেনশিয়াল লুকানোর সেটিং শুধু {{owner}}-এর মানুষটি বদলাতে পারেন।",
+      "channel_row_generic": "এটা শুধু Crew-এর মালিক সেট করতে পারেন",
+      "admission_generic": "এই Crew-এ কে আসতে পারবে তা শুধু Crew-এর মালিক বদলাতে পারেন।",
+      "sign_in_link": "এই Crew-এর সাইন-ইন লিংক শুধু {{owner}}-এর মানুষটি বানাতে পারেন।",
+      "cron_secrets_generic": "নির্ধারিত কাজকে সিক্রেটের অ্যাক্সেস শুধু Crew-এর মালিক দিতে পারেন।"
+    },
+    "identity_shared_here": "শেয়ার করা · এখন {{n}} জন",
+    "identity_via_tailscale": "{{name}} (Tailscale দিয়ে)",
+    "identity_title": "তুমি এখানে যা পাঠাও তা {{name}} নামে লেখা থাকে।",
+    "group_via_kiro_login": "Kiro Login দিয়ে",
+    "group_via_tailscale": "Tailscale দিয়ে",
+    "group_via_ssm": "Systems Manager দিয়ে",
+    "hero_shared_kiro_login": "Kiro Login দিয়ে শেয়ার করা",
+    "identity_via_kiro_login": "{{name}} (Kiro Login দিয়ে)"
   },
   "milestones": {
     "intro_video_watch": "দেখো",

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { api, type SessionEnvironmentStartStage } from '../api/client'
-import { ApiError, apiErrorCode } from '../api/apiError'
+import { OWNER_GATE_REFUSAL_CODES, isOwnerOnlyRefusal } from '../api/apiError'
 import { fmtElapsed } from '../i18n/format'
 
 /* The slot-environment query and the hooks other surfaces read it through.
@@ -26,19 +26,13 @@ function stageText(t: (key: string) => string, stage: SessionEnvironmentStartSta
 
 export const slotEnvironmentQueryKey = (slot: string) => ['slot-environment', slot] as const
 
-/** The read's plain non-owner refusal (a Shared Crew guest): the same answer on
- *  every attempt, and read as "this chat runs here". */
-export function isOwnerOnlyRefusal(error: unknown): boolean {
-  return error instanceof ApiError && error.status === 403 && apiErrorCode(error) === 'owner_only'
-}
-
 const SLOT_ENVIRONMENT_RETRIES = 2
 
 /** Every reader of the shared query retries alike: whichever mounts first sets
  *  the fetch's options, and one failed read must not replace a local chat's Files.
  *  The `owner_only` refusal is final, so it is never retried. */
 export const SLOT_ENVIRONMENT_RETRY = {
-  retry: (failureCount: number, error: Error) => failureCount < SLOT_ENVIRONMENT_RETRIES && !isOwnerOnlyRefusal(error),
+  retry: (failureCount: number, error: Error) => failureCount < SLOT_ENVIRONMENT_RETRIES && !isOwnerOnlyRefusal(error, OWNER_GATE_REFUSAL_CODES),
   retryDelay: 250,
 } as const
 
@@ -62,7 +56,7 @@ export function useSlotEnvironmentPlacement(slot: string | null | undefined) {
   const match = id ? data?.profiles?.find((p) => p.id === id) : undefined
   // A caller the read refuses as not the owner cannot bind chats, so for it every
   // chat runs here, as on main; a retry would meet the same refusal.
-  const ownerOnly = isOwnerOnlyRefusal(error)
+  const ownerOnly = isOwnerOnlyRefusal(error, OWNER_GATE_REFUSAL_CODES)
   const remote = useMemo<RemoteEnvironment | null | undefined>(() => {
     // No chat (the active one was just closed): nothing can be remote.
     if (!slot) return null

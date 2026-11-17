@@ -775,7 +775,7 @@ test("pane: close takes its views off the window, clears the partition, runs onc
   assert.strictEqual(again.handle.isClosed(), true);
 });
 
-test("pane: only main's IPC opens it, and no dashboard code calls it yet, so the window stays the only way a Crew opens", () => {
+test("pane: only main's IPC opens it, and only the dashboard's pane bridge steers it", () => {
   const fs = require("node:fs");
   const path = require("node:path");
   const callers = [];
@@ -800,7 +800,8 @@ test("pane: only main's IPC opens it, and no dashboard code calls it yet, so the
   const users = callers.filter((f) => !/\.test\.tsx?$/.test(f)
     && paneCalls.test(fs.readFileSync(path.join(dashboard, f), "utf8")));
   assert.ok(callers.length > 0, "the scan finds the dashboard's relayCrewAPI users");
-  assert.deepStrictEqual(users, []);
+  // One module owns the pane calls, so the main-window gate has one caller to read.
+  assert.deepStrictEqual(users, [path.join("lib", "relayCrewPaneBridge.ts")]);
 });
 
 test("window and pane: the handle and the attached Crew's log lines name the Crew", () => {

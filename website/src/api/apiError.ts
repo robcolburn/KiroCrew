@@ -105,6 +105,37 @@ export const isPermissionRefusal = (e: unknown): boolean => {
 }
 
 /**
+ * Refusal codes that mean "this stays the machine owner's": an owner gate's
+ * `owner_only` (`handlers/_shared_access.py`, the admission config keys, invites,
+ * mobile setup) and the relay's route limits a teammate is also held to
+ * (`kiro_relay/limits.py`: local tokens and secrets, shutdown).
+ * `test/test_owner_only_ui_pins.py` pins this list to the backend's codes.
+ */
+export const OWNER_ONLY_REFUSAL_CODES: ReadonlySet<string> = new Set(['owner_only', 'relay_local_credential', 'relay_shutdown_refused'])
+
+/**
+ * The owner gate's own `owner_only` code alone. A reader passes it to
+ * {@link isOwnerOnlyRefusal} when only the owner gate's answer means what it acts
+ * on: the slot-environment read takes that answer as "this chat runs here", and
+ * Resume all names the owner gate in its notice.
+ */
+export const OWNER_GATE_REFUSAL_CODES: ReadonlySet<string> = new Set(['owner_only'])
+
+/**
+ * True for a 403 that says the call is the owner's alone. Rendered as the
+ * owner-only lock (`OwnerOnlyOrError`), never as an error with a retry or an
+ * agent hand-off, so a route the backend makes owner-only later reads locked
+ * without a frontend change. A session-expiry 403 is not one. `codes` narrows
+ * which refusal codes count; it defaults to every owner-only code.
+ */
+export const isOwnerOnlyRefusal = (e: unknown, codes: ReadonlySet<string> = OWNER_ONLY_REFUSAL_CODES): boolean => {
+  if (typeof e !== 'object' || e === null) return false
+  const { status, body, authRequired } = e as { status?: unknown; body?: unknown; authRequired?: unknown }
+  if (status !== 403 || authRequired === true || typeof body !== 'string') return false
+  return codes.has(errorBodyCode(body))
+}
+
+/**
  * The `code` a raw refusal body names, or `''`. The body-level half of
  * {@link apiErrorCode}, for readers that run before an ApiError exists --
  * `friendlyErrText` builds the ApiError's message from the raw body.

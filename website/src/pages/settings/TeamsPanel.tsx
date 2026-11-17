@@ -7,6 +7,7 @@ import { SettingsSection, SettingsCard, SettingsInput, SettingsToggle } from '..
 import { SecretField } from '../../components/SecretField'
 import { Btn } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyOrError } from '../../components/OwnerOnlyNotice'
 import { TagListEditor } from './SlackPanel'
 import { api, type TeamsConfigData, type TeamsConfigSave } from '../../api/client'
 
@@ -602,7 +603,7 @@ export function TeamsPanel() {
             unsaved `draft` are exactly what a failed save did not store — the
             hand-off unmounts this panel and would lose them. Same shape as
             SlackPanel's save row. */}
-        <ErrorNotice message={error} variant="inline" />
+        <OwnerOnlyOrError error={saveMut.error} kind="channels"><ErrorNotice message={error} variant="inline" /></OwnerOnlyOrError>
       </div>}
     </>
   )

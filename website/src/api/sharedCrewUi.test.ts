@@ -18,6 +18,8 @@ import {
   principalName,
   heldLinks,
   waitingInvites,
+  groupPeopleByPath,
+  isHereNow,
   type PeopleRow,
 } from './sharedCrewUi'
 import type { TailscaleInvite } from './sharedCrewInvites'
@@ -299,5 +301,49 @@ describe('heldLinks: a link stays removable until its person is a member', () =>
 
   it('never lists an email invite', () => {
     expect(heldLinks([], [link({ kind: 'email', email: 'a@example.test' })])).toEqual([])
+  })
+})
+
+describe('groupPeopleByPath', () => {
+  const at = (id: string, over: Partial<PeopleRow> = {}): PeopleRow => ({
+    principal: { id, kind: 'human', display: { name: id, login: '', captured_at: null } }, sources: ['observed'], ...over,
+  })
+
+  it('stays flat for an older gateway that names no path', () => {
+    expect(groupPeopleByPath([at('a'), at('b')])).toBeNull()
+  })
+
+  it('leads with the owner, then groups by path in a fixed order, unknown as unattributed', () => {
+    const rows = [
+      at('ssm1', { provenance: 'ssm_invite' }),
+      at('relay1', { provenance: 'kiro_relay' }),
+      at('owner', { provenance: 'local_operator', is_owner: true, sources: ['owner'] }),
+      at('ts1', { provenance: 'tailscale_listener' }),
+      at('odd', { provenance: 'none' }),
+      at('relay2', { provenance: 'kiro_relay' }),
+    ]
+    const grouped = groupPeopleByPath(rows)
+    expect(grouped?.owner.map(r => r.principal.id)).toEqual(['owner'])
+    expect(grouped?.groups.map(g => [g.key, g.rows.map(r => r.principal.id)])).toEqual([
+      ['kiro_login', ['relay1', 'relay2']],
+      ['tailscale', ['ts1']],
+      ['ssm', ['ssm1']],
+      ['unattributed', ['odd']],
+    ])
+  })
+
+  it('keeps an owner who came in over a path with the owner, not the path', () => {
+    const grouped = groupPeopleByPath([at('owner', { provenance: 'kiro_relay', is_owner: true }), at('t', { provenance: 'kiro_relay' })])
+    expect(grouped?.owner.map(r => r.principal.id)).toEqual(['owner'])
+    expect(grouped?.groups).toEqual([{ key: 'kiro_login', rows: [expect.objectContaining({ principal: expect.objectContaining({ id: 't' }) })] }])
+  })
+})
+
+describe('isHereNow', () => {
+  it('counts an open tab or the viewer', () => {
+    const base: PeopleRow = { principal: { id: 'x', kind: 'human', display: { name: 'x', login: '', captured_at: null } }, sources: ['observed'] }
+    expect(isHereNow(base)).toBe(false)
+    expect(isHereNow({ ...base, is_viewer: true })).toBe(true)
+    expect(isHereNow({ ...base, live: { activity: 'idle', session_key: '', session_title: '' } })).toBe(true)
   })
 })

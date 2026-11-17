@@ -17,6 +17,12 @@
  * embedded header can render the instance switcher inline — exactly like the
  * local tab — instead of the parent stacking a second standalone strip on top
  * of the pane (option B). It is null in the top-level (non-embedded) dashboard.
+ *
+ * `relayPanes` are the Team Crews the desktop app shows as panes in this window,
+ * below the local top bar (useRelayCrewPane). `relayActive` is the one on screen,
+ * or null. A Team Crew pane is not an `activeId`: it sits under the LOCAL header,
+ * so `activeId` stays null while one is on screen, and any `setActiveId` brings
+ * Local or that SSH Crew forward instead.
  */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
@@ -202,6 +208,12 @@ const sameLaunchDraft = (a: CrewLaunchDraft | null, b: CrewLaunchDraft | null): 
         && a.identity.start_url === b.identity.start_url
         && a.identity.region === b.identity.region)))
 
+/** One Team Crew open as a pane in this window, as its top-bar chip names it. */
+export interface RelayPaneTab {
+  endpointId: string
+  name: string
+}
+
 interface InstancesState {
   warm: Record<string, WarmConn>
   activeId: string | null
@@ -223,6 +235,16 @@ interface InstancesState {
   pendingPaneSlot: PendingPaneSlot | null
   host: HostModel | null
   crewForms: CrewFormState
+  /** Optional because tests preload partial slices. */
+  relayPanes?: RelayPaneTab[]
+  relayActive?: string | null
+}
+
+/** Bring the local header forward: what `setActiveId(null)` does to the SSH side. */
+function leaveRemote(state: InstancesState) {
+  if (state.activeId && state.connectError) delete state.connectError[state.activeId]
+  state.activeId = null
+  state.pendingPaneSlot = null
 }
 
 const initialState: InstancesState = {
@@ -279,6 +301,8 @@ const instancesSlice = createSlice({
         delete state.connectError[state.activeId]
       }
       state.activeId = action.payload
+      // Local or an SSH Crew comes forward, so no Team Crew pane is on screen.
+      state.relayActive = null
       if (state.pendingPaneSlot && state.pendingPaneSlot.id !== action.payload) state.pendingPaneSlot = null
       if (action.payload) {
         state.mru = [action.payload, ...state.mru.filter(x => x !== action.payload)]
@@ -367,6 +391,26 @@ const instancesSlice = createSlice({
       if (!state.crewForms) return
       if (sameLaunchDraft(state.crewForms.launch ?? null, action.payload)) state.crewForms.launch = null
     },
+    /** A Team Crew pane opened (or an open one was asked for again): it is on screen. */
+    relayPaneOpened(state, action: PayloadAction<RelayPaneTab>) {
+      const tab = action.payload
+      const panes = state.relayPanes ?? []
+      const at = panes.findIndex(p => p.endpointId === tab.endpointId)
+      state.relayPanes = at < 0 ? [...panes, tab] : panes.map((p, i) => (i === at ? tab : p))
+      leaveRemote(state)
+      state.relayActive = tab.endpointId
+    },
+    /** Its chip, or its digit chord: bring that open Team Crew pane forward. */
+    showRelayPane(state, action: PayloadAction<string>) {
+      if (!(state.relayPanes ?? []).some(p => p.endpointId === action.payload)) return
+      leaveRemote(state)
+      state.relayActive = action.payload
+    },
+    /** The pane closed (its chip's close, or the desktop app closed it): back to Local. */
+    relayPaneClosed(state, action: PayloadAction<string>) {
+      state.relayPanes = (state.relayPanes ?? []).filter(p => p.endpointId !== action.payload)
+      if (state.relayActive === action.payload) state.relayActive = null
+    },
     clearInstances() {
       return initialState
     },
@@ -388,6 +432,9 @@ export const {
   setCrewEditForm,
   setCrewLaunchDraft,
   dropLaunchedCrewDraft,
+  relayPaneOpened,
+  showRelayPane,
+  relayPaneClosed,
   clearInstances,
 } = instancesSlice.actions
 export default instancesSlice.reducer

@@ -35,6 +35,7 @@ import { tokenTtlTotalSeconds } from '../lib/tokenTtl'
 import { hasDashboardPane } from '../utils/remoteCrew'
 import { useSelectInstance } from '../hooks/useSelectInstance'
 import ErrorNotice from './ErrorNotice'
+import RelayCrewChips from './RelayCrewChip'
 import { errMessage } from '../utils/thunkError'
 import { safeSetItem } from '../utils/safeStorage'
 import {
@@ -668,7 +669,8 @@ function SwitcherMenu({
   onCloseAutoFocus,
 }: {
   entries: SwitcherEntry[]
-  activeId: string | null
+  /** `undefined`: a pane outside these entries is on screen (a Team Crew), so none is checked. */
+  activeId: string | null | undefined
   onSelect: (id: string | null) => void
   pinned: Set<string>
   onTogglePin: (id: string) => void
@@ -736,7 +738,7 @@ function SwitcherMenu({
         onInteractOutside={onInteractOutside}
         onCloseAutoFocus={onCloseAutoFocus}
       >
-        <DropdownMenuRadioGroup value={activeId ?? LOCAL_VALUE}>
+        <DropdownMenuRadioGroup value={activeId === undefined ? '' : activeId ?? LOCAL_VALUE}>
           {entries.map((entry, i) => (
             <Fragment key={entry.id ?? LOCAL_VALUE}>
               {/* Local is the user's own machine, not a crew: a rule separates it
@@ -1061,7 +1063,8 @@ function CrewChipRow({
   onClippedChange,
 }: {
   chips: SwitcherEntry[]
-  activeId: string | null
+  /** `undefined` while a Team Crew pane is on screen: no chip here is active. */
+  activeId: string | null | undefined
   onSelect: (id: string | null) => void
   onClippedChange: (clipped: Set<string>) => void
 }) {
@@ -1120,10 +1123,14 @@ function Switcher({
   embedded = false,
   extraGroups,
   extraNew = false,
+  away = false,
 }: {
   entries: SwitcherEntry[]
   activeId: string | null
   onSelect: (id: string | null) => void
+  /** A Team Crew pane is on screen instead (RelayCrewChip): nothing here reads as
+   *  active, and the leading chip goes back to its crew rather than opening the menu. */
+  away?: boolean
   /** Top-level bar only: an embedded pane never gets one (no Team Crew list leaves this computer). */
   extraGroups?: SwitcherExtraGroups
   /** Top-level bar only: an extra group holds something not seen yet. */
@@ -1196,6 +1203,7 @@ function Switcher({
   )
   const activeIsChip = chips.some(e => (e.id ?? null) === activeId)
   const showLeadingActive = !stableOrder || !activeIsChip
+  const shownId = away ? undefined : activeId
   return (
     // `tb-crew-grow` is a top-bar layout hook, on every wrapper between the
     // identity group and the pinned row: the desktop top bar (index.css,
@@ -1204,27 +1212,27 @@ function Switcher({
       {showLeadingActive && active ? (
         <SwitcherChip
           entry={active}
-          active
-          onSelect={() => {
+          active={!away}
+          onSelect={away ? () => onSelect(active.id) : () => {
             chipOpened.current = true
             setMenuOpen(o => !o)
           }}
           className="tb-crew-active-chip"
           buttonRef={chipRef}
-          menuOpen={menuOpen}
+          menuOpen={away ? undefined : menuOpen}
         />
       ) : null}
       {chips.length > 0 ? (
         <CrewChipRow
           chips={chips}
-          activeId={activeId}
+          activeId={shownId}
           onSelect={onSelect}
           onClippedChange={setClippedPinned}
         />
       ) : null}
       <SwitcherMenu
         entries={entries}
-        activeId={activeId}
+        activeId={shownId}
         onSelect={onSelect}
         pinned={pinned}
         onTogglePin={togglePin}
@@ -1363,6 +1371,9 @@ export default function InstanceTabBar({
   const activeId = useAppSelector(s => s.instances.activeId)
   const warm = useAppSelector(s => s.instances.warm)
   const unread = useAppSelector(s => s.instances.unread)
+  // Team Crew panes in this window: their chips follow the switcher's.
+  const relayPaneCount = useAppSelector(s => s.instances.relayPanes?.length ?? 0)
+  const relayAway = useAppSelector(s => (s.instances.relayActive ?? null) !== null)
 
   // Embedded instance panes are single-level: never run the instances poll or
   // render the local switcher. Instead they render the parent-relayed switcher
@@ -1456,7 +1467,7 @@ export default function InstanceTabBar({
     ? (errMessage(instancesQuery.error) || i18nT('components.instanceTabBar.instances_load_failed'))
     : null
   // Team Crews keep the bar up on their own, even with the instances feature off.
-  if (!extraGroups && !extraNotice && (disabled || (tabInstances.length === 0 && !listFailure))) return null
+  if (!extraGroups && !extraNotice && relayPaneCount === 0 && (disabled || (tabInstances.length === 0 && !listFailure))) return null
 
   // Right-aligned tunnel-status cluster: the ACTIVE remote pane's connection
   // state + countdown to the next token auto-refresh. On the Local tab there is
@@ -1503,7 +1514,8 @@ export default function InstanceTabBar({
       aria-label={i18nT('components.instanceTabBar.instances')}
     >
       <div className={`tb-crew-grow flex items-center gap-1 min-w-0 ${variant === 'strip' ? 'flex-1' : ''}`}>
-        <Switcher entries={entries} activeId={activeId} onSelect={onSelect} extraGroups={extraGroups} extraNew={extraNew} />
+        <Switcher entries={entries} activeId={activeId} onSelect={onSelect} extraGroups={extraGroups} extraNew={extraNew} away={relayAway} />
+        <RelayCrewChips />
         {/* Only a 403 (feature gated) used to be interpreted; every other
             listInstances failure was dropped and the bar simply showed no
             crews. askAgent on: the bar holds no draft. */}

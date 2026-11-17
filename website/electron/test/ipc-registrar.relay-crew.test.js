@@ -190,7 +190,8 @@ test("relay-crew:open-pane checks the ID, the local-dashboard gate, the main win
   }
   assert.equal(h.probes.length, 0);
   // The dashboard measures at half the window's DIP width: the rect doubles, then clamps.
-  assert.deepEqual(await h.openPane(from(wc), ID, RECT, VIEWPORT), { ok: true });
+  // This opener reports no pane afterwards, as for a Crew already open in its own window.
+  assert.deepEqual(await h.openPane(from(wc), ID, RECT, VIEWPORT), { ok: true, inWindow: true });
   assert.deepEqual(o.calls, [[ID, { parent: main, dashboard: main._mcView, bounds: { x: 0, y: 96, width: 1000, height: 704 } }]]);
   for (const bad of [null, "rect", { x: 0, y: 0, width: 0, height: 10 }, { x: NaN, y: 0, width: 10, height: 10 }, { x: 0, y: 900, width: 10, height: 10 }]) {
     const b = paneOpener(null);
@@ -262,4 +263,12 @@ test("pane bounds, overlay, inactive and close steer the pane only from the dash
   const never = harness({ opener: null, main });
   assert.equal(await never.paneClose(from(wc), ID), undefined);
   assert.deepEqual(never.built, [], "steering never builds an opener");
+});
+
+test("relay-crew:open-pane answers plain ok once the pane is open", async () => {
+  const main = mainWindow();
+  const wc = main._mcView.webContents;
+  const o = paneOpener(main._mcView);
+  const h = harness({ opener: o, main });
+  assert.deepEqual(await h.openPane(from(wc), ID, { x: 0, y: 48, width: 500, height: 400 }, { width: 500, height: 400 }), { ok: true });
 });

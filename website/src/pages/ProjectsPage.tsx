@@ -591,14 +591,18 @@ export default function ProjectsPage() {
           value={workspaceDir}
           onChange={e => setWorkspaceDir(e.target.value)}
           placeholder={defaultWorkspaceDir || i18nT('pages.projectsPage.default_workspace_folder')}
-          title={i18nT('pages.projectsPage.root_folder_for_a_new_plan_leave_blank_to_use_th')}
+          // The full path a narrow field clips (typed, else the default the run
+          // will use), then the help sentence.
+          title={workspaceDir.trim() || defaultWorkspaceDir
+            ? i18nT('pages.projectsPage.workspace_field_title', { path: workspaceDir.trim() || defaultWorkspaceDir, help: i18nT('pages.projectsPage.root_folder_for_a_new_plan_leave_blank_to_use_th') })
+            : i18nT('pages.projectsPage.root_folder_for_a_new_plan_leave_blank_to_use_th')}
           disabled={anyPlanning}
           // Keeps its 200px floor at every width so a row that cannot fit it
           // WRAPS the field onto its own line, where `flex-1` gives it the full
           // width. Letting it shrink instead would keep it on the line as an
           // unusable sliver. From `sm` up the row has the room, so the field
           // returns to its natural size.
-          className={`min-w-[200px] flex-1 sm:flex-initial px-2.5 py-1.5 text-[13px] font-mono ${anyPlanning ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`min-w-[200px] flex-1 sm:flex-initial truncate px-2.5 py-1.5 text-[13px] font-mono ${anyPlanning ? 'opacity-50 cursor-not-allowed' : ''}`}
         />
       </div>
       {mode === 'compose' ? (

@@ -5,6 +5,7 @@ import { RUN_IN_TERMINAL_OPENING_GRACE_MS } from '../../utils/fenceShell'
 import { confirmRestoredPanelTerminals, reconcileRestoredPanelTerminals } from '../../hooks/usePanelTabs'
 import { withDeadline } from '../../lib/withDeadline'
 import { setTerminalEnabledFlag } from '../../utils/terminalRegistry'
+import { useViewerIsNotOwner } from '../../hooks/sharedCrew/useSharedCrew'
 
 /** Deadline on each look at `GET /api/terminal/sessions` during hydrate. The
  *  restored terminal tabs stay gated until both looks have settled, so a probe
@@ -42,7 +43,12 @@ export function useTerminalRestoreProbe(): boolean {
   // Hide only on an explicit opt-out (dashboard.terminal.enabled=false).
   // While the probe is loading (terminalConfig undefined) the terminal shows,
   // so there is no hidden-until-fetch-resolves flash.
-  const terminalEnabled = terminalConfig?.enabled !== false
+  // The Terminal is the machine owner's alone: a Shared Crew teammate's probe
+  // answers disabled, and `/api/auth/me` saying this tab is not the owner hides
+  // it too, so no dock opens and no socket dials one the gateway refuses them,
+  // whatever an earlier or failed probe answered.
+  const { notOwner } = useViewerIsNotOwner()
+  const terminalEnabled = terminalConfig?.enabled !== false && !notOwner
   useEffect(() => { setTerminalEnabledFlag(terminalEnabled) }, [terminalEnabled])
   // The same answer weighs the terminal tabs restored from storage (#10977): a
   // tab whose session the list omits, or reports dead, is a suspect. Absent is

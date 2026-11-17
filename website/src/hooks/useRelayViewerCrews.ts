@@ -5,6 +5,10 @@
  * plain browser tab and the PWA have none), and the gateway's crews route, which
  * answers 404 while `tunnel.relay_viewer_enabled` is off. Either one missing
  * hides the whole list, so the default dashboard is unchanged.
+ *
+ * Connecting a Crew from the list shows it as a pane in the main window when the
+ * shell can (hooks/useRelayCrewPane.ts); `openRelayCrew` below is the path for a
+ * shell or window without panes, where it opens in a window of its own.
  */
 import { useCallback, useState } from 'react'
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
@@ -13,7 +17,8 @@ import { parseErrorCode, parseErrorField } from '../utils/errorReport'
 import { i18nT } from '../i18n/t'
 import { timeAgo } from '../utils/timeAgo'
 
-export type RelayCrewOpenResult = { ok: boolean; error?: string }
+/** `inWindow`: the Crew was already open in a window of its own, which was focused. */
+export type RelayCrewOpenResult = { ok: boolean; error?: string; inWindow?: boolean }
 type RelayCrewBridge = { open: (endpointId: string) => Promise<RelayCrewOpenResult> }
 
 /** Read lazily, not at module load, so a test can stub `window.relayCrewAPI` per case. */
@@ -23,7 +28,8 @@ function relayCrewBridge(): RelayCrewBridge | null {
 }
 
 /** Hand ONLY the endpoint ID to the desktop shell. Main mints the access token
- *  and loads the Crew in its own window; nothing else crosses the bridge. */
+ *  and loads the Crew in a window of its own; nothing else crosses the bridge.
+ *  The pane path (`useConnectRelayCrew`) sends the pane's rect as well. */
 export async function openRelayCrew(endpointId: string): Promise<RelayCrewOpenResult> {
   const bridge = relayCrewBridge()
   if (!bridge) return { ok: false, error: 'UNAVAILABLE' }
@@ -34,7 +40,7 @@ export async function openRelayCrew(endpointId: string): Promise<RelayCrewOpenRe
   }
 }
 
-/** Ask the desktop shell to close every relay Crew window now, after this
+/** Ask the desktop shell to close every relay Crew window and pane now, after this
  *  dashboard's Sign out or Switch account lands. Does nothing without the bridge
  *  and never throws: a sign-out made elsewhere is caught at the next renewal. */
 export async function closeRelayCrews(): Promise<void> {

@@ -118,7 +118,8 @@ export default function CrewmateSwitcher({
   onPick: (name: string) => void
   /** Opens the New crewmate dialog. Omitted while creation is held. */
   onCreate?: () => void
-  /** Whether Import from file is offered under New bot (it is the owner's alone). */
+  /** Whether Import from file is offered under New bot: the owner's and a
+   *  Shared Crew teammate's, hidden for any other non-owner. */
   canImport?: boolean
   /** Pins the roster column back beside the thread. The page hides this chip
    *  while the column is open (it is the list the chip folds), so the action

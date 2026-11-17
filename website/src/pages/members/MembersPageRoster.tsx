@@ -449,10 +449,8 @@ interface MembersPageRosterColumnProps {
   openQuick: () => void
   postCreateError: PostCreateFailure | null
   createHeld: string | null
-  /** Import from file is the owner's (a relay teammate's view): its doors are hidden. */
+  /** Import from file is hidden: the viewer is neither the owner nor a teammate. */
   importHeld: boolean
-  /** The owner check behind `importHeld` failed: said on the roster. */
-  ownerCheckFailed: boolean
   slotKeyOf: (m: MemberRosterRow) => string
   /** The crewmate whose face is centre stage in the first Mate's entrance
    *  (#23207), so its row holds the face unpainted until it lands; `''` for none. */
@@ -463,7 +461,7 @@ interface MembersPageRosterColumnProps {
 export function MembersPageRosterColumn({
   rosterRead, teamsRead, layout, drawers, rosterView, rosterSignals, profileFlight, navigation, teamView,
   activeName, scrollActiveRowIntoView, gone, createOpen, openAdvanced, openQuick, postCreateError, createHeld,
-  importHeld, ownerCheckFailed, slotKeyOf, faceOnStageFor,
+  importHeld, slotKeyOf, faceOnStageFor,
 }: MembersPageRosterColumnProps) {
   const { t } = useTranslation()
   const [importing, setImporting] = useState(false)
@@ -681,19 +679,6 @@ export function MembersPageRosterColumn({
             {/* A failed team read renders the roster FLAT, which is not "no teams"
                 -- it is unknown, and said here on the roster the grouping lives
                 on. No draft on this page, so the hand-off is safe. */}
-            {/* The owner check behind Import from file failed, so the door is held:
-                said here, where it would have been, not dropped. No draft on this
-                page, so the hand-off is safe. */}
-            {ownerCheckFailed && (
-              <div className="px-4 pb-2">
-                <ErrorNotice
-                  message={t('pages.membersPage.owner_check_failed')}
-                  variant="inline"
-                  askAgent
-                  testId="member-roster-owner-check-error"
-                />
-              </div>
-            )}
             {teamsNoticeShown && (
               <div className="px-4 pb-2">
                 <ErrorNotice

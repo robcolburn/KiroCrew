@@ -209,7 +209,7 @@ async def test_one_person_on_two_devices_and_tabs_is_one_principal():
         assert status == 200 and actor is not None
         ids.add(actor.principal.id)
     assert len(ids) == 1
-    rows = people.people_view(actor.principal, [])["people"]
+    rows = [r for r in people.people_view(actor.principal, [])["people"] if not r["is_owner"]]
     assert len(rows) == 1 and rows[0]["devices"] == 2 and rows[0]["is_viewer"] is True
 
 

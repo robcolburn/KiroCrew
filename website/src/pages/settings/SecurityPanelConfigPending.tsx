@@ -30,7 +30,7 @@ import { apiErrorCode } from '../../api/apiError'
 import { Btn } from '../../components/ui'
 import { useConfirm } from '../../components/ConfirmDialog'
 import ErrorNotice from '../../components/ErrorNotice'
-import { isOwnerOnlyRefusal } from '../../components/sessionEnvironmentHooks'
+import { OWNER_GATE_REFUSAL_CODES, isOwnerOnlyRefusal } from '../../api/apiError'
 import { i18nT } from '../../i18n/t'
 import { reportForError } from '../../utils/errorReport'
 import { CONFIG_PENDING_QUERY_KEY, CONFIG_PENDING_SETTING_ID, useConfigPending } from './configPendingQuery'
@@ -373,7 +373,7 @@ export function ConfigPendingCards() {
   // the owner-only refusal every other viewer gets by design. A transport failure is
   // shown too: the socket can stay connected while the fetch fails, and then no
   // offline state would say the list may be stale.
-  const readFailed = error != null && !isOwnerOnlyRefusal(error)
+  const readFailed = error != null && !isOwnerOnlyRefusal(error, OWNER_GATE_REFUSAL_CODES)
   const pending = data?.count && Array.isArray(data.pending) ? data.pending : []
   if (!readFailed && pending.length === 0) return null
   return (

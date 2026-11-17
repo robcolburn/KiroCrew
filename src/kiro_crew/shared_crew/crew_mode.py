@@ -168,6 +168,9 @@ def mode_view(
     network_identity_unreadable: Optional[bool] = None,
     creators: Iterable[Principal] = (),
     owner_id: str = "",
+    owner_label: str = "",
+    viewer_is_owner: bool = False,
+    relay_on: bool = False,
 ) -> dict[str, Any]:
     """The ``GET /api/shared-crew/mode`` body.
 
@@ -177,6 +180,14 @@ def mode_view(
     ``not_offered`` and ``workload_identity_ref`` always ``unavailable`` in
     this build. ``adapters`` reports each network setup path as the gateway
     sees it.
+
+    ``viewer_via`` names the path the viewer came in on (:func:`viewer_via`),
+    ``viewer_is_owner`` whether the viewer is this machine's owner, and
+    ``owner_label`` the owner's name (this machine's, ``owner.machine_name``),
+    so a teammate's surfaces can say whom to ask. ``sharing_paths`` lists the
+    paths that are on: ``kiro_login`` while the Kiro relay leg is (*relay_on*),
+    and each adapter that is available or degraded. Display only: none of
+    these grants or refuses anything.
     """
     mode, problem = resolve_mode(
         setup_paths,
@@ -196,7 +207,38 @@ def mode_view(
         "console": {"state": "not_offered", "url": ""},
         "adapters": {k: dict(v) for k, v in setup_paths.items() if isinstance(v, Mapping)},
         "workload_identity_ref": WORKLOAD_UNAVAILABLE,
+        "viewer_via": viewer_via(viewer),
+        "viewer_is_owner": bool(viewer_is_owner),
+        "owner_label": owner_label,
+        "sharing_paths": sharing_paths(setup_paths, relay_on=relay_on),
     }
+
+
+#: The ``viewer_via`` value for each provenance a person can arrive with.
+_VIA_BY_PROVENANCE = {
+    Provenance.KIRO_RELAY: "kiro_login",
+    Provenance.TAILSCALE_SERVE: "tailscale",
+    Provenance.TAILSCALE_DIRECT: "tailscale",
+    Provenance.TAILSCALE_LISTENER: "tailscale",
+    Provenance.SSM_INVITE: "ssm",
+    Provenance.LOCAL_OPERATOR: "local",
+}
+
+
+def viewer_via(viewer: Principal) -> str:
+    """The path *viewer* reached this Crew on: ``kiro_login``, ``tailscale``,
+    ``ssm``, ``local`` or ``unknown``."""
+    return _VIA_BY_PROVENANCE.get(viewer.provenance, "unknown")
+
+
+def sharing_paths(setup_paths: Mapping[str, Mapping[str, str]], *, relay_on: bool) -> list[str]:
+    """The sharing paths that are on, in a fixed order: the Kiro relay first."""
+    out = ["kiro_login"] if relay_on else []
+    for path in ("tailscale", "ssm"):
+        state = setup_paths.get(path)
+        if isinstance(state, Mapping) and state.get("state") in _CONFIGURED_STATES:
+            out.append(path)
+    return out
 
 
 def validate_at_startup() -> Optional[TeamConfigProblem]:
@@ -226,6 +268,8 @@ __all__ = [
     "WORKLOAD_UNAVAILABLE",
     "mode_view",
     "network_configured",
+    "sharing_paths",
+    "viewer_via",
     "operator_ids",
     "others_observed",
     "resolve_mode",

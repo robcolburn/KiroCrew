@@ -59,6 +59,8 @@ vi.mock('../../api/client', () => ({
     listTrustedRegistries: vi.fn(),
     grantTrustedRegistry: vi.fn(),
     revokeTrustedRegistry: vi.fn(),
+    // Whether this tab is the Crew owner; a teammate's rail names the group differently.
+    viewerOwnerOk: vi.fn(),
   },
 }))
 
@@ -311,6 +313,13 @@ describe('SecurityPanel — review-round regressions', () => {
     // The listbox keeps exactly one accessible name — naming the wrapper too
     // made a screen reader announce it twice.
     expect(screen.getAllByRole('listbox', { name: 'Security sections' })).toHaveLength(1)
+  })
+
+  it("names the settings group the Crew's for a teammate, not theirs", async () => {
+    ;(api.viewerOwnerOk as ReturnType<typeof vi.fn>).mockResolvedValue(false)
+    renderWithProviders(<SecurityPanel />, { route: '/?section=posture' })
+    expect(await screen.findByRole('group', { name: 'Crew settings' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Your settings' })).not.toBeInTheDocument()
   })
 })
 

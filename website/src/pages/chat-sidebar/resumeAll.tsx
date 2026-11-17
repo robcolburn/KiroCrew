@@ -35,6 +35,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { RotateCcw, X } from 'lucide-react'
 import { api } from '../../api/client'
+import { OWNER_GATE_REFUSAL_CODES, isOwnerOnlyRefusal } from '../../api/apiError'
 import ErrorNotice from '../../components/ErrorNotice'
 import { useConfirm } from '../../components/ConfirmDialog'
 import { MORE_BELOW_MASK } from '../../components/ModelEffortDropdown'
@@ -170,20 +171,15 @@ function refusalOf(e: unknown): Refusal {
   } catch { return none }
 }
 
-/** The owner gate refusing the viewer: this row's route is owner-only, and a
- *  non-owner dashboard session cannot fix that by retrying, so its notice
- *  names the owner gate instead of the raw refusal. */
-export function isOwnerOnlyRefusal(e: unknown): boolean {
-  const { status, code } = refusalOf(e)
-  return status === 403 && code === 'owner_only'
-}
-
 /** What the failure notice says under its title. Never the server's own text
  *  ("Internal Server Error" tells the owner nothing): the owner gate gets its
  *  own sentence, and every other failure says nothing was resumed and what to
  *  do next. */
 export function resumeAllErrorText(e: unknown): string {
-  return isOwnerOnlyRefusal(e)
+  // The owner gate refusing the viewer: this row's route is owner-only, and a
+  // non-owner dashboard session cannot fix that by retrying, so the notice names
+  // the owner gate (its own `owner_only` code) instead of the raw refusal.
+  return isOwnerOnlyRefusal(e, OWNER_GATE_REFUSAL_CODES)
     ? i18nT('pages.chatSidebar.resume_all_owner_only')
     : i18nT('pages.chatSidebar.resume_all_failed_next')
 }

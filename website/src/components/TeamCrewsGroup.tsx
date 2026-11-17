@@ -1,32 +1,33 @@
 /**
  * TeamCrewsGroup: the desktop app's remote Crews reachable through the Kiro
- * relay, as the Team Crews group at the end of the Crew switcher's menu.
+ * relay, as the group at the end of the Crew switcher's menu, labelled "From your
+ * Kiro account" (the account that lists them). Each row's action reads Connect.
  *
  * Renders nothing unless the desktop bridge exists AND the gateway's crews route
  * answers (it 404s while `tunnel.relay_viewer_enabled` is off), so the default
- * switcher is unchanged. Open hands only the endpoint ID to the desktop shell,
- * which opens that Crew in its own window. A Team Crew is not a destination in
- * this dashboard: its rows are plain menu items, never pinned, never in the
- * stable order and never in the unread count.
+ * switcher is unchanged. Open hands only the endpoint ID to the desktop shell
+ * (`useConnectRelayCrew`), which shows that Crew as a pane in this window,
+ * below the top bar, with its own chip beside the instance chips (RelayCrewChip,
+ * useRelayCrewPane). A shell without panes, or a window with no pane region (a
+ * popout), opens it in its own window instead. Only a click opens one. The
+ * rows are plain menu items, never pinned, never in the stable order and never
+ * in the unread count; an open pane's chip is the tab.
  *
  * Loaded lazily from the top bar, so the relay hook stays out of the app core.
  * Only the top-level bar gets the group: an SSH pane's own switcher never
  * receives the Team Crew list.
- *
- * shortcut: each Crew opens in its own window. The row's `onOpen` is the one
- * switch point if Team Crews later open in the main window.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRenderedLocationIsCurrent } from '../hooks/useRenderedLocationIsCurrent'
 import { useSearchParams } from 'react-router-dom'
-import { ExternalLink } from 'lucide-react'
 import type { RelayCrewEntry } from '../api/client'
 import {
   clearRelayCrewsUnseen, isRelayCrewOnline, openRelayCrew, recordRelayCrewsSeen, relayCrewStatusText,
   relayRefusalText, relayRetryable, useRelayViewerCrews, type RelayListRefusal,
 } from '../hooks/useRelayViewerCrews'
+import { useConnectRelayCrew } from '../hooks/useRelayCrewPane'
 import InstanceTabBar from './InstanceTabBar'
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui/dropdown-menu'
 import ErrorNotice, { ErrorNoticeMenuItem } from './ErrorNotice'
@@ -54,10 +55,12 @@ function TeamCrewItem({ crew, refusal, onOpen }: {
         // tooltip with it: an offline row stays focusable and says why it won't open.
         offline={!online}
         aria-disabled={online ? undefined : true}
-        aria-label={t('components.relayCrews.open_crew', { name: crew.name })}
+        aria-label={t('components.relayCrews.connect_crew', { name: crew.name })}
         title={online ? undefined : t('components.relayCrews.refusal_offline')}
         onSelect={(e: Event) => {
-          // The menu closes only once the window opened; a refusal stays on screen.
+          // The menu closes only once the Crew connected; a refusal stays on screen.
+          // Selecting the row is the only thing that connects it: nothing here
+          // connects a listed Crew on its own.
           e.preventDefault()
           if (online) onOpen(crew.endpointId)
         }}
@@ -77,9 +80,11 @@ function TeamCrewItem({ crew, refusal, onOpen }: {
           </span>
           <span className="truncate text-[12px] text-muted">{type} · {relayCrewStatusText(crew)}</span>
         </span>
-        <span className="shrink-0 text-muted" title={t('components.relayCrews.opens_own_window')}>
-          <ExternalLink className="lucide-inline" aria-hidden />
-        </span>
+        {online && (
+          <span className="shrink-0 text-[12px] font-medium text-accent" aria-hidden data-testid="relay-crew-connect">
+            {t('components.relayCrews.connect')}
+          </span>
+        )}
       </DropdownMenuItem>
       {refusal && (
         <>
@@ -188,16 +193,18 @@ export function TeamCrewsGroup({ crews, refusal, retry, retrying, refreshOnOpen,
       void clearRelayCrewsUnseen(queryClient, saved.current)
     }
   }, [queryClient])
+  const connect = useConnectRelayCrew()
   const onOpen = useCallback((endpointId: string) => {
     setRefusals(prev => {
       const { [endpointId]: _dropped, ...rest } = prev
       return rest
     })
-    void openRelayCrew(endpointId).then(res => {
+    const name = crews.find(c => c.endpointId === endpointId)?.name ?? ''
+    void connect({ endpointId, name }).then(res => {
       if (res.ok) close()
       else setRefusals(prev => ({ ...prev, [endpointId]: relayRefusalText(res.error) }))
     })
-  }, [close])
+  }, [close, connect, crews])
   return (
     <div role="group" aria-label={t('components.relayCrews.list_label')} data-testid="team-crews-group">
       <DropdownMenuSeparator />

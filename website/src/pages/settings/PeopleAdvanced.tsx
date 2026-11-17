@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../../api/client'
 import { Input, Toggle } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyOrError } from '../../components/OwnerOnlyNotice'
 import { SchemaRestartBadge } from '../../components/settingRef/RestartRequiredBadge'
 import { i18nT } from '../../i18n/t'
 import { setConfigPathValue, useOptimisticConfigPaths } from './useOptimisticConfigPaths'
@@ -195,7 +196,7 @@ export function PeopleAdvanced() {
         {save.isError && (
           <div className="py-2">
             {/* No hand-off: People holds unsaved invite emails, name, picture and API key. */}
-            <ErrorNotice variant="inline" message={i18nT('sharedCrew.adv_save_failed')} testId="people-advanced-save-error" />
+            <OwnerOnlyOrError error={save.error} kind="admission"><ErrorNotice variant="inline" message={i18nT('sharedCrew.adv_save_failed')} testId="people-advanced-save-error" /></OwnerOnlyOrError>
           </div>
         )}
       </div>

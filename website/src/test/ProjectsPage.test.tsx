@@ -139,6 +139,18 @@ describe('ProjectsPage', () => {
     expect(ws.value).toBe('')
   })
 
+  it('puts the full workspace path in the tooltip and truncates the field visibly', async () => {
+    const { api: mockApi } = await import('../api/client')
+    const long = '/srv/projects/a-very-long-project-folder-name/workspace'
+    vi.mocked(mockApi.taskRunnerStatus).mockResolvedValue({ running: false, available: true, runs: [], default_workspace_dir: long })
+    renderWithProviders(<ProjectsPage />)
+    const ws = await screen.findByPlaceholderText(long) as HTMLInputElement
+    expect(ws.title.startsWith(long)).toBe(true)
+    expect(ws.className).toContain('truncate')
+    fireEvent.change(ws, { target: { value: '/custom/dir' } })
+    expect(ws.title.startsWith('/custom/dir')).toBe(true)
+  })
+
   it('threads the typed workspace dir into planTask on Run', async () => {
     const { api: mockApi } = await import('../api/client')
     vi.mocked(mockApi.taskRunnerStatus).mockResolvedValue({ running: false, available: true, runs: [], default_workspace_dir: '/ws/root' })

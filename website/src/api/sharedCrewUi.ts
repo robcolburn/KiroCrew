@@ -23,6 +23,7 @@ import {
   type SharedDecision,
 } from './sharedCrew'
 import type { InviteRecord } from './sharedCrewInvites'
+import type { ViewerVia } from './sharedCrewMode'
 
 /** One row of `GET /api/shared-crew/sessions`: a catalog row plus its attribution. */
 export interface SharedCrewSessionItem {
@@ -41,8 +42,10 @@ export interface SharedCrewSessionPage extends SessionPage<SharedCrewSessionItem
   creator?: string
 }
 
-/** Where a People row's evidence came from. Unknown values read as observed. */
-export type PeopleSource = 'observed' | 'session_creator' | 'directory' | 'tailscale_share'
+/** Where a People row's evidence came from. Unknown values read as observed.
+ *  `owner` is the owner's row when nothing else named them: who the Crew
+ *  belongs to, not a sighting. */
+export type PeopleSource = 'observed' | 'session_creator' | 'directory' | 'tailscale_share' | 'owner'
 
 export interface PeopleRow {
   principal: PublicPrincipal
@@ -140,6 +143,45 @@ export function sharedCrewPreviewOn(capabilities: SharedCrewCapabilities): boole
  *  surfaces come back once a teammate connects again. */
 export function someoneJoined(rows: readonly PeopleRow[] | null | undefined): boolean {
   return (rows ?? []).some(row => !row.is_owner && !isUnknownPrincipal(row.principal) && (row.sources ?? []).includes('observed'))
+}
+
+/** Here now: an open tab in presence, or the viewer, who is on this page. */
+export function isHereNow(row: PeopleRow): boolean {
+  return !!row.live || !!row.is_viewer
+}
+
+/** The path a row's `provenance` names, as `crew_mode.viewer_via` maps it
+ *  (pinned to `_VIA_BY_PROVENANCE` by `test_shared_crew_provenance_ui_pin.py`). */
+export function pathOfProvenance(provenance: string | undefined): ViewerVia {
+  switch (provenance) {
+    case 'kiro_relay': return 'kiro_login'
+    case 'tailscale_serve': case 'tailscale_direct': case 'tailscale_listener': return 'tailscale'
+    case 'ssm_invite': return 'ssm'
+    case 'local_operator': return 'local'
+    default: return 'unknown'
+  }
+}
+
+/** A People group: the path its people came in on, or `unattributed`. */
+export type PeopleGroupKey = 'kiro_login' | 'tailscale' | 'ssm' | 'unattributed'
+const PEOPLE_GROUP_ORDER: readonly PeopleGroupKey[] = ['kiro_login', 'tailscale', 'ssm', 'unattributed']
+
+/** People grouped by how they came in, in a fixed order with empty groups left
+ *  out. The owner, and anyone else at this machine, lead outside any group.
+ *  `null` when no row says its path (an older gateway): the list stays flat
+ *  rather than putting everyone under Unattributed. */
+export function groupPeopleByPath(rows: readonly PeopleRow[]): { owner: PeopleRow[]; groups: { key: PeopleGroupKey; rows: PeopleRow[] }[] } | null {
+  if (!rows.some(row => row.provenance !== undefined)) return null
+  const owner = rows.filter(row => row.is_owner || pathOfProvenance(row.provenance) === 'local')
+  const rest = rows.filter(row => !owner.includes(row))
+  const keyOf = (row: PeopleRow): PeopleGroupKey => {
+    const via = pathOfProvenance(row.provenance)
+    return via === 'kiro_login' || via === 'tailscale' || via === 'ssm' ? via : 'unattributed'
+  }
+  const groups = PEOPLE_GROUP_ORDER
+    .map(key => ({ key, rows: rest.filter(row => keyOf(row) === key) }))
+    .filter(group => group.rows.length > 0)
+  return { owner, groups }
 }
 
 /** The invites listed under "Invites": every pending email invite the server

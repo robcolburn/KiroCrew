@@ -354,11 +354,16 @@ body: it merges that record with the creators recorded on persisted sessions
 and with the people the local Tailscale daemon lists, in that order, so a person
 keeps the first row they have. The route builds that body in a worker thread
 (see *Session list query*). Each row names its `sources`
-(`observed`, `session_creator`, `tailscale_share`), so an observation is never
-presented as membership, and carries `is_owner` (the row's principal is one of
-`owner.owner_principal_ids`). An owner viewing always has a row, and the owner's
-local-token rows fold into one, matched by principal id because a creator read
-back from public attribution carries no provenance. Only the owner's People lists
+(`observed`, `session_creator`, `tailscale_share`, `owner`), so an observation is
+never presented as membership, and carries `is_owner` (the row's principal is one
+of `owner.owner_principal_ids`) and `provenance`, how the row's principal was
+identified (a creator read back from public attribution carries no provenance, so
+it reads `unknown`). The owner always has a row: an owner viewing gets their own,
+and any other viewer, when no row is the owner's, gets the owner's local principal
+(`owner.owner_principal`, labelled `owner.machine_name`) with source `owner`, null
+sightings, `devices` 0 and `sessions_created` 0, so a teammate can tell whose Crew
+it is. The owner's local-token rows fold into one, matched by principal id because
+a creator read back from public attribution carries no provenance. Only the owner's People lists
 `tailscale_share` rows: the daemon names every user this machine can see, ordinary
 tailnet members included, so the route reads it for the owner alone and a
 collaborator's People never carries the login of someone who did not come in.
@@ -409,6 +414,15 @@ again. One rule decides it for every surface
 `useSharedCrewListView`); with the preview off the browser reads no mode or People
 for them. Until then the dashboard looks as it does for one person.
 
+The same rule shows the sidebar's identity row (`SidebarIdentityRow`, under the
+header): "<name> via Kiro Login", "via Tailscale" or "via Systems Manager" (the
+name alone at this machine or on an unnamed path, from the mode body's
+`viewer_via`), naming who this tab's sends are recorded as before they are sent,
+and a read-only "Shared · N here now", where N counts People rows with an open tab
+plus the viewer (`sharedCrewUi.isHereNow`). It has no toggle. Because it follows
+the same rule, a relay teammate on a Crew whose preview is off sees no identity
+row, as they see no bylines.
+
 A team configuration is refused (`crew_mode.team_config_problem`) with reason
 `network_identity_config_unreadable` while the tailnet login allowlist could not be
 read (`config.resolution.tailnet_identity_unknown`, recorded by `access.note_tailnet`).
@@ -422,7 +436,14 @@ as an error, not as personal.
 The mode body: `mode`, `crew_id` (the gateway id; it keys the browser's remembered
 list filter), `viewer`, `team_config` (`state` `not_configured` | `invalid`, with
 `reason`, `capability`, `cause`), `console` (always `not_offered`), `adapters` (the
-setup paths) and `workload_identity_ref` (always `unavailable`). The Tailscale link
+setup paths) and `workload_identity_ref` (always `unavailable`). It also carries
+`viewer_via` (the viewer's path, `crew_mode.viewer_via`: `kiro_login`,
+`tailscale`, `ssm`, `local` or `unknown`), `viewer_is_owner` (the viewer is this
+machine's owner), `owner_label` (`owner.machine_name`) and `sharing_paths` (the
+paths that are on, in a fixed order: `kiro_login` while the Kiro relay leg is
+enabled, then `tailscale` and `ssm` when their adapter is available or degraded;
+`crew_mode.sharing_paths`). Display only: none of them grants or refuses anything.
+The Tailscale link
 is a fixed public documentation page.
 Identity is never inferred from the OS user or a typed label, and loopback alone
 yields the local operator only together with a dashboard token.
@@ -431,7 +452,23 @@ People has no role control in any mode. Its one invite entry is the `Invite…` 
 (`InviteEntry`), shown in `personal` and `network` mode to the owner only; it opens
 the one invite dialog (§7). Inviting adds a person to the tailnet, which is the
 sharing step. People has no access card, no approval list and no Approve or Dismiss
-control; its one removal verb is the owner's "Remove". Each person is one row. Invites whose person is not a row yet are
+control; its one removal verb is the owner's "Remove". Each person is one row.
+Rows are grouped by how the person came in (`sharedCrewUi.groupPeopleByPath`),
+read from each row's `provenance` through `sharedCrewUi.pathOfProvenance`, which
+maps it as `crew_mode.viewer_via` does: `kiro_relay` to Kiro Login,
+`tailscale_serve`, `tailscale_direct` and `tailscale_listener` to Tailscale,
+`ssm_invite` to Systems Manager, `local_operator` to this machine, and anything
+else to Unattributed. The owner (and anyone else at this machine) comes first with
+no heading, then "via Kiro Login", "via Tailscale", "via Systems Manager" and
+Unattributed, each with its count; empty groups are left out, and a body with no
+`provenance` on any row (an older gateway) stays one flat list. The owner's row
+carries the "Crew owner" badge for everyone else and implies no permission. The
+connect card names a path's state only when that path is on: while `sharing_paths`
+omits `tailscale` it reads "Shared over Kiro Login" (or "Shared over Systems
+Manager") instead of the Tailscale setup state; with no path on, or no
+`sharing_paths` (an older gateway), it shows the Tailscale state. The note that
+this Crew cannot report work per person is the owner's and is not shown to a
+teammate. Invites whose person is not a row yet are
 listed under their own "Invites · N" sub-heading, below the people they are not
 counted in (`sharedCrewUi.waitingInvites`, which takes invites from any sharing path by
 their `transport`): every pending email invite the server returns, and an accepted email invite
@@ -589,6 +626,28 @@ view is the machine owner's. A teammate's owner socket carries
 reads: the hub's fan-out, its awaited owner deliveries (`deliver_ws_owners`: question,
 change and guide cards), the connect snapshot, the browser-live snapshot and the
 subagent replay all send it every frame redacted in full while the switch is off.
+The same edges hand a teammate the plain copy of a chat the host could not start
+for want of an OS sandbox, whatever the switch reads: no backend
+(`SandboxUnavailableError`) or a launcher that failed as the agent started
+(`AcpSandboxInitFailed`). That row's text is the machine owner's runbook for the
+host (the probe's errno, the kernel sysctl, the OS family, the launcher's stderr,
+`kirocrew service install`, the owner's config key), so `_on_error`, the ACP error
+card and the background-start stop row type it: `meta.code` `host_sandbox_unavailable` with the
+failure time `meta.at` (and `meta.retryable` for a momentary refusal), and the
+content prefix `host_sandbox_unavailable: `, which the chat SSE stream carries
+since it sends no row meta. `_on_error` looks for the refusal in the cause chain
+before its capability arms, so one wrapped in a `CapabilityError` or
+`CapabilityStartupError` is typed too. `dashboard.host_sandbox_refusal.for_non_owner` replaces
+such a row's content with one fixed line and drops its gateway-notice meta for
+every reader who is not the machine owner: on a non-owner socket (`for_socket`),
+the status stream (`for_reader`), the chat SSE stream (`SseEvents`) and every JSON
+response body of a non-owner request (`redaction_audience_middleware`). The
+audience is the host-owner split above (`is_host_owner_dashboard_request`, and
+`redaction_audience.socket_reads_as_owner` for a socket), never the owner gate,
+which admits a teammate. The owner's socket, stream and reads keep the whole
+diagnostic, and the persisted row keeps it. A session export (`GET
+/api/chat/slots/{slot}/export`, either format) carries user and assistant turns
+only, so no reader's file holds the row.
 The machine owner is never a teammate, whichever path they came in on: the owner on
 a tailnet path carries a `tailscale_*` actor too, and keeps the Terminal.
 
@@ -599,7 +658,10 @@ their principal, so every audit row and attribution names them, never the owner.
 where the difference is a fact about who is at the machine, not a right:
 `/api/auth/me`'s `owner_ok` (so the host's first-run chapters open only in the
 owner's tab) and the decide-by-id form of a tool approval, which only the owner's
-browser sends (a teammate's card always names its request). A messaging allowlist
+browser sends (a teammate's card always names its request). `/api/auth/me` also
+answers `teammate`: `is_shared_crew_teammate` for that request, never true together
+with `owner_ok`, so the dashboard locks the owner-only surfaces from the backend's
+own answer (§7 "Owner-only locks"). A messaging allowlist
 link, an app token, an internal caller, a widened-bind tailnet peer (attribution
 only) and an Unknown actor are not teammates. The SSM and Tailscale paths exist only
 while the Shared Crew preview is on; a relay teammate is the team Crew's own access
@@ -1691,9 +1753,10 @@ that never learned a revision sends none and is not compared.
 | Route | Answer |
 |---|---|
 | `GET /api/shared-crew/capabilities` | `Capabilities` |
-| `GET /api/auth/me` | gains `principal` (`Principal.to_public_dict`) |
+| `GET /api/auth/me` | gains `principal` (`Principal.to_public_dict`) and `teammate` (the caller is a Shared Crew teammate; never true with `owner_ok`) |
 | `GET /api/shared-crew/sessions?creator=&q=&cursor=&limit=` | `SessionPage`; each item carries `attribution` |
-| `GET /api/shared-crew/people` | observed collaborators with usage (`is_owner` per row, `tailscale_share` rows), and the directory state |
+| `GET /api/shared-crew/people` | observed collaborators with usage (`is_owner` and `provenance` per row, `tailscale_share` rows, an `owner` row when the owner was not otherwise seen), and the directory state |
+| `GET /api/shared-crew/mode` | the mode body (§2 People and setup modes), with `viewer_via`, `viewer_is_owner`, `owner_label` and `sharing_paths` |
 | `GET` / `PUT /api/shared-crew/preview` `{enabled}` | owner only, registered with the preview off: `{enabled, active, env_override, restart_required}` (Release gate) |
 | `GET /api/shared-crew/capacity` | `CapacityResponse` for the viewer |
 | `GET /api/shared-crew/work?session_key=` | public `AcceptedWork` list |
@@ -1758,7 +1821,9 @@ the Settings > People tab (with its share card and invite dialog) and the
 direct tailnet link in the phone dialog render only while
 `GET /api/shared-crew/capabilities` reports `shared_crew_preview: true`
 (`sharedCrewUi.sharedCrewPreviewOn`). A missing field, an older gateway or a
-failed read keeps them hidden, and no browser setting turns them on.
+failed read keeps them hidden, and no browser setting turns them on. The sidebar
+identity row follows the team-attribution rule of §2 People and setup modes; it
+owns no read failure (the creator-filter bar below it does).
 
 Shared Crew query failures render through `ErrorNotice`. A failed refresh keeps
 cached content mounted, including invite emails, name, picture and API-key drafts,
@@ -1775,6 +1840,61 @@ the viewer/typing-lease reads for the composer, including when the sidebar is
 closed, so notices never repeat per message. The one queued-send label owns work
 and capacity failures whether or not its last successful read contains queued work.
 `SharedCrewReadFailures.test.tsx` exercises these query consumers together.
+
+**Owner-only locks.** What §2 keeps the machine owner's shows a Shared Crew
+teammate one muted line with a lock (`OwnerOnlyNotice`,
+`components/OwnerOnlyNotice.tsx`), never an `ErrorNotice`: no retry, no agent
+hand-off, no Terminal or CLI step. Two backend answers drive it, never a second
+frontend rule:
+
+- `/api/auth/me`'s `teammate` (`useViewerIsTeammate`). A surface that would only
+  read and be refused renders the lock up front (`OwnerOnlyGate`) and is not
+  mounted, so its owner-only reads are never issued. `false` until the gateway
+  answers and on a failed read, so the owner never waits on it.
+- a write refused as owner-only: a 403 whose code is in `OWNER_ONLY_REFUSAL_CODES`
+  (`api/apiError.ts`: `owner_only`, and the relay route limits
+  `relay_local_credential` and `relay_shutdown_refused`), read by
+  `isOwnerOnlyRefusal`. Every owner-only write's error path goes through
+  `OwnerOnlyOrError`, so a route the backend makes owner-only later reads locked
+  with no frontend change. A session-expiry 403 (`X-Auth-Required`) is not one.
+  A reader that acts on the owner gate's own answer alone (the slot-environment
+  read, the config-pending read, Resume all) passes `OWNER_GATE_REFUSAL_CODES`
+  (`owner_only` only) to the same predicate.
+  The refused write's line is an inline `ErrorNotice` worded as the lock, with no
+  retry. It offers the agent hand-off exactly where the surface's own notice does
+  (the call site passes the same `askAgent` / `onHandoff`): the teammate's agent
+  runs and can explain the lock, and a surface next to an unsaved draft keeps the
+  hand-off off for both.
+
+The line names the owner by `owner_label` from `GET /api/shared-crew/mode`, the
+host's machine name, as "the person at <machine>" ("Only the person at linux-e2e
+can change this"); with the route off or failed, or outside a
+`QueryClientProvider`, it reads "the Crew's owner". `test/test_owner_only_ui_pins.py`
+pins every lock kind to the routes or config keys its surface writes and asserts
+the backend refuses each to a teammate (`is_owner_only_for_teammates`,
+`is_admission_config_key`, or the handler's host-owner gate), and pins
+`OWNER_ONLY_REFUSAL_CODES` to the backend's codes.
+
+| Surface | Teammate sees |
+|---|---|
+| Terminal (rail row, dock, side-panel tab, Run in terminal) | hidden, as §2 says: the probe answers a teammate `{"enabled": false}`, and `useTerminalRestoreProbe` also reads `owner_ok`, so no dock opens and no socket dials when the probe fails open |
+| Settings > Secrets (single page and vault) | "Secrets are managed by the person at <machine>." in place of the vault; no Add secret, no `kirocrew secrets authorize` step, no list read |
+| Settings > Remote Crew | "Only the person at <machine> can manage remote Crews from this Crew." in place of the panel; no `/api/instances` or cloud reads |
+| Connect your phone (rail row stays; dialog) | "Only the person at <machine> can connect a phone to this Crew." in place of every method, error and retry |
+| Settings > Security > Sign in on mobile | "Only the person at <machine> can create sign-in links for this Crew." in place of Create |
+| Settings > Webhooks summary; Webhooks page token mint/revoke refusal | "Only the person at <machine> can create or revoke webhook tokens." (the endpoint's state stays readable) |
+| Settings > Messaging Channels | above the list "Only the person at <machine> can connect or change a messaging channel. You can still read and send through the connected ones."; a row that needs setup reads "Only the person at <machine> can set this up"; each channel's form is read-only (a disabled `fieldset`); a refused save is the lock |
+| Schedule > a script job's Secrets grants | "Only the person at <machine> can give a scheduled job access to secrets." in place of the grant panel; a refused grant or revoke is the lock |
+| Settings > People | "Only the person at <machine> can invite people or remove their access." where the invite entry would be |
+| Settings > Developer > Feature previews, Shared Crew row | "Only the person at <machine> can turn the Shared Crew preview on or off." in place of the switch |
+| Settings > Security > Tailnet origin; People > Advanced (admission config keys) | the switch disabled with "Only the person at <machine> can change who can reach this Crew."; a refused write is the lock |
+| Settings > Security > credential redaction | "Only the person at <machine> can change credential redaction." in place of the switch (any non-owner) |
+| a removed credential's Show (reveal) | "Only the person at <machine> can show this value." on refusal |
+
+Voice and Computer Use are not locked: they are open to a teammate. The session
+export's raw model context (Layer B) has no dashboard control; a teammate's export
+degrades to Layer A (`layer_b_skipped`).
+
 The People Remote Control card reports a failed connection-method read with an
 error and retry, retains cached methods, and reserves unavailable copy for a
 successful empty response. Its hand-off stays off beside the invite/key drafts.
@@ -1796,6 +1916,23 @@ its newest user message carries a small "Queued" line with its own Cancel (`Queu
 tooltip names the personal or Crew-wide limit. Cancel sends `POST
 /api/shared-crew/work/{id}/cancel` at the shown revision once; a stale click adopts
 the current record. A busy session's queued sends stay the queue stack's rows.
+
+A chat the Crew's host cannot start because it has no OS sandbox
+(`meta.code: host_sandbox_unavailable`) renders for the machine owner as any other
+error row: the full diagnostic, with Resume. For anyone else
+(`useViewerIsNotOwner`, the host-owner split of §2, never the owner gate) the row
+is one line, "This Crew's computer can't start chats right now. Ask <owner> to
+check it.", where <owner> is "the person at <machine>" from the mode route's
+`owner_label`, or "the Crew's owner" when the route is unavailable, and a Copy
+details button that copies only the code and the failure time
+(`host_sandbox_unavailable <ISO time>`). The row offers Resume to a teammate only
+when the refusal was momentary (`meta.retryable`); otherwise the next start meets
+the same host and fails the same way. A momentary row's line says so instead of
+naming whom to ask: "This Crew couldn't start this chat just now. Press Resume to
+try again." For the same reason the composer withholds
+its own Resume while the newest error row is a non-retryable
+`host_sandbox_unavailable` one (`transcriptRenderers.newestErrorOwnsRecovery`).
+The sidebar's interrupted-session count is unchanged.
 
 | State | Shown as | Draft |
 |---|---|---|
@@ -1826,6 +1963,80 @@ in `TailscaleInvites.tsx`, theme tokens, rows wrap at narrow widths):
 | the direct link's Copy is refused by the browser | an inline `ErrorNotice` with the agent hand-off; the link stays selectable in its field |
 | Remove key | a confirm, then `DELETE .../credential` with the irreversible-confirm header |
 | teammate or a gateway without the routes | nothing |
+
+A few settings lines describe the machine the Crew runs on. When the gateway says
+this tab is not the owner (`useViewerIsNotOwner().notOwner`), they name the Crew's
+host instead of the viewer's own device. The name is `owner_label` from
+`GET /api/shared-crew/mode`, read only for a teammate. When that route is off or
+fails, the copy says "the Crew's computer" (`hooks/sharedCrew/useCrewHost.ts`).
+The owner's own view keeps the original copy.
+
+| Surface | Owner | Teammate |
+|---|---|---|
+| Settings > Security, rail group | "Your settings" | "Crew settings" |
+| Settings > About, tagline | "runs locally" | "runs on <host>" |
+| Settings > Voice, no built-in speech engine | the espeak-ng install hint | "<host>, the Crew's computer, has no built-in speech engine. The Crew's owner can install one there, or you can pick another provider." No install command. |
+| Settings > Computer Use, unsupported host | plain copy plus a "Technical details" line holding the backend's `reason` | the same plain copy, with no details line |
+
+Pinned by `SecurityPanel.rail.test.tsx`, `AboutPanel.teammateHost.test.tsx`,
+`SettingsVoicePanelCoverage.test.tsx` and `ComputerUsePanel.test.tsx`.
+
+### A Team Crew in the desktop app's main window
+
+When the desktop shell offers panes (`window.relayCrewAPI.openPane`), Connect on a
+row of the Crew switcher's relay group, or Open on a row of Settings → Remote Crew →
+Shared Crews, shows the Crew in the main window, below the local top bar, instead of
+a window of its own. The switcher's group is labelled "From your Kiro account"
+(`components.relayCrews.group_team_crews`), because the Kiro account the viewer
+signed in with is what lists them; each online row's one visible action is a small
+Connect (accessible name "Connect <name>"), and an offline row shows none. The
+region it fills is `RelayCrewPane.tsx`, every grid row of the local dashboard under
+the top bar; the protocol is `hooks/useRelayCrewPane.ts`. Only a click connects one:
+nothing connects when the list loads, when the menu opens or when the dashboard
+reloads. When the Crew is already open in a window of its own, `relay-crew:open-pane`
+brings that window forward and answers `{ok: true, inWindow: true}`, and the
+dashboard adds no chip.
+
+Only the local dashboard in the main window opens a pane. The shell withholds
+`relayCrewAPI` from a window on a remote gateway, gives a relay Crew's page no
+preload, and refuses `relay-crew:open-pane` from every window but the main one; the
+page itself also refuses while it is a Crew inside a relay pane or window (the
+`kiroCrewRelayPane` / `kiroCrewRelayWindow` user-agent tokens) or an SSH Crew's
+embedded pane (`lib/relayCrewPaneBridge.ts`). Without `openPane` (an older desktop)
+or in a window with no region (a popout), Open uses `relayCrewAPI.open` and the
+Crew opens in a window of its own. A plain browser has neither.
+
+| State | Shown as | Shell call |
+|---|---|---|
+| Open pressed | the region's rect (CSS px) and viewport go to the shell; the menu stays open with the refusal under the row if it fails | `openPane(endpointId, rect, viewport)` |
+| open | a chip after the instance chips, named for the Crew, active; the leading Local chip reads as not on screen and a click on it goes back | none |
+| Open pressed while the Crew has a window of its own | that window comes forward; no chip | `openPane` answers `inWindow: true` |
+| the region resizes or moves | the pane follows | `setPaneBounds` |
+| a local menu, popover, select or dialog is open anywhere | the pane hides until it closes; on close the pane in front takes the keyboard back | `setPaneOverlay(true/false)`, then `openPane` |
+| Local, an SSH Crew or another Team Crew in front (its chip, the menu, Ctrl/Cmd+digit, a local navigation) | the pane stays loaded but hidden | `setPaneInactive(true)` |
+| its chip clicked again | the pane shows; clicked while it is already in front, it takes the keyboard back | `setPaneInactive(false)`; `openPane` when already in front |
+| it comes forward (chip, menu, chord) | it takes the keyboard: opening an open pane focuses it in the shell; if that focus lands after another tab came forward (a stopped renewal restarting first), the pane is put back behind it and a pane now in front takes the keyboard back. An open that just brought it forward already focused it, so that one focus is skipped; an open of the pane already in front sets no skip, and any change of the front pane clears it | `openPane`, then `setPaneInactive(true)` when it is no longer in front |
+| its chip's close | the chip goes, Local comes forward | `closePane` |
+| the shell closes it (sign-out, access removed, the notice's Back to Local) | `closed` event: the chip goes, Local comes forward | none |
+| Ctrl/Cmd+digit while the pane has the keyboard | `chord` event: the same switch as the dashboard's own chord | none |
+| the dashboard reloads | the panes the last load opened are closed once, never reopened | `closePane` |
+
+A Team Crew pane is not an `activeId`: `instances.relayPanes` and
+`instances.relayActive` hold it, `activeId` stays null while it is on screen, and
+any `setActiveId` brings Local or that SSH Crew forward. It has no unread count.
+
+Ctrl/Cmd+1-9 (`useInstanceShortcuts`, `useSwitchTabByIndex`) numbers Local, then
+the SSH Crews, then the open Team Crew panes in the order they opened. A chord only
+brings an open pane forward and never opens one. The crew deep link rule
+([2026-11-07](../../decisions/2026-11-07-a-crew-deep-link-names-the-crew-by-id-and-follows-auto-connect.md))
+holds: `kirocrew://chat?crew=` names an SSH Crew by its `instances.json` id and
+follows auto-connect; a Team Crew is not in `instances.json`, so a crew deep link
+never selects or opens a Team Crew pane. A chord to an SSH Crew tab connects it
+exactly as a tab click does.
+
+The pane's notices (access removed, access turned off, Crew unavailable) are the
+relay Crew window's, closed with Back to Local instead of Close window
+([desktop README, Relay Crew windows](../../../website/electron/README.md#relay-crew-windows)).
 
 ## 8. Capabilities
 

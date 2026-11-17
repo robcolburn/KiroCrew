@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { SettingsSection, SettingsCard } from '../../components/settings'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyNotice, OwnerOnlyOrError, useIsTeammate } from '../../components/OwnerOnlyNotice'
 import { SecretField } from '../../components/SecretField'
 import { SECRETS_GUIDE_URL as SECRETS_SETUP_GUIDE } from '../../utils/docsLink'
 
@@ -260,18 +261,18 @@ function ManagedSecretRow({
       )}
       {/* No hand-off while this or any sibling editor holds an unsaved value. */}
       {setMutation.isError && (
-        <ErrorNotice
+        <OwnerOnlyOrError error={setMutation.error} kind="secrets" askAgent={allowAgentHandoff && !value}><ErrorNotice
           variant="inline"
           askAgent={allowAgentHandoff && !value}
           message={i18nT('settings.secrets.save_error', { error: (setMutation.error as Error).message })}
-        />
+        /></OwnerOnlyOrError>
       )}
       {deleteMutation.isError && (
-        <ErrorNotice
+        <OwnerOnlyOrError error={deleteMutation.error} kind="secrets" askAgent={allowAgentHandoff && !value}><ErrorNotice
           variant="inline"
           askAgent={allowAgentHandoff && !value}
           message={i18nT('settings.secrets.delete_error', { error: (deleteMutation.error as Error).message })}
-        />
+        /></OwnerOnlyOrError>
       )}
     </div>
   )
@@ -281,8 +282,21 @@ function ManagedSecretRow({
  * Settings > Secrets while the "Secrets vault redesign" preview
  * (`PREVIEW_SECRETS_VAULT`) is off: the single-page panel. With the preview on,
  * `SecretsPanel.tsx` draws the tab instead. Retire this file with the flag.
+ * A Shared Crew teammate sees the owner-only lock instead of the vault.
  */
 export function SecretsPanelLegacy() {
+  const teammate = useIsTeammate()
+  if (!teammate) return <LegacySecretsVault />
+  return (
+    <SettingsSection title={i18nT('settings.secrets.title')}>
+      <SettingsCard>
+        <OwnerOnlyNotice kind="secrets" />
+      </SettingsCard>
+    </SettingsSection>
+  )
+}
+
+function LegacySecretsVault() {
   const queryClient = useQueryClient()
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
@@ -554,13 +568,13 @@ export function SecretsPanelLegacy() {
                           </div>
                           {/* No hand-off while any editor or delete confirmation is active. */}
                           {deleteMutation.isError && (
-                            <ErrorNotice
+                            <OwnerOnlyOrError error={deleteMutation.error} kind="secrets" askAgent={!hasAnyDraft}><ErrorNotice
                               variant="inline"
                               askAgent={!hasAnyDraft}
                               message={i18nT('settings.secrets.delete_error', {
                                 error: (deleteMutation.error as Error).message,
                               })}
-                            />
+                            /></OwnerOnlyOrError>
                           )}
                         </div>
                       ) : (
@@ -642,12 +656,12 @@ export function SecretsPanelLegacy() {
                 </div>
                 {/* No ask-agent hand-off: navigation would discard the unsaved value. */}
                 {setMutation.isError && (
-                  <ErrorNotice
+                  <OwnerOnlyOrError error={setMutation.error} kind="secrets"><ErrorNotice
                     variant="inline"
                     message={i18nT('settings.secrets.save_error', {
                       error: (setMutation.error as Error).message,
                     })}
-                  />
+                  /></OwnerOnlyOrError>
                 )}
               </div>
             ) : (

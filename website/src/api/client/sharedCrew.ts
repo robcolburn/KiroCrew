@@ -74,6 +74,15 @@ export function createSharedCrewEndpoints({ get, post, put, del, j, jSharedCrewP
       const body = await j(r) as { owner_ok?: unknown } | null
       return typeof body?.owner_ok === 'boolean' ? body.owner_ok : null
     },
+    /** Whether this caller is a Shared Crew teammate (`/api/auth/me`'s `teammate`,
+     *  decided by `shared_crew.teammate_access`); `null` when the gateway does not
+     *  report it. Any other failure throws. */
+    viewerTeammate: async (): Promise<boolean | null> => {
+      const r = await get('/api/auth/me')
+      if (r.status === 404) return null
+      const body = await j(r) as { teammate?: unknown } | null
+      return typeof body?.teammate === 'boolean' ? body.teammate : null
+    },
     sharedCrewCapacity: () => read<CapacityResponse>('/api/shared-crew/capacity'),
     sharedCrewWork: (sessionKey: string) =>
       read<WorkListResponse>('/api/shared-crew/work?' + new URLSearchParams({ session_key: sessionKey })),

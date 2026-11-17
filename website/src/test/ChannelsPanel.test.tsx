@@ -10,7 +10,7 @@
  * happy-dom reports zero layout sizes.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
@@ -35,6 +35,7 @@ vi.mock('../pages/settings/TeamsPanel', () => ({ TeamsPanel: () => <div data-tes
 vi.mock('../pages/settings/WeixinPanel', () => ({ WeixinPanel: () => <div data-testid="weixin-panel" /> }))
 vi.mock('../pages/settings/IMessagePanel', () => ({ IMessagePanel: () => <div data-testid="imessage-panel" /> }))
 
+const teammateMock = vi.fn().mockResolvedValue(false)
 const govChannelsMock = vi.fn().mockResolvedValue({
   slack: true, discord: true, telegram: true, webex: true, wecom: true, teams: true, weixin: true, imessage: true,
 })
@@ -54,6 +55,9 @@ vi.mock('../api/client', () => ({
     // tests are unaffected. Governance-specific tests override it per case.
     getGovernanceChannels: (...a: unknown[]) => govChannelsMock(...a),
     getTeamsConfig: vi.fn().mockResolvedValue({ connected: false, configured: false }),
+    // The owner by default; the Shared Crew teammate case flips it.
+    viewerTeammate: (...a: unknown[]) => teammateMock(...a),
+    sharedCrewMode: vi.fn().mockResolvedValue({ owner_label: 'linux-e2e' }),
   },
 }))
 
@@ -86,6 +90,8 @@ function renderAt(route = '/settings?tab=channels') {
 beforeEach(() => {
   mockWidth = null
   slackMountCount = 0
+  teammateMock.mockReset()
+  teammateMock.mockResolvedValue(false)
   govChannelsMock.mockReset()
   govChannelsMock.mockResolvedValue({
     slack: true, discord: true, telegram: true, webex: true, wecom: true, teams: true, weixin: true, imessage: true,
@@ -301,5 +307,36 @@ describe('ChannelsPanel — status polling', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('ChannelsPanel — Shared Crew teammate', () => {
+  it('says who sets a channel up and keeps every detail form read-only', async () => {
+    // Channel connection writes stay the machine owner's; reading a channel and
+    // sending through a connected one stay open.
+    teammateMock.mockResolvedValue(true)
+    mockWidth = 1000
+    renderAt()
+    // The owner's name arrives with the mode read; until then the line is generic.
+    await waitFor(() => expect(screen.getByTestId('owner-only-channels')).toHaveTextContent(
+      'Only the person at linux-e2e can connect or change a messaging channel. You can still read and send through the connected ones.',
+    ))
+    // Telegram needs setup: its row names the owner instead of "Needs setup".
+    await waitFor(() => expect(screen.getByTestId('channel-owner-sets-up-telegram')).toHaveTextContent("Only the Crew's owner can set this up"))
+    // Slack is connected and Discord configured: their status stays.
+    expect(screen.queryByTestId('channel-owner-sets-up-slack')).toBeNull()
+    expect(screen.queryByTestId('channel-owner-sets-up-discord')).toBeNull()
+    expect(screen.getByText('Connected')).toBeInTheDocument()
+    const form = await screen.findByTestId('channel-form-read-only')
+    expect(form).toBeDisabled()
+    expect(form).toContainElement(screen.getByTestId('slack-panel'))
+  })
+
+  it('leaves the owner\'s list and forms as they are', async () => {
+    mockWidth = 1000
+    renderAt()
+    expect(await screen.findByTestId('slack-panel')).toBeInTheDocument()
+    expect(screen.queryByTestId('channel-form-read-only')).toBeNull()
+    expect(screen.queryByTestId('owner-only-channels')).toBeNull()
   })
 })

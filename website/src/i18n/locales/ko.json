@@ -7538,11 +7538,15 @@
       "refusal_list_generic": "팀 크루를 불러올 수 없습니다.",
       "try_again": "다시 시도",
       "request_id": "요청 ID: {{id}}",
-      "group_team_crews": "팀 크루",
+      "group_team_crews": "Kiro 계정에서",
       "opens_own_window": "별도 창에서 열립니다",
       "new_crew": "새 항목",
       "seen_not_saved": "확인한 것으로 저장하지 못했습니다. 다시 새 항목으로 표시됩니다.",
-      "open_crew_failed": "{{name}}을(를) 열 수 없습니다."
+      "open_crew_failed": "{{name}}을(를) 열 수 없습니다.",
+      "connect": "연결",
+      "chip_title": "{{name}} (팀 Crew)",
+      "close_pane": "{{name}} 닫기",
+      "connect_crew": "{{name}} 연결"
     },
     "instancesViewport": {
       "connecting": "연결 중…",
@@ -7779,7 +7783,10 @@
       "pending_cancel_unsettled": "로그인했지만 여기서 시작한 로그인을 취소할 수 없습니다. 시간이 초과될 때까지 열려 있습니다.",
       "card_intro": "Kiro Agent 백엔드에서만 사용합니다. 해당 에이전트는 이 Kiro 계정으로 실행됩니다. Kiro CLI는 자체 kiro-cli 로그인을 계속 사용하므로 여기서 로그인해도 바뀌지 않습니다.",
       "previous_sign_in_not_removed": "로그인했지만 이전 로그인을 제거할 수 없음",
-      "previous_sign_in_not_removed_body": "새 계정은 저장되었지만 전환하기 전의 계정이 여전히 남아 있고 우선 적용됩니다. 그 계정에서 로그아웃한 뒤 여기 표시된 로그인을 확인하세요."
+      "previous_sign_in_not_removed_body": "새 계정은 저장되었지만 전환하기 전의 계정이 여전히 남아 있고 우선 적용됩니다. 그 계정에서 로그아웃한 뒤 여기 표시된 로그인을 확인하세요.",
+      "copy_link_failed": "링크를 복사하지 못했어요. 직접 선택해서 복사해 주세요.",
+      "copy_code": "코드 복사",
+      "copy_code_failed": "코드를 복사하지 못했어요. 직접 선택해서 복사해 주세요."
     },
     "kiroPrerequisiteGate": {
       "setup_completion_not_recorded": "설정 완료가 기록되지 않았습니다",
@@ -10447,7 +10454,6 @@
       "reveal_copy": "복사",
       "reveal_note": "숨기거나 이 페이지를 떠날 때까지 표시됩니다. {{productName}}은(는) 본 사실만 기록하고 값은 기록하지 않습니다.",
       "reveal_gone": "더 이상 여기서 사용할 수 없습니다: {{productName}}이(가) 다시 시작되었거나 24시간이 지났습니다. 값은 원래 위치에 아직 있을 수 있습니다.",
-      "reveal_denied": "대시보드 소유자만 이 값을 표시할 수 있습니다.",
       "reveal_failed": "값을 표시하지 못했습니다. 다시 시도하세요.",
       "reveal_not_kept": "이 값은 여기서 표시하도록 보관되지 않았습니다."
     },
@@ -11141,8 +11147,6 @@
       "copy_failed": "복사하지 못했습니다. 앱에서 텍스트를 선택해 직접 복사하세요.",
       "more_actions": "작업 더 보기"
     },
-    "meetYourMatesIntro": {},
-    "startupVideoModal": {},
     "selectionActions": {
       "apps": "앱",
       "apps_hint": "선택한 텍스트를 앱으로 보내기",
@@ -12698,7 +12702,14 @@
         "spec_choice_done_resuming": "이제부터 {{agent}}에 {{file}}을(를) 사용합니다. 세션을 다시 시작합니다. 나중에 kirocrew agent pin으로 바꿀 수 있습니다.",
         "spec_choice_done": "이제부터 {{agent}}에 {{file}}을(를) 사용합니다. 메시지를 다시 보내 시작하세요. 나중에 kirocrew agent pin으로 바꿀 수 있습니다.",
         "spec_choice_failed": "선택을 저장하지 못했습니다",
-        "hidden_scratch_folder": "이 채팅의 폴더는 이전 실행에서 만든 임시 폴더라 더 이상 열 수 없습니다. 이제 이 채팅은 기본 폴더에서 작업합니다."
+        "hidden_scratch_folder": "이 채팅의 폴더는 이전 실행에서 만든 임시 폴더라 더 이상 열 수 없습니다. 이제 이 채팅은 기본 폴더에서 작업합니다.",
+        "copy_details_failed": "복사하지 못했어요",
+        "host_sandbox_teammate_retryable": "이 Crew가 방금 이 채팅을 시작하지 못했어요. ‘재개’를 눌러 다시 시도해 보세요.",
+        "copy_details_done": "복사됨",
+        "host_sandbox_teammate_unnamed": "이 Crew의 컴퓨터가 지금 채팅을 시작할 수 없어요. Crew 소유자에게 확인을 요청하세요.",
+        "copy_details": "세부 정보 복사",
+        "copy_details_hint": "오류 코드와 시간만 복사합니다",
+        "host_sandbox_teammate_named": "이 Crew의 컴퓨터가 지금 채팅을 시작할 수 없어요. {{owner}}을(를) 쓰는 사람에게 확인을 요청하세요."
       },
       "folderPanel": {
         "clear_search": "검색 지우기",
@@ -14207,7 +14218,8 @@
       "comments_sent_other": "{{count}}개의 댓글이 전송되었습니다",
       "your_crewmate": "Bot",
       "jump_to_new_other": "새 메시지 {{count}}개 · 최신으로",
-      "could_not_repair_images": "이미지를 복구하지 못했습니다"
+      "could_not_repair_images": "이미지를 복구하지 못했습니다",
+      "session_not_on_this_crew": "그 대화는 더 이상 이 Crew에 없어요."
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -17904,7 +17916,8 @@
       "action_failed": "작업 실패",
       "project_renamed_to": "프로젝트 이름이 {{name}}(으)로 변경되었습니다",
       "plan_mode_label": "계획 모드",
-      "yaml_workflows_hard_dag": "YAML 워크플로는 LLM 분해기를 거치지 않습니다 — <field/>은(는) 엄격한 DAG 제약으로 적용됩니다."
+      "yaml_workflows_hard_dag": "YAML 워크플로는 LLM 분해기를 거치지 않습니다 — <field/>은(는) 엄격한 DAG 제약으로 적용됩니다.",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "뒤로",
@@ -18621,7 +18634,9 @@
         "what_you_d_get_in_version_plain": "{{version}}에 포함된 내용",
         "what_you_d_get_none": "내 빌드와 이 업데이트 사이에 변경 로그 항목이 없습니다.",
         "version_label": "버전",
-        "named_update_available": "{{name}} {{version}}을(를) 사용할 수 있습니다."
+        "named_update_available": "{{name}} {{version}}을(를) 사용할 수 있습니다.",
+        "tagline_runs_on_host": "자율 에이전트 관리 · {{host}}에서 실행 · 오픈 소스",
+        "tagline_runs_on_crew_host": "자율 에이전트 관리 · Crew의 컴퓨터에서 실행 · 오픈 소스"
       },
       "botChannelPanel": {
         "allowed_user_ids": "허용된 사용자 ID",
@@ -19154,7 +19169,6 @@
         "attach_screenshots": "스크린샷 첨부",
         "computer_use": "컴퓨터 사용",
         "computer_use_lets_the_agent_read_any_app_window": "컴퓨터 사용을 켜면 에이전트가 모든 앱 창을 읽고 클릭과 키 입력을 보낼 수 있습니다. 대부분의 클릭은 앱에 직접 전달되어 포인터를 건드리지 않지만, 대상에 필요한 경우 에이전트가 실제 포인터를 옮기도록 요청할 수 있습니다. 비밀번호 입력란은 읽지 않으며, 그 외에 조작할 수 있는 앱을 제한하는 장치는 없습니다.",
-        "computer_use_not_available": "컴퓨터 사용은 {{platform}}에서 사용할 수 없습니다.",
         "could_not_check": "확인할 수 없음",
         "could_not_load_computer_use_settings": "컴퓨터 사용 설정을 불러올 수 없습니다.",
         "could_not_save_computer_use_settings": "컴퓨터 사용 설정을 저장할 수 없습니다.",
@@ -19182,7 +19196,14 @@
         "on_windows_keystrokes_take_your_keyboard_focus": "Windows에서는 키 입력이 키보드 포커스를 가져가고 좌표 클릭이 실제 커서를 움직입니다. 이 플랫폼에는 앱별 입력 경로가 없습니다.",
         "the_app_lists_in_computer_use_json_could_not_be": "computer_use.json의 앱 목록을 읽을 수 없어 여기에는 비어 있는 상태로 표시됩니다. 파일이 유효한 JSON이 될 때까지 에이전트는 이 목록에 의존하는 모든 작업을 거부합니다.",
         "your_chat_sessions_were_restarted_so_this_takes": "채팅 세션이 다시 시작되어 이 변경이 즉시 적용됩니다 — Kiro는 세션마다 도구 목록을 한 번만 읽으므로 열려 있던 채팅은 그렇지 않으면 변경을 반영하지 못합니다. 메시지는 그대로 남아 있으며, 에이전트는 다음 메시지에서 컨텍스트를 다시 읽습니다.",
-        "your_chat_sessions_were_restarted": "채팅 세션을 다시 시작했습니다. 메시지는 그대로 남아 있습니다."
+        "your_chat_sessions_were_restarted": "채팅 세션을 다시 시작했습니다. 메시지는 그대로 남아 있습니다.",
+        "unavailable_on_host": "이 Crew를 호스팅하는 컴퓨터({{os}})에서는 컴퓨터 사용을 쓸 수 없어요.",
+        "os_linux": "Linux",
+        "os_windows": "Windows",
+        "technical_details": "기술 세부 정보",
+        "unavailable_on_host_other_os": "이 Crew를 호스팅하는 컴퓨터의 운영체제에서는 컴퓨터 사용을 쓸 수 없어요.",
+        "driver_failed_on_host": "이 Crew를 호스팅하는 컴퓨터({{os}})에서 컴퓨터 사용을 시작하지 못했어요. 드라이버가 로드되지 않았어요.",
+        "os_macos": "macOS"
       },
       "crewmatesSection": {
         "reply_threads": "Bot 채팅 메시지의 답글 스레드",
@@ -20154,7 +20175,6 @@
         "credential_redaction_read_failed": "마스킹 설정을 읽을 수 없습니다.",
         "credential_redaction_write_failed": "변경 내용을 저장할 수 없습니다. {{state}}",
         "credential_redaction_retry": "다시 시도",
-        "credential_redaction_owner_only": "대시보드 소유자만 이 설정을 읽거나 변경할 수 있습니다.",
         "credential_redaction_still_on": "마스킹은 여전히 켜져 있습니다.",
         "credential_redaction_still_off": "마스킹은 여전히 꺼져 있습니다.",
         "credential_redaction_ask_agent": "이 오류에 대해 에이전트와 채팅 열기",
@@ -20168,7 +20188,8 @@
         "rules_matched_other": "{{matched}} / {{n}}개 규칙",
         "categories_count_other": "{{n}}개 카테고리",
         "rules_count_other": "{{n}}개 규칙",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Crew 설정"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "채팅 탭 전환을 Option+숫자 대신 Ctrl+숫자에 할당합니다. 텍스트 필드에 포커스가 있으면 Option+숫자로 채팅이 전환되지 않습니다.",
@@ -20192,7 +20213,7 @@
         "auto_generate_skills_from_sessions": "세션에서 스킬 자동 생성",
         "extra_skill_paths": "추가 스킬 경로",
         "extra_skill_paths_description": "추가 스킬을 불러올 폴더를 한 줄에 경로 하나씩 입력하세요. 경로 앞뒤의 공백과 빈 줄은 무시됩니다. 그곳에서 찾은 스킬은 읽기 전용이며, 이름이 겹치면 내 스킬 폴더의 스킬이 우선합니다. 변경 사항은 재시작 없이 적용됩니다.",
-        "extra_skill_paths_description_summary": "한 줄에 폴더 경로 하나.",
+        "extra_skill_paths_description_summary": "한 줄에 폴더 경로 하나. 폴더는 이 Crew를 실행하는 컴퓨터에 있어요.",
         "extra_skill_paths_placeholder": "한 줄에 폴더 하나",
         "failed_to_save_extra_skill_paths": "추가 스킬 경로를 저장하지 못했습니다. 입력한 내용은 필드에 그대로 남아 있습니다.",
         "failed_to_save_skills_setting": "스킬 설정을 저장하지 못했습니다",
@@ -20701,7 +20722,9 @@
         "recheck": "다시 확인",
         "language": "언어",
         "language_for_spoken_replies": "음성으로 읽어 주는 답변의 언어",
-        "language_provider_default": "제공자 기본값"
+        "language_provider_default": "제공자 기본값",
+        "no_speech_engine_on_named_host": "Crew의 컴퓨터 {{host}}에는 내장 음성 엔진이 없어요. Crew 소유자가 설치하거나, 다른 제공자를 고르세요.",
+        "no_speech_engine_on_crew_host": "Crew의 컴퓨터에는 내장 음성 엔진이 없어요. Crew 소유자가 설치하거나, 다른 제공자를 고르세요."
       },
       "weComPanel": {
         "allow_all_bypass_note": "모두 허용이 켜져 있어 위의 userid 목록은 무시됩니다. 다시 되돌릴 때를 위해 그대로 보관됩니다.",
@@ -21560,7 +21583,6 @@
       "import_refused_text": "이 파일에는 비밀번호나 키처럼 보이는 텍스트가 있어 가져올 수 없습니다.",
       "slug_collision": "이 Bot은 ‘{{name}}’와(과) 짧은 이름이 같아 채팅이 이미 그쪽에서 사용 중입니다. 이름을 변경해도 짧은 이름은 바뀌지 않습니다. ‘{{self}}’을(를) 삭제하고 짧은 이름이 다른 이름으로 다시 만드세요. ‘{{name}}’은(는) 그대로 두세요.",
       "thread_open_failed": "이 Bot의 채팅을 열 수 없습니다.",
-      "owner_check_failed": "여기서 Bot을 가져올 수 있는지 확인하지 못해 ‘파일에서 가져오기’를 숨겼어요.",
       "thread_owner_only": "이 Bot과는 소유자만 채팅할 수 있어요.",
       "thread_repair_failed": "이 채팅에 다시 연결할 수 없습니다. Bot을 다시 열어 다시 시도하세요.",
       "title": "Bot",
@@ -23480,7 +23502,50 @@
     "preview_save_failed": "공유 Crew 설정을 저장하지 못했습니다.",
     "preview_restart_failed": "게이트웨이를 다시 시작하지 못했습니다.",
     "raised_by": "{{name}} 님이 요청함",
-    "take_over_keeps_draft": "넘겨받아 입력하세요. {{name}} 님의 초안은 그대로 유지됩니다."
+    "take_over_keeps_draft": "넘겨받아 입력하세요. {{name}} 님의 초안은 그대로 유지됩니다.",
+    "hero_shared_ssm": "Systems Manager로 공유 중",
+    "identity_shared": "공유 중",
+    "identity_via_ssm": "{{name}} (Systems Manager 경유)",
+    "ownerOnly": {
+      "invites": "사람을 초대하거나 접근을 없앨 수 있는 건 {{owner}}을(를) 쓰는 사람뿐이에요.",
+      "terminal": "터미널은 {{owner}}을(를) 쓰는 사람만 쓸 수 있어요.",
+      "remote_generic": "이 Crew에서 원격 Crew를 관리할 수 있는 건 Crew 소유자뿐이에요.",
+      "channel_row": "이건 Crew 소유자만 설정할 수 있어요",
+      "webhooks": "웹훅 토큰은 {{owner}}을(를) 쓰는 사람만 만들거나 취소할 수 있어요.",
+      "channels_generic": "메시지 채널을 연결하거나 바꿀 수 있는 건 Crew 소유자뿐이에요. 연결된 채널로 읽고 보내는 건 계속 할 수 있어요.",
+      "secrets_generic": "시크릿은 Crew 소유자만 관리할 수 있어요.",
+      "redaction_generic": "자격 증명 가리기 설정은 Crew 소유자만 바꿀 수 있어요.",
+      "reveal": "이 값은 {{owner}}을(를) 쓰는 사람만 볼 수 있어요.",
+      "preview_generic": "Shared Crew 미리 보기는 Crew 소유자만 켜거나 끌 수 있어요.",
+      "channels": "메시지 채널을 연결하거나 바꿀 수 있는 건 {{owner}}을(를) 쓰는 사람뿐이에요. 연결된 채널로 읽고 보내는 건 계속 할 수 있어요.",
+      "cron_secrets": "예약된 작업에 시크릿 접근을 줄 수 있는 건 {{owner}}을(를) 쓰는 사람뿐이에요.",
+      "invites_generic": "사람을 초대하거나 접근을 없앨 수 있는 건 Crew 소유자뿐이에요.",
+      "phone": "이 Crew에 휴대폰을 연결할 수 있는 건 {{owner}}을(를) 쓰는 사람뿐이에요.",
+      "admission": "누가 이 Crew에 접근할 수 있는지는 {{owner}}을(를) 쓰는 사람만 바꿀 수 있어요.",
+      "generic_generic": "이건 Crew 소유자만 바꿀 수 있어요.",
+      "secrets": "시크릿은 {{owner}}을(를) 쓰는 사람만 관리할 수 있어요.",
+      "sign_in_link_generic": "이 Crew의 로그인 링크는 Crew 소유자만 만들 수 있어요.",
+      "remote": "이 Crew에서 원격 Crew를 관리할 수 있는 건 {{owner}}을(를) 쓰는 사람뿐이에요.",
+      "preview": "Shared Crew 미리 보기는 {{owner}}을(를) 쓰는 사람만 켜거나 끌 수 있어요.",
+      "webhooks_generic": "웹훅 토큰은 Crew 소유자만 만들거나 취소할 수 있어요.",
+      "phone_generic": "이 Crew에 휴대폰을 연결할 수 있는 건 Crew 소유자뿐이에요.",
+      "terminal_generic": "터미널은 Crew 소유자만 쓸 수 있어요.",
+      "generic": "이건 {{owner}}을(를) 쓰는 사람만 바꿀 수 있어요.",
+      "reveal_generic": "이 값은 Crew 소유자만 볼 수 있어요.",
+      "redaction": "자격 증명 가리기 설정은 {{owner}}을(를) 쓰는 사람만 바꿀 수 있어요.",
+      "channel_row_generic": "이건 Crew 소유자만 설정할 수 있어요",
+      "admission_generic": "누가 이 Crew에 접근할 수 있는지는 Crew 소유자만 바꿀 수 있어요.",
+      "sign_in_link": "이 Crew의 로그인 링크는 {{owner}}을(를) 쓰는 사람만 만들 수 있어요.",
+      "cron_secrets_generic": "예약된 작업에 시크릿 접근을 줄 수 있는 건 Crew 소유자뿐이에요."
+    },
+    "identity_shared_here": "공유 중 · 지금 {{n}}명",
+    "identity_via_tailscale": "{{name}} (Tailscale 경유)",
+    "identity_title": "여기서 보내는 내용은 {{name}}(으)로 기록돼요.",
+    "group_via_kiro_login": "Kiro Login 경유",
+    "group_via_tailscale": "Tailscale 경유",
+    "group_via_ssm": "Systems Manager 경유",
+    "hero_shared_kiro_login": "Kiro Login으로 공유 중",
+    "identity_via_kiro_login": "{{name}} (Kiro Login 경유)"
   },
   "milestone": {
     "chats_opened": {

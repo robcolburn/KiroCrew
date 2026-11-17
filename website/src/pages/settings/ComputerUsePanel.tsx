@@ -11,6 +11,7 @@ import type { ComputerUseConfigData, ComputerUseConfigSave } from '../../api/cli
 import { i18nT } from '../../i18n/t'
 import ErrorNotice from '../../components/ErrorNotice'
 import AgentSpecNotRewrittenNotice, { agentSpecNotRewritten } from '../../components/AgentSpecNotRewrittenNotice'
+import { useViewerIsNotOwner } from '../../hooks/sharedCrew/useSharedCrew'
 
 const QK = ['computer-use-config']
 /** The locked-by-policy note under the enable, which the switch's description points at. */
@@ -25,6 +26,21 @@ const GRANTED = 'granted'
 const MISSING = 'missing'
 const DARWIN = 'macos'
 const WINDOWS = 'windows'
+const LINUX = 'linux'
+
+/** Plain copy for an unsupported host, decided by the payload's `platform` id,
+ *  never by its `reason`: that is untranslated developer prose ("the Linux AT-SPI
+ *  driver is not implemented yet ..."), shown only in the owner's details line.
+ *  The copy names the Crew's host, because a teammate on a Mac reading
+ *  "macOS-only" cannot tell the limit belongs to someone else's machine. On
+ *  macOS and Windows an unsupported status means the driver failed to load;
+ *  Linux and any other OS have no driver yet. */
+function unsupportedCopy(platform: string): string {
+  if (platform === DARWIN) return i18nT('pages.settings.computerUsePanel.driver_failed_on_host', { os: i18nT('pages.settings.computerUsePanel.os_macos') })
+  if (platform === WINDOWS) return i18nT('pages.settings.computerUsePanel.driver_failed_on_host', { os: i18nT('pages.settings.computerUsePanel.os_windows') })
+  if (platform === LINUX) return i18nT('pages.settings.computerUsePanel.unavailable_on_host', { os: i18nT('pages.settings.computerUsePanel.os_linux') })
+  return i18nT('pages.settings.computerUsePanel.unavailable_on_host_other_os')
+}
 
 /** Catalog KEY for each of the backend's permission tokens. The raw values are wire
  *  vocabulary (`missing`, `unsupported`, `unknown`) and read as jargon in a badge.
@@ -229,6 +245,7 @@ export function ComputerUsePanel() {
 
   const cfg = cfgQ.data
   const busy = saveMut.isPending
+  const { notOwner } = useViewerIsNotOwner()
   // An LTS build ignores the local opt-in; the enable is shown greyed out.
   const locked = cfg?.locked_by_policy === true
   const save = (patch: Partial<ComputerUseConfigSave>) => {
@@ -307,8 +324,15 @@ export function ComputerUsePanel() {
       <SettingsSection title={i18nT('pages.settings.computerUsePanel.computer_use')} badge={platformBadge}>
         <SettingsCard>
           <div className="text-[13px] text-muted">
-            {cfg.reason || i18nT('pages.settings.computerUsePanel.computer_use_not_available', { platform: cfg.platform })}
+            {unsupportedCopy(cfg.platform)}
           </div>
+          {/* The backend's own reason, for the person who can act on it. */}
+          {!notOwner && cfg.reason && (
+            <details className="mt-2 text-[12px] text-muted">
+              <summary className="cursor-pointer">{i18nT('pages.settings.computerUsePanel.technical_details')}</summary>
+              <p className="mt-1 break-words">{cfg.reason}</p>
+            </details>
+          )}
         </SettingsCard>
       </SettingsSection>
     )

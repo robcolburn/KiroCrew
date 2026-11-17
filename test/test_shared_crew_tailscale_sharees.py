@@ -218,9 +218,11 @@ async def test_the_owner_row_is_always_present_for_the_owner_viewer():
     owners = [r for r in body["people"] if r["is_owner"]]
     assert len(owners) == 1
     assert owners[0]["principal"]["id"] == viewer.id and owners[0]["is_viewer"] is True
-    # Not for a viewer who is somebody else.
+    # A viewer who is somebody else sees the owner's row, not their own as the owner's.
     other = tailnet_principal("guest@example.com", "n", Provenance.TAILSCALE_LISTENER)
-    assert not any(r["is_owner"] for r in (await _view(other))["people"])
+    owners = [r for r in (await _view(other))["people"] if r["is_owner"]]
+    assert len(owners) == 1 and owners[0]["is_viewer"] is False
+    assert owners[0]["sources"] == ["owner"] and owners[0]["principal"]["id"] == viewer.id
 
 
 @pytest.mark.asyncio

@@ -8,7 +8,7 @@
  * the two surfaces cannot disagree. Both cards render nothing while that hook
  * is hidden: no desktop bridge, or the route 404s because
  * `tunnel.relay_viewer_enabled` is off. Rows open a Crew the same way the
- * switcher does (`openRelayCrew`, the endpoint ID only).
+ * switcher does (`useConnectRelayCrew`, the endpoint ID only).
  *
  * shortcut: no role chip and no member count. The crews answer carries neither
  * (`_entry` in `src/kiro_crew/dashboard/handlers/relay_viewer.py`); add them
@@ -20,8 +20,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import { ExternalLink, Users } from 'lucide-react'
 import type { RelayCrewEntry } from '../api/client'
 import {
-  clearRelayCrewsUnseen, isRelayCrewOnline, openRelayCrew, recordRelayCrewsSeen, relayCrewStatusText, relayRefusalText, relayRetryable, useRelayViewerCrews,
+  clearRelayCrewsUnseen, isRelayCrewOnline, recordRelayCrewsSeen, relayCrewStatusText, relayRefusalText, relayRetryable, useRelayViewerCrews,
 } from '../hooks/useRelayViewerCrews'
+import { useConnectRelayCrew } from '../hooks/useRelayCrewPane'
 import { Btn, Card } from './ui'
 import ErrorNotice from './ErrorNotice'
 import { i18nT } from '../i18n/t'
@@ -86,12 +87,16 @@ export default function SharedCrewsCards() {
   const { hidden, crews, refusal, retry, retrying } = useRelayViewerCrews()
   const [refusals, setRefusals] = useState<Record<string, string>>({})
   const queryClient = useQueryClient()
+  // The switcher's path: a pane in this window when the shell has panes, so a
+  // Crew is never open both as a pane and as a window.
+  const connect = useConnectRelayCrew()
   const onOpen = useCallback((endpointId: string) => {
     setRefusals(prev => {
       const { [endpointId]: _dropped, ...rest } = prev
       return rest
     })
-    void openRelayCrew(endpointId).then(res => {
+    const name = crews.find(c => c.endpointId === endpointId)?.name ?? ''
+    void connect({ endpointId, name }).then(res => {
       if (!res.ok) {
         setRefusals(prev => ({ ...prev, [endpointId]: relayRefusalText(res.error) }))
         return
@@ -102,7 +107,7 @@ export default function SharedCrewsCards() {
         if (failed) setRefusals(prev => ({ ...prev, [endpointId]: i18nT('components.relayCrews.seen_not_saved') }))
       })
     })
-  }, [queryClient])
+  }, [connect, crews, queryClient])
   if (hidden) return null
   return (
     <>

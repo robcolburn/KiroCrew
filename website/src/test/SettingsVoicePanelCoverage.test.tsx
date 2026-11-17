@@ -243,6 +243,16 @@ describe('VoicePanel system fields', () => {
     await waitFor(() => expect(systemVoices.mock.calls.length).toBeGreaterThan(calls))
   })
 
+  it("tells a teammate the engine is missing on the Crew's host, with no install command", async () => {
+    vi.spyOn(api, 'viewerOwnerOk').mockResolvedValue(false)
+    vi.spyOn(api, 'sharedCrewMode').mockResolvedValue({ owner_label: 'build-box' } as Awaited<ReturnType<typeof api.sharedCrewMode>>)
+    seed({ provider: 'system' }, { systemUnavailable: true })
+    const line = await screen.findByTestId('system-engine-absent', undefined, { timeout: 5_000 })
+    await waitFor(() => expect(line.textContent).toMatch(/build-box, the Crew's computer, has no built-in speech engine/))
+    expect(line.textContent).toMatch(/owner can install one/)
+    expect(line.textContent).not.toMatch(/sudo|apt install/)
+  })
+
   it('disables the re-fetch button while the probe is in flight', async () => {
     // The probe spawns a subprocess, so it takes real time. Leaving the button
     // idle and the notice unchanged makes the click look ignored and invites

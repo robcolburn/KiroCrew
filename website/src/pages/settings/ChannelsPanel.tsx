@@ -1,5 +1,6 @@
 import React from 'react'
 import { useQueries, useQuery } from '@tanstack/react-query'
+import { Lock } from 'lucide-react'
 import { api } from '../../api/client'
 import { SettingsSubNav } from '../../components/SettingsSubNav'
 import { SlackIcon } from '../../components/SlackIcon'
@@ -23,6 +24,7 @@ import { TeamsPanel } from './TeamsPanel'
 import { WeixinPanel } from './WeixinPanel'
 import { IMessagePanel } from './IMessagePanel'
 import { WhatsAppPanel } from './WhatsAppPanel'
+import { OwnerOnlyNotice, ownerOnlyText, useCrewOwnerName, useIsTeammate } from '../../components/OwnerOnlyNotice'
 
 import { i18nT } from '../../i18n/t'
 /** Minimal status shape every channel config endpoint shares. */
@@ -128,10 +130,18 @@ export function ChannelsPanel({ basePath }: { basePath?: string } = {}) {
   })
   const channelGov = (key: string): ChannelGovState =>
     govState(key, govPolicy, govLoading, govError)
+  // Connecting, changing or removing a channel holds its token and its allow-list,
+  // so those writes stay the machine owner's; a Shared Crew teammate still reads
+  // each channel and sends through a connected one. Their "Needs setup" rows say
+  // who sets them up, and each detail form is read-only.
+  const teammate = useIsTeammate()
+  const ownerName = useCrewOwnerName()
 
   const items = CHANNELS.map((c, i) => {
-    const st = statusLine(statuses[i].data as ChannelStatus | undefined, statuses[i].isError)
+    const status = statuses[i].data as ChannelStatus | undefined
+    const st = statusLine(status, statuses[i].isError)
     const denied = channelGov(c.key) === 'denied'
+    const ownerSetsUp = teammate && !statuses[i].isError && !!status && !status.connected && !status.configured
     return {
       key: c.key,
       label: c.name,
@@ -150,6 +160,11 @@ export function ChannelsPanel({ basePath }: { basePath?: string } = {}) {
           title={i18nT('pages.settings.channelsPanel.off_by_admin')}
         >
           {i18nT('pages.settings.channelsPanel.off_by_admin')}
+        </span>
+      ) : ownerSetsUp ? (
+        <span className="flex items-center gap-1.5 text-[11.5px] text-muted min-w-0" data-testid={`channel-owner-sets-up-${c.key}`}>
+          <Lock size={11} className="shrink-0" aria-hidden />
+          <span className="truncate" title={ownerOnlyText('channel_row', ownerName)}>{ownerOnlyText('channel_row', ownerName)}</span>
         </span>
       ) : (
         // errors-use-error-notice: status chip only — an ErrorNotice would not
@@ -172,6 +187,7 @@ export function ChannelsPanel({ basePath }: { basePath?: string } = {}) {
       listLabel={i18nT('pages.settings.channelsPanel.chat_channels')}
       backLabel={i18nT('pages.settings.channelsPanel.channels')}
       basePath={basePath}
+      banner={teammate ? <OwnerOnlyNotice kind="channels" className="pb-3" /> : undefined}
       guideTargetPrefix="settings.sub.channels."
     >
       {active => {
@@ -181,6 +197,15 @@ export function ChannelsPanel({ basePath }: { basePath?: string } = {}) {
         // denied / still-loading / unavailable governance state shows the
         // corresponding notice instead, so a user never edits (or the page
         // never flashes) a form whose config wouldn't take effect.
+        if (channelGov(selected.key) === 'allowed' && teammate) {
+          // Read-only for a teammate: every control in the form is disabled, so
+          // no save reaches a write the gateway refuses them.
+          return (
+            <fieldset disabled className="m-0 min-w-0 border-0 p-0" data-testid="channel-form-read-only">
+              <selected.Panel key={selected.key} />
+            </fieldset>
+          )
+        }
         return channelGov(selected.key) === 'allowed'
           ? <selected.Panel key={selected.key} />
           : <ChannelDisabledPanel

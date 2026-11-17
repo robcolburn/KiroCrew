@@ -1447,7 +1447,12 @@ function createIpcRegistrar({
       const bounds = paneRect(parent, rect, viewport);
       // Before any mint, like a bad ID.
       if (!bounds) return { ok: false, error: "INVALID_BOUNDS" };
-      return relayCrewOpener().open(endpointId, { parent, dashboard: parent._mcView, bounds });
+      const opener = relayCrewOpener();
+      const res = await opener.open(endpointId, { parent, dashboard: parent._mcView, bounds });
+      // A Crew already open in a window of its own stays there and is focused:
+      // say so, so the dashboard adds no tab for a pane that does not exist.
+      if (res && res.ok && !opener.paneFor(endpointId)) return { ok: true, inWindow: true };
+      return res;
     });
 
     // The calls that steer an open pane take it only from the dashboard view

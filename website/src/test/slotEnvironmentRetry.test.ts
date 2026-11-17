@@ -3,15 +3,15 @@
  * twice, the `owner_only` refusal (a Shared Crew guest) never is.
  */
 import { describe, it, expect } from 'vitest'
-import { ApiError } from '../api/apiError'
-import { SLOT_ENVIRONMENT_RETRY, isOwnerOnlyRefusal } from '../components/sessionEnvironmentHooks'
+import { ApiError, OWNER_GATE_REFUSAL_CODES, isOwnerOnlyRefusal } from '../api/apiError'
+import { SLOT_ENVIRONMENT_RETRY } from '../components/sessionEnvironmentHooks'
 
 const ownerOnly = () => new ApiError(403, 'owner authorization required', '{"code":"owner_only"}')
 
 describe('SLOT_ENVIRONMENT_RETRY', () => {
   it('does not retry the owner_only refusal', () => {
     expect(SLOT_ENVIRONMENT_RETRY.retry(0, ownerOnly())).toBe(false)
-    expect(isOwnerOnlyRefusal(ownerOnly())).toBe(true)
+    expect(isOwnerOnlyRefusal(ownerOnly(), OWNER_GATE_REFUSAL_CODES)).toBe(true)
   })
 
   it('retries every other failure twice', () => {
@@ -23,8 +23,10 @@ describe('SLOT_ENVIRONMENT_RETRY', () => {
   })
 
   it('reads only a 403 with that code as the refusal', () => {
-    expect(isOwnerOnlyRefusal(new ApiError(500, 'x', '{"code":"owner_only"}'))).toBe(false)
-    expect(isOwnerOnlyRefusal(new Error('owner_only'))).toBe(false)
-    expect(isOwnerOnlyRefusal(null)).toBe(false)
+    expect(isOwnerOnlyRefusal(new ApiError(500, 'x', '{"code":"owner_only"}'), OWNER_GATE_REFUSAL_CODES)).toBe(false)
+    expect(isOwnerOnlyRefusal(new Error('owner_only'), OWNER_GATE_REFUSAL_CODES)).toBe(false)
+    expect(isOwnerOnlyRefusal(null, OWNER_GATE_REFUSAL_CODES)).toBe(false)
+    // The relay's owner-only codes are not the owner gate's answer, so the read retries them.
+    expect(SLOT_ENVIRONMENT_RETRY.retry(0, new ApiError(403, 'x', '{"code":"relay_local_credential"}'))).toBe(true)
   })
 })

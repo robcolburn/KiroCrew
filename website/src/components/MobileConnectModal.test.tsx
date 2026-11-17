@@ -28,6 +28,8 @@ const mocks = vi.hoisted(() => ({
   tailnetMobileQr: vi.fn(),
   mobileLoginLink: vi.fn(),
   sharedCrewCapabilities: vi.fn(),
+  viewerTeammate: vi.fn(),
+  sharedCrewMode: vi.fn(),
 }))
 vi.mock('../api/client', () => ({ api: mocks }))
 
@@ -58,9 +60,25 @@ beforeEach(() => {
   mocks.tailnetMobile.mockResolvedValue({ step: 'ready' })
   mocks.sharedCrewCapabilities.mockReset()
   mocks.sharedCrewCapabilities.mockResolvedValue(null)
+  mocks.viewerTeammate.mockReset()
+  mocks.viewerTeammate.mockResolvedValue(false)
+  mocks.sharedCrewMode.mockReset()
+  mocks.sharedCrewMode.mockResolvedValue({ owner_label: 'linux-e2e' })
 })
 
 describe('MobileConnectModal', () => {
+  it('shows a Shared Crew teammate the owner-only lock instead of any method, error or retry', async () => {
+    mocks.viewerTeammate.mockResolvedValue(true)
+    mount(['tailnet_qr', 'login_link'])
+    expect(await screen.findByText('Only the person at linux-e2e can connect a phone to this Crew.')).toBeInTheDocument()
+    expect(screen.getByTestId('owner-only-phone')).toBeInTheDocument()
+    expect(screen.queryByText('Create sign-in link')).toBeNull()
+    expect(screen.queryByText('Try again')).toBeNull()
+    expect(screen.queryByText(/Could not check remote access/)).toBeNull()
+    expect(mocks.mobileLoginLink).not.toHaveBeenCalled()
+    expect(mocks.tailnetMobileQr).not.toHaveBeenCalled()
+  })
+
   it('never mints a credential on mount — QR appears only after the explicit click', async () => {
     mocks.tailnetMobileQr.mockResolvedValue({
       url: 'https://host/?token=live',

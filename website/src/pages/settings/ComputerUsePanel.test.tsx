@@ -11,6 +11,7 @@ vi.mock('../../api/client', () => ({
   api: {
     getComputerUseConfig: vi.fn(),
     saveComputerUseConfig: vi.fn(),
+    viewerOwnerOk: vi.fn(),
   },
 }))
 
@@ -279,6 +280,7 @@ describe('ComputerUsePanel', () => {
   })
 
   it('renders only the reason and no toggle when the platform is unsupported', async () => {
+    ;(api.viewerOwnerOk as ReturnType<typeof vi.fn>).mockResolvedValue(true)
     await renderPanel(
       snapshot({
         supported: false,
@@ -286,9 +288,13 @@ describe('ComputerUsePanel', () => {
         reason: 'the Linux AT-SPI driver is not implemented yet',
       }),
     )
+    // Plain copy naming the Crew's host, never the backend's developer prose as
+    // the message; that stays in the owner's details line.
     expect(
-      await screen.findByText('the Linux AT-SPI driver is not implemented yet'),
+      await screen.findByText("Computer use isn't available on the machine hosting this Crew (Linux)."),
     ).toBeInTheDocument()
+    expect(await screen.findByText('the Linux AT-SPI driver is not implemented yet')).toBeInTheDocument()
+    expect(screen.getByText('the Linux AT-SPI driver is not implemented yet').closest('details')).not.toBeNull()
     expect(screen.queryByRole('switch', { name: ENABLE_LABEL })).not.toBeInTheDocument()
     // **No badge on an unsupported host**, and specifically not "macOS only": on
     // Linux that is a claim about a different platform sitting beside a reason that
@@ -297,6 +303,19 @@ describe('ComputerUsePanel', () => {
     // channel here. An absent badge withholds a fact; a wrong one ends the attempt.
     expect(screen.queryByText('macOS only')).not.toBeInTheDocument()
     expect(screen.queryByText('Focus + cursor')).not.toBeInTheDocument()
+  })
+
+  it("hides the backend's raw reason from a teammate", async () => {
+    ;(api.viewerOwnerOk as ReturnType<typeof vi.fn>).mockResolvedValue(false)
+    await renderPanel(snapshot({ supported: false, platform: 'linux', reason: 'the Linux AT-SPI driver is not implemented yet' }))
+    expect(await screen.findByText("Computer use isn't available on the machine hosting this Crew (Linux).")).toBeInTheDocument()
+    await waitFor(() => expect(api.viewerOwnerOk).toHaveBeenCalled())
+    await waitFor(() => expect(screen.queryByText('the Linux AT-SPI driver is not implemented yet')).not.toBeInTheDocument())
+  })
+
+  it('says the driver did not load on a macOS host whose driver failed', async () => {
+    await renderPanel(snapshot({ supported: false, platform: 'macos', reason: 'the native computer-use driver could not be loaded (x)' }))
+    expect(await screen.findByText("Computer use couldn't start on the machine hosting this Crew (macOS): its driver did not load.")).toBeInTheDocument()
   })
 
 

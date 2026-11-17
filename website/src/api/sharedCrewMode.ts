@@ -25,7 +25,18 @@ export interface CrewModeResponse {
   console: { state: 'available' | 'not_offered' | 'invalid'; url: string }
   adapters: Partial<Record<SetupPath, SetupPathCapability>>
   workload_identity_ref: string
+  /** The path the viewer came in on. Absent from an older gateway. */
+  viewer_via?: ViewerVia
+  /** Whether the viewer is this machine's owner. Absent from an older gateway. */
+  viewer_is_owner?: boolean
+  /** The owner's name (this machine's), for "Only <owner> …" copy. */
+  owner_label?: string
+  /** The sharing paths that are on, Kiro Login first. */
+  sharing_paths?: SharingPath[]
 }
+
+export type ViewerVia = 'kiro_login' | 'tailscale' | 'ssm' | 'local' | 'unknown'
+export type SharingPath = 'kiro_login' | 'tailscale' | 'ssm'
 
 const MODES: ReadonlySet<string> = new Set<CrewMode>(['personal', 'network', 'console', 'invalid'])
 

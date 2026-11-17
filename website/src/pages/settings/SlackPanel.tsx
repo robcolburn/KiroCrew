@@ -13,6 +13,7 @@ import { copyToClipboard } from '../../utils/clipboard'
 import { i18nT } from '../../i18n/t'
 import { ChannelFolderBackfill } from './ChannelFolderBackfill'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyOrError } from '../../components/OwnerOnlyNotice'
 import InfoTip from '../../components/InfoTip'
 import { SchemaRestartBadge } from '../../components/settingRef/RestartRequiredBadge'
 import { SlackCodeSection, slackCodeDraftFrom, slackCodePayload, type SlackCodeDraft } from './SlackCodePanel'
@@ -701,7 +702,7 @@ export function SlackPanel() {
             persisted — `formKey` even remounts them after a successful save) and
             the unsaved `draft` are exactly what a failed save did not store; the
             hand-off unmounts this panel and would lose them. */}
-        <ErrorNotice message={error} variant="inline" />
+        <OwnerOnlyOrError error={saveMut.error} kind="channels"><ErrorNotice message={error} variant="inline" /></OwnerOnlyOrError>
       </div>}
     </>
   )

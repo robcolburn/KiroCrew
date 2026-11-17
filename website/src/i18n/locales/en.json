@@ -3397,7 +3397,6 @@
         "typesetting_hints_one": "{{count}} typesetting hint",
         "typesetting_hints_other": "{{count}} typesetting hints"
       },
-      "editor": {},
       "fileTree": {
         "delete_file": "Delete {{file}}",
         "delete_file_button": "Delete file",
@@ -5071,11 +5070,15 @@
       "refusal_list_generic": "Couldn't load your Team Crews.",
       "try_again": "Try again",
       "request_id": "Request ID: {{id}}",
-      "group_team_crews": "Team Crews",
+      "group_team_crews": "From your Kiro account",
       "opens_own_window": "Opens in its own window",
       "new_crew": "New",
       "seen_not_saved": "Couldn't save that you've seen this. It will show as new again.",
-      "open_crew_failed": "Couldn't open {{name}}."
+      "open_crew_failed": "Couldn't open {{name}}.",
+      "connect": "Connect",
+      "chip_title": "{{name}} (Team Crew)",
+      "close_pane": "Close {{name}}",
+      "connect_crew": "Connect {{name}}"
     },
     "instancesViewport": {
       "loading_pane": "Loading pane…",
@@ -6202,7 +6205,6 @@
       "annotations_count_other": "{{count}} notes",
       "browser_live": "Browser — live"
     },
-    "welcomeView": {},
     "widgetFrame": {
       "could_not_render": "Couldn't render this widget",
       "download_as_html": "Download as HTML",
@@ -6494,7 +6496,6 @@
       "reveal_copy": "Copy",
       "reveal_note": "Shown until you hide it or leave this page. {{productName}} logs that you viewed it, never the value.",
       "reveal_gone": "No longer available here: {{productName}} restarted or 24 hours passed. The value may still be where it came from.",
-      "reveal_denied": "Only the dashboard owner can show this value.",
       "reveal_failed": "Could not show the value. Try again.",
       "reveal_not_kept": "This value was not kept for showing here."
     },
@@ -6631,6 +6632,11 @@
       "shortcut_hint_mac": "⌃⇧M mutes or unmutes",
       "mute_short": "Mute",
       "unmute_short": "Unmute"
+    },
+    "kasLogin": {
+      "copy_code": "Copy code",
+      "copy_code_failed": "Couldn't copy the code. Select it and copy it by hand.",
+      "copy_link_failed": "Couldn't copy the link. Select it and copy it by hand."
     }
   },
   "hooks": {
@@ -7305,7 +7311,14 @@
         "spec_choice_more": "{{count}} more files declare {{agent}} and are not listed. Pin one of them with: kirocrew agent pin {{agent}} <file>",
         "spec_choice_done_resuming": "Using {{file}} for {{agent}} from now on. Starting the session again. Change it later with kirocrew agent pin.",
         "spec_choice_done": "Using {{file}} for {{agent}} from now on. Send your message again to start. Change it later with kirocrew agent pin.",
-        "spec_choice_failed": "The choice could not be saved"
+        "spec_choice_failed": "The choice could not be saved",
+        "host_sandbox_teammate_retryable": "This Crew couldn't start this chat just now. Press Resume to try again.",
+        "copy_details_failed": "Couldn't copy",
+        "copy_details_done": "Copied",
+        "host_sandbox_teammate_unnamed": "This Crew's computer can't start chats right now. Ask the Crew's owner to check it.",
+        "copy_details": "Copy details",
+        "copy_details_hint": "Copies the error code and the time, nothing else",
+        "host_sandbox_teammate_named": "This Crew's computer can't start chats right now. Ask the person at {{owner}} to check it."
       },
       "knowledgePicker": {
         "cancel": "Cancel",
@@ -7896,7 +7909,8 @@
       "type_to_filter": "Type to filter…",
       "what_can_i_do_for_you": "What can I do for you?",
       "jump_to_new_one": "{{count}} new · Jump to latest",
-      "jump_to_new_other": "{{count}} new · Jump to latest"
+      "jump_to_new_other": "{{count}} new · Jump to latest",
+      "session_not_on_this_crew": "That conversation is no longer on this Crew."
     },
     "chatSidebar": {
       "needsMeCard": {
@@ -8990,7 +9004,6 @@
       "add_member": "New bot",
       "slug_collision": "This bot shares its short name with “{{name}}”, whose chat already uses it. Renaming keeps the short name, so delete “{{self}}” and create it again under a name with a different short name. Keep “{{name}}”.",
       "thread_open_failed": "Could not open this bot's chat.",
-      "owner_check_failed": "Couldn't check whether you can import bots here, so Import from file is hidden.",
       "thread_owner_only": "Only this bot's owner can chat with it.",
       "thread_repair_failed": "Couldn't reconnect this chat. Reopen the bot to try again.",
       "title": "Bots",
@@ -10231,7 +10244,8 @@
       "workspace_folder": "Workspace folder",
       "yaml_files_should_be_uploaded_via_the_from_yaml": "YAML files should be uploaded via the \"From YAML\" tab.",
       "project_renamed_to": "Project renamed to {{name}}",
-      "yaml_workflows_hard_dag": "YAML workflows bypass the LLM decomposer — <field/> is enforced as a hard DAG constraint."
+      "yaml_workflows_hard_dag": "YAML workflows bypass the LLM decomposer — <field/> is enforced as a hard DAG constraint.",
+      "workspace_field_title": "{{path}}\n\n{{help}}"
     },
     "remoteArtifactDetailPage": {
       "back": "Back",
@@ -10395,7 +10409,6 @@
       "unknown_agent": "sub-agent",
       "unknown_model": "unknown"
     },
-    "sessionMemoryCard": {},
     "sessionStorage": {
       "age_option_one": "Older than {{days}} days — {{count}} session · {{size}}",
       "age_option_other": "Older than {{days}} days — {{count}} sessions · {{size}}",
@@ -10590,7 +10603,9 @@
         "what_s_new": "What's new",
         "you_are_on_the_latest_version": "You are on the latest version.",
         "you_re_on_the_latest_version": "You're on the latest version.",
-        "update_refused_dirty_worktree": "Update stopped to keep your local edits safe: your {{productName}} folder has uncommitted changes ({{changed}}). Commit or stash them, then press Update now again. To stash everything, run the command below in a terminal in your {{productName}} folder."
+        "update_refused_dirty_worktree": "Update stopped to keep your local edits safe: your {{productName}} folder has uncommitted changes ({{changed}}). Commit or stash them, then press Update now again. To stash everything, run the command below in a terminal in your {{productName}} folder.",
+        "tagline_runs_on_host": "Autonomous agent management · runs on {{host}} · open source",
+        "tagline_runs_on_crew_host": "Autonomous agent management · runs on the Crew's computer · open source"
       },
       "botChannelPanel": {
         "allowed_user_ids": "Allowed user IDs",
@@ -10850,7 +10865,14 @@
         "retry": "Retry",
         "screen_recording": "Screen Recording",
         "screenshot_width": "Screenshot width",
-        "show_cursor_motion": "Show cursor motion"
+        "show_cursor_motion": "Show cursor motion",
+        "unavailable_on_host": "Computer use isn't available on the machine hosting this Crew ({{os}}).",
+        "os_windows": "Windows",
+        "technical_details": "Technical details",
+        "unavailable_on_host_other_os": "Computer use isn't available on the operating system of the machine hosting this Crew.",
+        "os_linux": "Linux",
+        "driver_failed_on_host": "Computer use couldn't start on the machine hosting this Crew ({{os}}): its driver did not load.",
+        "os_macos": "macOS"
       },
       "developerPanel": {
         "developer_tools": "Developer Tools",
@@ -11155,7 +11177,8 @@
         "categories_count_other": "{{n}} categories",
         "rules_count_one": "{{n}} rule",
         "rules_count_other": "{{n}} rules",
-        "categories_rules_summary": "{{categories}} · {{rules}}"
+        "categories_rules_summary": "{{categories}} · {{rules}}",
+        "section_group_crew_settings": "Crew settings"
       },
       "shortcutsPanel": {
         "bind_chat_tab_switching_to_ctrl_digit_instead_of": "Bind chat-tab switching to Ctrl+digit instead of Option+digit. Option+digit does not switch chats while a text field has focus.",
@@ -11169,7 +11192,7 @@
         "auto_generate_skills_from_sessions": "Auto-generate skills from sessions",
         "extra_skill_paths": "Extra skill paths",
         "extra_skill_paths_description": "Folders to load extra skills from, one path per line. Spaces around a path and blank lines are ignored. Skills found there are read-only, and a skill in your own skills folder wins on a duplicate name. Changes apply without a restart.",
-        "extra_skill_paths_description_summary": "One folder path per line.",
+        "extra_skill_paths_description_summary": "One folder path per line. The folders are on the computer that runs this Crew.",
         "extra_skill_paths_placeholder": "One folder per line",
         "failed_to_save_extra_skill_paths": "Failed to save the extra skill paths. Your text is still in the field.",
         "keep_every_auto_generated_candidate_in_the_pendi": "Keep every auto-generated candidate in the pending queue until you approve it. Turning this off lets new prose-only skills publish automatically; skills that bundle scripts, and any update to an existing skill, always require approval, unless skills.auto_refine_on_deviation is on.",
@@ -11364,7 +11387,9 @@
         "recheck": "Check again",
         "language": "Language",
         "language_for_spoken_replies": "Language for spoken replies",
-        "language_provider_default": "Provider default"
+        "language_provider_default": "Provider default",
+        "no_speech_engine_on_named_host": "{{host}}, the Crew's computer, has no built-in speech engine. The Crew's owner can install one there, or you can pick another provider.",
+        "no_speech_engine_on_crew_host": "The Crew's computer has no built-in speech engine. The Crew's owner can install one there, or you can pick another provider."
       },
       "webexPanel": {
         "access": "Access",
@@ -12383,7 +12408,50 @@
     "first_share_laptop_no_keep_awake": "This computer is a laptop. When it sleeps, they lose access until it wakes.",
     "direct_link_note": "Anyone allowed by Tailscale access rules can open this link.",
     "raised_by": "Raised by {{name}}",
-    "take_over_keeps_draft": "Take over to type. {{name}}'s draft stays with them."
+    "take_over_keeps_draft": "Take over to type. {{name}}'s draft stays with them.",
+    "ownerOnly": {
+      "remote": "Only the person at {{owner}} can manage remote Crews from this Crew.",
+      "invites": "Only the person at {{owner}} can invite people or remove their access.",
+      "terminal": "Only the person at {{owner}} can use the Terminal.",
+      "remote_generic": "Only the Crew's owner can manage remote Crews from this Crew.",
+      "channel_row": "Only the Crew's owner can set this up",
+      "preview": "Only the person at {{owner}} can turn the Shared Crew preview on or off.",
+      "webhooks": "Only the person at {{owner}} can create or revoke webhook tokens.",
+      "channels_generic": "Only the Crew's owner can connect or change a messaging channel. You can still read and send through the connected ones.",
+      "webhooks_generic": "Only the Crew's owner can create or revoke webhook tokens.",
+      "secrets_generic": "Secrets are managed by the Crew's owner.",
+      "phone_generic": "Only the Crew's owner can connect a phone to this Crew.",
+      "redaction_generic": "Only the Crew's owner can change credential redaction.",
+      "reveal": "Only the person at {{owner}} can show this value.",
+      "terminal_generic": "Only the Crew's owner can use the Terminal.",
+      "generic": "Only the person at {{owner}} can change this.",
+      "reveal_generic": "Only the Crew's owner can show this value.",
+      "preview_generic": "Only the Crew's owner can turn the Shared Crew preview on or off.",
+      "redaction": "Only the person at {{owner}} can change credential redaction.",
+      "channels": "Only the person at {{owner}} can connect or change a messaging channel. You can still read and send through the connected ones.",
+      "cron_secrets": "Only the person at {{owner}} can give a scheduled job access to secrets.",
+      "invites_generic": "Only the Crew's owner can invite people or remove their access.",
+      "channel_row_generic": "Only the Crew's owner can set this up",
+      "admission_generic": "Only the Crew's owner can change who can reach this Crew.",
+      "phone": "Only the person at {{owner}} can connect a phone to this Crew.",
+      "admission": "Only the person at {{owner}} can change who can reach this Crew.",
+      "sign_in_link": "Only the person at {{owner}} can create sign-in links for this Crew.",
+      "generic_generic": "Only the Crew's owner can change this.",
+      "secrets": "Secrets are managed by the person at {{owner}}.",
+      "cron_secrets_generic": "Only the Crew's owner can give a scheduled job access to secrets.",
+      "sign_in_link_generic": "Only the Crew's owner can create sign-in links for this Crew."
+    },
+    "hero_shared_ssm": "Shared over Systems Manager",
+    "identity_shared": "Shared",
+    "identity_via_ssm": "{{name}} via Systems Manager",
+    "identity_shared_here": "Shared · {{n}} here now",
+    "identity_via_tailscale": "{{name}} via Tailscale",
+    "group_via_ssm": "via Systems Manager",
+    "identity_title": "What you send here is recorded as {{name}}.",
+    "group_via_kiro_login": "via Kiro Login",
+    "hero_shared_kiro_login": "Shared over Kiro Login",
+    "group_via_tailscale": "via Tailscale",
+    "identity_via_kiro_login": "{{name}} via Kiro Login"
   },
   "shell": {
     "nav": {

@@ -11,6 +11,7 @@ import { i18nT } from '../i18n/t'
 import { useLanguageGeneration } from '../i18n/useLanguageGeneration'
 import { HOST_ONLY_ATTR } from '../utils/visibleText'
 import { ActionRow, btnCls, btnPrimaryCls, ErrorLine, FeedbackButton } from './redactionPrimitives'
+import { OwnerOnlyRefusal } from './OwnerOnlyNotice'
 
 
 /**
@@ -116,7 +117,8 @@ export function RevealValue({ revealId, slotKey, cache }: { revealId: string | n
         </button>
       </ActionRow>
       {state === 'gone' && <ErrorLine testId="reveal-gone" message={i18nT('components.redaction.reveal_gone')} />}
-      {state === 'denied' && <ErrorLine testId="reveal-denied" message={i18nT('components.redaction.reveal_denied')} />}
+      {/* The value is the machine owner's alone: the refused request reads as the owner-only lock. */}
+      {state === 'denied' && <OwnerOnlyRefusal kind="reveal" testId="reveal-denied" className="mt-1" askAgent />}
       {state === 'failed' && <ErrorLine testId="reveal-failed" message={i18nT('components.redaction.reveal_failed')} />}
     </>
   )

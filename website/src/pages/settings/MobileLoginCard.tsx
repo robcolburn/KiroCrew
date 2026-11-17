@@ -5,6 +5,7 @@ import { Copy, Smartphone } from 'lucide-react'
 import { api } from '../../api/client'
 import { Btn, Card, CardTitle, Input } from '../../components/ui'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyNotice, OwnerOnlyOrError, useIsTeammate } from '../../components/OwnerOnlyNotice'
 import { useAppSelector } from '../../store'
 import { findReport, parseErrorCode } from '../../utils/errorReport'
 import { copyToClipboard } from '../../utils/clipboard'
@@ -48,7 +49,25 @@ const MOBILE_LINK_ERROR_KEYS = {
     'components.mobileConnect.phone_connection_is_disabled_by_policy_on_this_dep',
 } as const
 
+/** A sign-in link is a credential that outlives the Shared Crew teammate's
+ *  access, so it stays the machine owner's: a teammate sees the lock. */
 export function MobileLoginCard() {
+  const { t } = useTranslation()
+  if (useIsTeammate()) {
+    return (
+      <Card>
+        <CardTitle>
+          <Smartphone className="lucide-inline" aria-hidden="true" />
+          {t('pages.settings.mobileLoginCard.sign_in_on_mobile')}
+        </CardTitle>
+        <OwnerOnlyNotice kind="sign_in_link" className="mt-2" />
+      </Card>
+    )
+  }
+  return <OwnerMobileLoginCard />
+}
+
+function OwnerMobileLoginCard() {
   const { t } = useTranslation()
   const [link, setLink] = useState('')
   const [expiresIn, setExpiresIn] = useState<number | null>(null)
@@ -149,7 +168,7 @@ export function MobileLoginCard() {
         // the journal keys on what `apiFailure` threw, so a lookup by the
         // translated sentence would miss and the hand-off would carry no
         // endpoint, status or backend `code`.
-        <ErrorNotice
+        <OwnerOnlyOrError error={createLink.error} kind="sign_in_link" askAgent><ErrorNotice
           askAgent
           className="mt-3"
           report={findReport(createLink.error?.message)}
@@ -158,7 +177,7 @@ export function MobileLoginCard() {
               mobileLinkErrorCode(createLink.error) as keyof typeof MOBILE_LINK_ERROR_KEYS
             ] || 'pages.settings.mobileLoginCard.could_not_create_a_sign_in_link_try_again',
           )}
-        />
+        /></OwnerOnlyOrError>
       )}
       {copyFailed && (
         <ErrorNotice

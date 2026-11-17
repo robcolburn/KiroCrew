@@ -13,6 +13,7 @@ import { SettingsSection, SettingsCard, SettingsToggle } from '../../components/
 import { api, ApiError, type CredentialRedactionState } from '../../api/client'
 import { i18nT } from '../../i18n/t'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyOrError, OwnerOnlyRefusal } from '../../components/OwnerOnlyNotice'
 import { reportForError } from '../../utils/errorReport'
 
 /* ── Credential redaction toggle ─────────────────────────────────────────────
@@ -116,26 +117,22 @@ function CredentialRedactionCard() {
           {/* A rejected PUT is an error the agent can usually fix (an owner-gate
               refusal, a keystone write failure). */}
           {set.isError && !refusedByPolicy && (
-            <ErrorNotice
+            <OwnerOnlyOrError error={set.error} kind="redaction" askAgent askAgentLabel={i18nT('pages.settings.securityPanel.credential_redaction_ask_agent')}><ErrorNotice
               variant="inline"
               className="mt-1"
               message={i18nT('pages.settings.securityPanel.credential_redaction_write_failed', { state: i18nT(view.enabled ? 'pages.settings.securityPanel.credential_redaction_still_on' : 'pages.settings.securityPanel.credential_redaction_still_off') })}
               askAgent
               askAgentLabel={i18nT('pages.settings.securityPanel.credential_redaction_ask_agent')}
               testId="credential-redaction-write-failed"
-            />
+            /></OwnerOnlyOrError>
           )}
         </>
       ) : ownerGateRefused ? (
-        // A non-owner: not a failure to recover from, a fact about the viewer. No Retry
-        // (it can never succeed and each click would write another audited refusal).
-        <ErrorNotice
-          variant="inline"
-          message={i18nT('pages.settings.securityPanel.credential_redaction_owner_only')}
-          askAgent
-          askAgentLabel={i18nT('pages.settings.securityPanel.credential_redaction_ask_agent')}
-          testId="credential-redaction-owner-only"
-        />
+        // A non-owner: not a failure to recover from, a fact about the viewer. The
+        // owner-only lock: no Retry (it can never succeed and each click would
+        // write another audited refusal); the agent hand-off can explain it, and
+        // this read holds no draft to lose.
+        <OwnerOnlyRefusal kind="redaction" testId="credential-redaction-owner-only" askAgent askAgentLabel={i18nT('pages.settings.securityPanel.credential_redaction_ask_agent')} />
       ) : isError ? (
         // With the read failed there is no toggle to move, so the notice carries the
         // only recovery that does not mean reloading the page: the query's own retry.

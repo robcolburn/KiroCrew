@@ -435,7 +435,7 @@ describe('ChatPage ?sid= URL parameter', () => {
       vi.useFakeTimers()
       renderChatPage({ route: '/chat?sid=nonexistent', slots })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "nonexistent" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
       vi.useRealTimers()
     })
 
@@ -448,7 +448,7 @@ describe('ChatPage ?sid= URL parameter', () => {
       vi.useFakeTimers()
       const { store } = renderChatPage({ route: '/chat?sid=chat-9-900', slots: [], slotsLoaded: false })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
 
       await act(async () => { store.dispatch(sseSlots([slot('chat-9-900', 'Late Session')])) })
       await act(async () => { await vi.advanceTimersByTimeAsync(50) }) // the open takes its own turn; act runs the update it schedules
@@ -463,17 +463,17 @@ describe('ChatPage ?sid= URL parameter', () => {
       vi.useFakeTimers()
       const { store } = renderChatPage({ route: '/chat?sid=chat-9-900', slots: [], slotsLoaded: false })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
 
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await act(async () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
       })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(store.getState().chat.activeSlot).toBe('chat-9-900')
       vi.useRealTimers()
     })
@@ -493,14 +493,14 @@ describe('ChatPage ?sid= URL parameter', () => {
       })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await vi.advanceTimersByTimeAsync(60_000)
       await act(async () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
       })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(store.getState().chat.activeSlot).toBe('chat-1-100')
       vi.useRealTimers()
     })
@@ -518,14 +518,14 @@ describe('ChatPage ?sid= URL parameter', () => {
       })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await vi.advanceTimersByTimeAsync(10_000)
       await act(async () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
       })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(store.getState().chat.activeSlot).toBe('chat-9-900')
       vi.useRealTimers()
     })
@@ -540,7 +540,7 @@ describe('ChatPage ?sid= URL parameter', () => {
       })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await act(async () => { store.dispatch(sseConnected(false)) })
       await vi.advanceTimersByTimeAsync(60_000)
@@ -549,7 +549,7 @@ describe('ChatPage ?sid= URL parameter', () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
       })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(store.getState().chat.activeSlot).toBe('chat-1-100')
 
       await act(async () => { await store.dispatch(switchSlot('chat-9-900')) })
@@ -572,14 +572,14 @@ describe('ChatPage ?sid= URL parameter', () => {
       const { store } = renderChatPage({ route: '/chat?sid=chat-9-900', slots: [], slotsLoaded: false })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await act(async () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
         await Promise.resolve()
         await Promise.resolve()
       })
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(screen.getByText(
         i18nT('store.chatSlice.session_open_error_named', { name: 'Late Session' }),
       )).toBeTruthy()
@@ -599,11 +599,11 @@ describe('ChatPage ?sid= URL parameter', () => {
       const { store } = renderChatPage({ route: '/chat?sid=chat-9-900', slots: [], slotsLoaded: false })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await act(async () => { store.dispatch(sseSlots([...slots])) })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
       expect(store.getState().chat.activeSlot).not.toBe('chat-9-900')
       vi.useRealTimers()
     })
@@ -823,14 +823,14 @@ describe('ChatPage ?sid= URL parameter', () => {
       })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await act(async () => { await store.dispatch(switchSlot('chat-2-200')) })
       await act(async () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
       })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(store.getState().chat.activeSlot).toBe('chat-2-200')
       vi.useRealTimers()
     })
@@ -845,7 +845,7 @@ describe('ChatPage ?sid= URL parameter', () => {
       })
       await act(async () => { store.dispatch(sseSlots(slots)) })
       await vi.advanceTimersByTimeAsync(5100)
-      expect(screen.getByText(/session "chat-9-900" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
 
       await act(async () => { await store.dispatch(switchSlot('chat-2-200')) })
       await act(async () => { await store.dispatch(switchSlot('chat-1-100')) })
@@ -853,7 +853,7 @@ describe('ChatPage ?sid= URL parameter', () => {
         store.dispatch(sseSlots([...slots, slot('chat-9-900', 'Late Session')]))
       })
       await vi.advanceTimersByTimeAsync(50)
-      expect(screen.queryByText(/session "chat-9-900" not found/i)).toBeNull()
+      expect(screen.queryByText(/no longer on this Crew/i)).toBeNull()
       expect(store.getState().chat.activeSlot).toBe('chat-1-100')
       vi.useRealTimers()
     })
@@ -996,7 +996,7 @@ describe('ChatPage ?sid= URL parameter', () => {
       renderChatPage({ route: '/chat?sid=nonexistent', activeSlot: 'chat-1-100', slots })
       await vi.advanceTimersByTimeAsync(5100)
       expect(detailCalls()).not.toContain('chat-1-100')
-      expect(screen.getByText(/session "nonexistent" not found/i)).toBeTruthy()
+      expect(screen.getByText(/no longer on this Crew/i)).toBeTruthy()
       vi.useRealTimers()
     })
   })

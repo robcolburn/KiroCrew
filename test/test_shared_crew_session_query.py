@@ -369,4 +369,5 @@ def test_people_usage_is_reported_only_when_a_source_is_wired():
     finally:
         people.reset_for_tests()
     assert body["usage_available"] is True
-    assert body["people"][0]["usage"] == {"active": 1, "queued": 2}
+    alice = next(r for r in body["people"] if r["principal"]["id"] == ALICE.id)
+    assert alice["usage"] == {"active": 1, "queued": 2}

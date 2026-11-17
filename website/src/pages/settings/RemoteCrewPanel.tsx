@@ -25,6 +25,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import DefaultDestinationCrewPicker from '../../components/DefaultDestinationCrewPicker'
 import SharedCrewsCards from '../../components/SharedCrewsCards'
+import { OwnerOnlyNotice, useIsTeammate } from '../../components/OwnerOnlyNotice'
 import {
   Server,
   Rocket,
@@ -108,7 +109,14 @@ export { TurnUrlField } from './RemoteCrewPanelCrewRow'
 /** The shape of an AWS Region name, e.g. us-east-1 or us-gov-west-1. The gateway validates it again. */
 const AWS_REGION_RE = /^[a-z]{2}(-[a-z]+)+-\d{1,2}$/
 
+/** Remote instances are the machine owner's (their routes mint a peer's owner
+ *  token): a Shared Crew teammate gets the lock, and none of the panel's reads. */
 export function RemoteCrewPanel() {
+  const teammate = useIsTeammate()
+  return teammate ? <Card><OwnerOnlyNotice kind="remote" /></Card> : <OwnerManagedRemoteCrewPanel />
+}
+
+function OwnerManagedRemoteCrewPanel() {
   const queryClient = useQueryClient()
   const dispatch = useAppDispatch()
   const [tab, setTab] = useState<'crews' | 'setup'>('crews')

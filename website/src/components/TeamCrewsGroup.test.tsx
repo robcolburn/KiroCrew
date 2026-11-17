@@ -18,6 +18,8 @@ import { setCrewPins, setStableOrder } from './InstanceTabBar'
 import { RELAY_VIEWER_CREWS_KEY, relayRefusalText, relayRetryable } from '../hooks/useRelayViewerCrews'
 import { timeAgo } from '../utils/timeAgo'
 import { renderWithProviders, createTestStore } from '../test/helpers'
+import RelayCrewPane from './RelayCrewPane'
+import { resetRelayPaneLoadForTest } from '../hooks/useRelayCrewPane'
 
 const crew = (over: Partial<RelayCrewEntry>): RelayCrewEntry => ({
   endpointId: 'ep-1',
@@ -62,7 +64,7 @@ async function openGroup(u: ReturnType<typeof userEvent.setup>) {
   return screen.findByTestId('team-crews-group')
 }
 
-const row = (name: string) => screen.getByRole('menuitem', { name: `Open ${name}` })
+const row = (name: string) => screen.getByRole('menuitem', { name: `Connect ${name}` })
 
 beforeEach(() => {
   localStorage.clear()
@@ -138,13 +140,15 @@ describe('TeamCrewsGroup', () => {
     const u = userEvent.setup()
     const group = await openGroup(u)
     expect(screen.getByText('This computer')).toBeTruthy()
-    expect(within(group).getByText('Team Crews')).toBeTruthy()
+    // Named for where the list comes from: the Kiro account that lists them.
+    expect(within(group).getByText('From your Kiro account')).toBeTruthy()
     // The Local row keeps its name; "This computer" is the group's name only.
     expect(screen.getByRole('menuitemradio', { name: /Local/ })).toBeTruthy()
     // Team rows are plain items, not destinations: no radio, no pin.
     expect(within(group).queryAllByRole('menuitemradio')).toHaveLength(0)
     expect(within(group).queryAllByRole('menuitemcheckbox')).toHaveLength(0)
-    expect(within(group).getByTitle('Opens in its own window')).toBeTruthy()
+    // The row's one visible action is a small Connect, and only a click runs it.
+    expect(within(group).getByTestId('relay-crew-connect').textContent).toBe('Connect')
   })
 
   it('names My Crews only when SSH Crews are listed', async () => {
@@ -167,7 +171,7 @@ describe('TeamCrewsGroup', () => {
     await waitFor(() => expect(client.getQueryState(['instances'])?.status).toBe('error'))
     const u = userEvent.setup()
     const group = await openGroup(u)
-    expect(within(group).getByRole('menuitem', { name: 'Open Build box' })).toBeTruthy()
+    expect(within(group).getByRole('menuitem', { name: 'Connect Build box' })).toBeTruthy()
   })
 
   it("leaves Team Crews out of the caret's unread count", async () => {
@@ -177,7 +181,7 @@ describe('TeamCrewsGroup', () => {
     const u = userEvent.setup()
     // The Team rows must be on screen first, or the count could pass before they exist.
     const group = await openGroup(u)
-    expect(within(group).getAllByRole('menuitem', { name: /^Open / })).toHaveLength(2)
+    expect(within(group).getAllByRole('menuitem', { name: /^Connect / })).toHaveLength(2)
     await u.keyboard('{Escape}')
     expect(await screen.findByRole('button', { name: 'Switch crew, 2 unread elsewhere' })).toBeTruthy()
   })
@@ -263,6 +267,80 @@ describe('TeamCrewsGroup', () => {
       'Personal · offline',
       'Personal · offline',
     ])
+  })
+
+  describe('with the desktop app\'s panes', () => {
+    function withPaneBridge() {
+      const bridge = {
+        open: vi.fn(async (_id: string) => ({ ok: true })),
+        openPane: vi.fn(async (_id: string, _r: unknown, _v: unknown) => ({ ok: true })),
+        setPaneBounds: vi.fn(async () => undefined),
+        setPaneOverlay: vi.fn(async () => undefined),
+        setPaneInactive: vi.fn(async () => undefined),
+        closePane: vi.fn(async () => undefined),
+        onPaneEvent: vi.fn(() => () => undefined),
+      }
+      ;(window as { relayCrewAPI?: unknown }).relayCrewAPI = bridge
+      return bridge
+    }
+    function mountWithPane() {
+      vi.spyOn(api, 'listInstances').mockResolvedValue(listResp([]))
+      const store = createTestStore({ instances: { warm: {}, activeId: null, mru: [], unread: {} } })
+      renderWithProviders(<><RelayCrewPane /><TeamCrewsSwitcher variant="inline" /></>, { store })
+      return store
+    }
+    beforeEach(() => {
+      resetRelayPaneLoadForTest()
+      sessionStorage.clear()
+    })
+
+    it('Open shows the Crew as a pane with a chip, and Local stops reading as on screen', async () => {
+      const bridge = withPaneBridge()
+      vi.spyOn(api, 'relayViewerCrews').mockResolvedValue({ crews: [crew({ endpointId: 'ep-9', name: 'Lab' })] })
+      const store = mountWithPane()
+      const u = userEvent.setup()
+      await openGroup(u)
+      await u.click(row('Lab'))
+      await waitFor(() => expect(bridge.openPane).toHaveBeenCalled())
+      // The open, then (once the menu closes and hands focus back to its trigger)
+      // a focus of the same pane: every call names this Crew.
+      expect(new Set(bridge.openPane.mock.calls.map(c => c[0]))).toEqual(new Set(['ep-9']))
+      expect(bridge.open).not.toHaveBeenCalled()
+      await waitFor(() => expect(screen.queryByTestId('team-crews-group')).toBeNull())
+      expect(screen.getByTestId('relay-crew-chip').getAttribute('data-active')).toBe('true')
+      // The leading Local chip is no longer the pane on screen: a click goes back to it.
+      const local = screen.getByRole('button', { name: 'Local dashboard' })
+      expect(local.getAttribute('aria-current')).toBeNull()
+      await u.click(local)
+      expect(store.getState().instances.relayActive).toBeNull()
+      expect(screen.getByTestId('relay-crew-chip').getAttribute('data-active')).toBe('false')
+    })
+
+    it.each([
+      ['a relay pane', 'kiroCrewRelayPane'],
+      ['a relay window', 'kiroCrewRelayWindow'],
+    ])('inside %s, opens through bridge.open and never calls openPane', async (_where, marker) => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(`Mozilla/5.0 Electron ${marker}`)
+      const bridge = withPaneBridge()
+      vi.spyOn(api, 'relayViewerCrews').mockResolvedValue({ crews: [crew({ name: 'Lab' })] })
+      mountWithPane()
+      expect(screen.queryByTestId('relay-crew-pane-region')).toBeNull()
+      const u = userEvent.setup()
+      await openGroup(u)
+      await u.click(row('Lab'))
+      await waitFor(() => expect(bridge.open).toHaveBeenCalledWith('ep-1'))
+      expect(bridge.openPane).not.toHaveBeenCalled()
+      expect(screen.queryByTestId('relay-crew-chip')).toBeNull()
+    })
+
+    it('never opens on its own', async () => {
+      const bridge = withPaneBridge()
+      vi.spyOn(api, 'relayViewerCrews').mockResolvedValue({ crews: [crew({})] })
+      mountWithPane()
+      await openGroup(userEvent.setup())
+      expect(bridge.openPane).not.toHaveBeenCalled()
+      expect(bridge.open).not.toHaveBeenCalled()
+    })
   })
 
   it('Open sends only the endpoint ID to the desktop bridge, then closes the menu', async () => {

@@ -14,6 +14,8 @@ import { Trans } from 'react-i18next'
 import { i18nT } from '../../i18n/t'
 import { fmtTimeNumeric } from '../../i18n/format'
 import ErrorNotice from '../../components/ErrorNotice'
+import { OwnerOnlyNotice, useIsTeammate, OwnerOnlyRefusal } from '../../components/OwnerOnlyNotice'
+import { isOwnerOnlyRefusal } from '../../api/apiError'
 import { copyToClipboard } from '../../utils/clipboard'
 import { CODE_BASE, StatusChip } from './SecurityPanelPosture'
 
@@ -82,6 +84,9 @@ export function TailnetOriginCard() {
     mutationFn: (next: boolean) => api.patchConfig('dashboard.tailscale.enabled', next),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tailnet-status'] }),
   })
+  // `dashboard.tailscale.*` is an admission key: which listeners run stays the
+  // machine owner's, so a Shared Crew teammate (or a refused write) sees the lock.
+  const locked = useIsTeammate() || isOwnerOnlyRefusal(save.error)
   const [copied, setCopied] = useState(false)
   // Separate from `!copied`: idle and failed both read as not-copied, but only
   // the failure needs a notice (same split as MobileLoginCard).
@@ -137,13 +142,17 @@ export function TailnetOriginCard() {
           <div className="text-[12px] text-muted mt-1 leading-relaxed">
             {i18nT('pages.settings.securityPanel.tailnet_desc')}
           </div>
+          {/* A teammate sees the lock up front; a refused save says the same as a failed request. */}
+          {locked && (isOwnerOnlyRefusal(save.error)
+            ? <OwnerOnlyRefusal kind="admission" className="mt-1" askAgent />
+            : <OwnerOnlyNotice kind="admission" className="mt-1" />)}
         </div>
         <span className="shrink-0 flex items-center gap-1.5">
           {pinned && <Lock size={13} className="lucide-inline text-muted" aria-hidden="true" />}
           <Toggle
             checked={effectiveOn}
             onChange={next => save.mutate(next)}
-            disabled={isLoading || pinned || save.isPending}
+            disabled={isLoading || pinned || save.isPending || locked}
             label={i18nT('pages.settings.securityPanel.tailnet_title')}
           />
         </span>
@@ -288,7 +297,8 @@ export function TailnetOriginCard() {
           onDismiss={() => setCopyFailed(false)}
         />
       )}
-      {save.isError && (
+      {/* An owner-only refusal is said by the lock above, not as a failure. */}
+      {save.isError && !isOwnerOnlyRefusal(save.error) && (
         <ErrorNotice variant="inline" className="mt-1.5" message={i18nT('pages.settings.securityPanel.third_party_apps_save_failed')} askAgent />
       )}
     </SettingsCard>

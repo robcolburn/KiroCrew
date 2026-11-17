@@ -12,6 +12,7 @@ import ErrorNotice from '../../components/ErrorNotice'
 import SpeechProviderNotice from '../../components/SpeechProviderNotice'
 import { parseSpeechProviders, speechProviderNotice, speechProviderOptions } from '../../lib/speechProviders'
 import { languageOptionLabel } from '../../lib/sttProviders'
+import { useCrewHost } from '../../hooks/sharedCrew/useCrewHost'
 type VoiceConfig = {
   enabled: boolean; provider: string; voice: string; engine: string; rate: string
   autoSpeak: boolean; aws_profile: string; region: string
@@ -81,6 +82,9 @@ export function VoicePanel() {
   const [saveError, setSaveError] = useState('')
   const [localProfile, setLocalProfile] = useState('')
   const [localRegion, setLocalRegion] = useState('')
+  // A teammate has no shell on the Crew's host, so the engine hint names that
+  // machine and its owner rather than handing them an install command.
+  const crewHost = useCrewHost()
 
   // ── Text-to-Speech config (server-side) ──
   const voiceQ = useQuery<VoiceConfig>({ queryKey: ['voiceConfig'], queryFn: () => api.voiceConfig() })
@@ -219,7 +223,11 @@ export function VoicePanel() {
                        user who installs espeak-ng would otherwise stare at this
                        line until a full reload. */
                     <div className="flex flex-wrap items-center gap-2 mb-2 text-[13px]" data-testid="system-engine-absent">
-                      <span className="flex items-center gap-1.5"><Info size={13} className="lucide-inline" /> {i18nT('pages.settings.voicePanel.this_host_has_no_built_in_speech_engine_install_es')}</span>
+                      <span className="flex items-center gap-1.5"><Info size={13} className="lucide-inline" /> {!crewHost.teammate
+                        ? i18nT('pages.settings.voicePanel.this_host_has_no_built_in_speech_engine_install_es')
+                        : crewHost.ownerLabel
+                          ? i18nT('pages.settings.voicePanel.no_speech_engine_on_named_host', { host: crewHost.ownerLabel })
+                          : i18nT('pages.settings.voicePanel.no_speech_engine_on_crew_host')}</span>
                       {/* "Check again", not "Retry": nothing failed here. The engine is
                           absent, so this re-runs detection after the user installs one --
                           the two genuine fetch failures below keep "Retry". */}

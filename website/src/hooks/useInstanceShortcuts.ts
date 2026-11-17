@@ -2,7 +2,10 @@
  * useInstanceShortcuts — ⌘+digit (macOS) / Ctrl+digit (Windows/Linux) jumps
  * between the panes shown in the InstanceTabBar: digit 1 = Local, digit 2 = the
  * first remote instance, and so on — mirroring the tab strip left-to-right,
- * exactly like a native tab switcher.
+ * exactly like a native tab switcher. The Team Crews open as panes in this window
+ * (instances.relayPanes) number on after the remote instances, in the order they
+ * opened. The same mapping serves the chord a Team Crew pane forwards while it
+ * holds the keyboard (`useSwitchTabByIndex`, called from useRelayCrewPane).
  *
  * ELECTRON-ONLY by design: in a plain browser ⌘/Ctrl+digit is reserved for
  * browser tab switching (Chromium may not even dispatch the keydown), so the
@@ -37,7 +40,8 @@ import { useCallback, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { isInstancesDisabledError } from '../utils/instancesDisabled'
-import { useAppSelector } from '../store'
+import { useAppDispatch, useAppSelector } from '../store'
+import { showRelayPane, type RelayPaneTab } from '../store/instancesSlice'
 import { isEmbeddedPane } from '../lib/embedded'
 import { isElectron } from '../lib/electron'
 import { visibleInstanceTabs } from '../components/InstanceTabBar'
@@ -59,12 +63,21 @@ function chordIndex(e: KeyboardEvent): number {
   return parseInt(code.charAt(5)) - 1 // Digit1 -> 0 (Local), Digit2 -> 1, ...
 }
 
-const shortcutsEnabled = () => localStorage.getItem(SHORTCUTS_ENABLED_KEY) !== '0'
+export const shortcutsEnabled = () => localStorage.getItem(SHORTCUTS_ENABLED_KEY) !== '0'
 
-export function useInstanceShortcuts() {
+/** Stable empty fallback for partial (test) stores. */
+const NO_RELAY_PANES: RelayPaneTab[] = []
+
+/**
+ * Top-level tab N (0-based: 0 = Local, then the remote instances, then the Team
+ * Crew panes) brought forward, exactly as a click on it would. `count` is how many
+ * tabs there are; `usable` is false while the remote-instances feature is off and
+ * no Team Crew pane is open, which leaves no chord to claim.
+ */
+export function useSwitchTabByIndex() {
+  const dispatch = useAppDispatch()
   const warm = useAppSelector(s => s.instances.warm)
-  const host = useAppSelector(s => s.instances.host)
-
+  const relayPanes = useAppSelector(s => s.instances.relayPanes ?? NO_RELAY_PANES)
   const embedded = isEmbeddedPane()
   // Top-level only: share the ['instances'] React Query cache with
   // InstanceTabBar / viewport — same cache entry, not a second network poll.
@@ -87,10 +100,26 @@ export function useInstanceShortcuts() {
         return
       }
       const inst = tabInstances[idx - 1]
-      if (inst) selectInstance(inst.id)
+      if (inst) {
+        selectInstance(inst.id)
+        return
+      }
+      const pane = relayPanes[idx - 1 - tabInstances.length]
+      if (pane) dispatch(showRelayPane(pane.endpointId))
     },
-    [tabInstances, selectInstance],
+    [tabInstances, relayPanes, selectInstance, dispatch],
   )
+  return {
+    selectByIndex,
+    count: 1 + tabInstances.length + relayPanes.length,
+    usable: !forbidden || relayPanes.length > 0,
+  }
+}
+
+export function useInstanceShortcuts() {
+  const host = useAppSelector(s => s.instances.host)
+  const embedded = isEmbeddedPane()
+  const { selectByIndex, count, usable } = useSwitchTabByIndex()
 
   // Embedded select: relay up through the SAME channel as the embedded tab
   // bar's click path (EmbeddedInstanceTabBar). The parent validates the target.
@@ -120,13 +149,13 @@ export function useInstanceShortcuts() {
         if (relayByIndex(idx)) e.preventDefault()
         return
       }
-      if (!isElectron || forbidden) return
+      if (!isElectron || !usable) return
       // Only claim the keystroke when a matching pane exists.
-      if (idx > tabInstances.length) return
+      if (idx >= count) return
       e.preventDefault()
       selectByIndex(idx)
     },
-    [embedded, host, relayByIndex, forbidden, tabInstances.length, selectByIndex],
+    [embedded, host, relayByIndex, usable, count, selectByIndex],
   )
 
   useEffect(() => {

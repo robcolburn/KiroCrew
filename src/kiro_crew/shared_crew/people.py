@@ -13,8 +13,9 @@ local Tailscale daemon lists. Three sources feed it, and each row says which:
   appear before they connect, with no first or last sighting and no devices.
 
 Rows merge in that order: a person already observed or recorded keeps that row.
-Every row says whether it is the owner (``is_owner``), and the owner has a row
-whenever the owner is the one viewing.
+Every row says whether it is the owner (``is_owner``) and how the person was
+identified (``provenance``), and the owner always has a row: the viewer's own when the owner is viewing, else one labelled with this
+machine's name (source ``owner``), so a teammate can tell whose Crew it is.
 
 The registry never stores a token, an address or a node name. It keeps a
 bounded set of device digests only to count devices.
@@ -49,6 +50,9 @@ MAX_DEVICES = 16
 SOURCE_OBSERVED = "observed"
 SOURCE_SESSION_CREATOR = "session_creator"
 SOURCE_TAILSCALE_SHARE = "tailscale_share"
+#: The owner's row when nothing else named the owner: who the Crew belongs to,
+#: not a sighting.
+SOURCE_OWNER = "owner"
 
 
 @dataclass
@@ -184,9 +188,15 @@ def people_view(
     ``directory`` is always unavailable here: no authoritative assigned-user
     directory exists in this build, and observations are not one. *sharees*
     are the people the local Tailscale daemon lists besides the owner; one
-    whose principal is already a row adds none.
+    whose principal is already a row adds none. When no row is the owner's,
+    one is added: the viewer's own when the owner is viewing, else the owner's
+    local principal (``owner.owner_principal``) with source ``owner``.
     """
-    from kiro_crew.shared_crew.owner import local_owner_principal_ids, owner_principal_ids
+    from kiro_crew.shared_crew.owner import (
+        local_owner_principal_ids,
+        owner_principal,
+        owner_principal_ids,
+    )
 
     reg = reg or _REGISTRY
     creators = _creators(session_rows)
@@ -291,6 +301,18 @@ def people_view(
                 [SOURCE_OBSERVED],
                 first_seen=now,
                 last_seen=now,
+                devices=0,
+                sessions_created=0,
+            ),
+        )
+    elif not any(r["is_owner"] for r in rows):
+        rows.insert(
+            0,
+            _row(
+                owner_principal(),
+                [SOURCE_OWNER],
+                first_seen=None,
+                last_seen=None,
                 devices=0,
                 sessions_created=0,
             ),

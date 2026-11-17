@@ -580,10 +580,8 @@ interface MembersPageThreadColumnProps {
   setPostCreateError: Dispatch<SetStateAction<PostCreateFailure | null>>
   postCreateDismissable: boolean
   createHeld: string | null
-  /** Import from file is the owner's (a relay teammate's view). */
+  /** Import from file is hidden: the viewer is neither the owner nor a teammate. */
   importHeld: boolean
-  /** The owner check behind `importHeld` failed: said here while the roster is not. */
-  ownerCheckFailed: boolean
   threadOutcome: MemberThreadOutcome | undefined
   slotsLoaded: boolean
   active: MemberRosterRow | undefined
@@ -597,7 +595,7 @@ export function MembersPageThreadColumn({
   rosterRead, crewEditing, teamsRead, layout, profileCard, drawers, rosterView, thread, sidePanel, threadView,
   rosterSignals, profileFlight, navigation, teamView, navigate, location, activeName, setSearchParams,
   editingCrew, profile, gone, openCreate, openAdvanced, openQuick, threadColumnRef, postCreateError,
-  setPostCreateError, postCreateDismissable, createHeld, importHeld, ownerCheckFailed, threadOutcome, slotsLoaded, active, leftCreateFailure,
+  setPostCreateError, postCreateDismissable, createHeld, importHeld, threadOutcome, slotsLoaded, active, leftCreateFailure,
   setLeftCreateFailure, retryPostCreate,
 }: MembersPageThreadColumnProps) {
   const { t } = useTranslation()
@@ -852,22 +850,11 @@ export function MembersPageThreadColumn({
                     is visible and this wrapper steps aside; below md the roster is
                     hidden regardless of the pin. No hand-off: the Profile card may
                     hold an unsaved schedule draft, and Ask the agent navigates away. */}
-                {(patrol.failed || teamsNoticeShown || starError || ownerCheckFailed) && (
+                {(patrol.failed || teamsNoticeShown || starError) && (
                   <div
                     className={`${rosterPinned ? 'md:hidden' : ''} flex flex-col gap-2 px-4 pb-2`}
                     data-testid="member-main-roster-errors"
                   >
-                    {/* The owner check behind Import from file failed: the roster
-                        says so, and this is its copy while the roster is folded,
-                        so the switcher's missing Import is explained. */}
-                    {ownerCheckFailed && (
-                      <ErrorNotice
-                        message={t('pages.membersPage.owner_check_failed')}
-                        variant="inline"
-                        askAgent={false}
-                        testId="member-thread-owner-check-error"
-                      />
-                    )}
                     {patrol.failed && (
                       <ErrorNotice
                         message={t('pages.membersPage.patrol_error_roster')}
