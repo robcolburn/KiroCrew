@@ -395,3 +395,67 @@ def test_replace_installs_the_skills_tree_on_a_machine_with_no_live_skills(tmp_p
 
     assert (home / "skills" / "foreign" / "SKILL.md").is_file()
     assert "skills_kept" not in summary
+
+
+def _managed_copy(home: Path) -> Path:
+    """What the gateway's startup leaves in the skills folder: a marked core skill copy."""
+    from kiro_crew import deploy
+
+    name = sorted(p.name for p in deploy._SKILLS_DIR.iterdir() if p.is_dir())[0]
+    copy = home / "skills" / name
+    copy.mkdir(parents=True)
+    (copy / deploy._MANAGED_MARKER).write_text("", encoding="utf-8")
+    (copy / "SKILL.md").write_text("managed copy", encoding="utf-8")
+    return copy
+
+
+def test_replace_installs_the_skills_tree_when_the_live_skills_are_only_managed_copies(tmp_path):
+    home = _home(tmp_path)
+    _managed_copy(home)
+    (home / "skills" / "auto").mkdir()
+    (home / "skills" / "auto" / "x.md").write_text("generated", encoding="utf-8")
+
+    summary = _import(_skills_zip(tmp_path), home)
+
+    assert (home / "skills" / "foreign" / "SKILL.md").is_file()
+    assert "skills_kept" not in summary
+
+
+def test_replace_keeps_a_user_skill_that_sits_beside_managed_copies(tmp_path):
+    home = _home(tmp_path)
+    _managed_copy(home)
+    mine = _live_skill(home)
+
+    summary = _import(_skills_zip(tmp_path), home)
+
+    assert mine.read_text(encoding="utf-8") == "live skill"
+    assert not (home / "skills" / "foreign").exists()
+    assert summary["skills_kept"] is True
+
+
+def _alias_config(home: Path) -> None:
+    (home / "config.json").write_text(
+        json.dumps({"agents": {"crew-alias": {"kiro_agent": "default"}}}), encoding="utf-8"
+    )
+
+
+def test_a_crew_alias_of_the_live_config_keeps_its_cron_agent_id(tmp_path, monkeypatch):
+    home = _home(tmp_path)
+    _alias_config(home)
+    monkeypatch.setenv("KIROCREW_HOME", str(home))
+    path = _store(tmp_path, [_risky_job("a", agent_id="crew-alias")])
+
+    _sanitize_imported_crons(path, hold_all=True)
+
+    assert _read(path)["a"]["agent_id"] == "crew-alias"
+
+
+def test_an_unknown_agent_id_is_still_reset_beside_a_crew_alias(tmp_path, monkeypatch):
+    home = _home(tmp_path)
+    _alias_config(home)
+    monkeypatch.setenv("KIROCREW_HOME", str(home))
+    path = _store(tmp_path, [_risky_job("b", agent_id="ghost-agent")])
+
+    _sanitize_imported_crons(path, hold_all=True)
+
+    assert not _read(path)["b"].get("agent_id")
