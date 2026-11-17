@@ -203,6 +203,7 @@ _MOVED = _FIRST_SPLIT | {name for names in _LATER_MOVES.values() for name in nam
 #: one-module file; these are the tool gate's tiers (``gate_tiers``) and its typed
 #: input (``ToolCall``, beside the extraction it absorbed).
 _NEW_OWNER_DEFS: dict[str, tuple[str, ...]] = {
+    "app_browser_grant": ("tier_app_browser_sites",),
     "gate_tiers": tuple("""
         GateFacts _tier_unverifiable_shell _tier_targets _rule_sensitive_path
         _rule_sensitive_bash _rule_exfil _tier_param_paths _tier_write_protected

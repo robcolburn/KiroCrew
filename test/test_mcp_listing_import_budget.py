@@ -74,8 +74,12 @@ FORBIDDEN_BEFORE_THE_LIST = (
 #: the ssh verb gate into the owner ``security.argv_floor_ssh_gate``, which the floor
 #: imports with the rest of its owners; the module count rose by that one file and nothing
 #: new loads.
+#: Raised by 1 for ``mcp-core`` (489 to 490): the tool gate's ``app-browser-sites`` row
+#: lives in its own owner, ``kiro_crew.hook_runtime.app_browser_grant``, which the facade
+#: imports with the rest of its owners (``gate_tiers`` is at its line cap); the row's
+#: own readers load at call time, so nothing else new loads.
 PACKAGE_MODULE_CEILING = {
-    "mcp-core": 489,
+    "mcp-core": 490,
     "mcp-cron": 359,
     "mcp-guide": 353,
     "mcp-mate": 354,

@@ -63,6 +63,7 @@ from kiro_crew.config.fields import _coerce_bool  # noqa: F401
 # one is re-exported here unchanged: ``kiro_crew.hooks`` is the import path and the
 # patch surface for all of them, and ``compose`` at the foot of this module runs each
 # of their functions on these globals. See :mod:`kiro_crew.hook_runtime`.
+from kiro_crew.hook_runtime import app_browser_grant as _owner_app_browser_grant
 from kiro_crew.hook_runtime import denied_commands as _owner_denied_commands
 from kiro_crew.hook_runtime import descriptor_identity as _owner_descriptor_identity
 from kiro_crew.hook_runtime import gate_tiers as _owner_gate_tiers
@@ -79,6 +80,9 @@ from kiro_crew.hook_runtime import search_targets as _owner_search_targets
 from kiro_crew.hook_runtime import stream_caps as _owner_stream_caps
 from kiro_crew.hook_runtime import tool_identity as _owner_tool_identity
 from kiro_crew.hook_runtime import windows_paths as _owner_windows_paths
+
+# The ``app-browser-sites`` row's body, composed onto these globals like the tiers below.
+from kiro_crew.hook_runtime.app_browser_grant import tier_app_browser_sites
 from kiro_crew.hook_runtime.denied_commands import (  # noqa: F401
     _governance_pinned_command_ids,
     _publish_denied_state,
@@ -1462,6 +1466,7 @@ _global_script_hook_store: ScriptHookStore | None = None
 _facade_compose(
     globals(),
     (
+        _owner_app_browser_grant,
         _owner_denied_commands,
         _owner_descriptor_identity,
         _owner_gate_tiers,
@@ -1531,6 +1536,7 @@ GATE_TIERS: tuple[GateTier, ...] = (
     GateTier("spec-denies", "deny_policy", _tier_spec_denies),
     GateTier("spec-unjudged-denies", "deny_policy", _tier_spec_unjudged_denies),
     GateTier("app-own-server", "grant", _tier_app_own_server),
+    GateTier("app-browser-sites", "grant", tier_app_browser_sites),
     GateTier("operator-grants", "grant", _tier_operator_grants),
     GateTier("spec-builtin-grant", "grant", _tier_spec_builtin_grant),
     GateTier("batch-guard-grant", "grant", _tier_batch_guard_grant),

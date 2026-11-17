@@ -578,6 +578,7 @@ GATED_POSTS = (
     "/api/browser/input/claim",
     "/api/browser/input/event",
     "/api/browser/ask/answer",
+    "/api/browser/media",
 )
 GATED_GETS = (
     "/api/browser/live/chat-1/recordings",

@@ -46,6 +46,8 @@ def register(app: web.Application) -> None:
     app.router.add_post("/api/browser/input/event", handlers.api_browser_input_event)
     # The card's answer to a quick ask (owner-only, ``handlers/browser_ask.py``).
     app.router.add_post("/api/browser/ask/answer", handlers.api_browser_ask_answer)
+    # An app page's media buttons on its own agent's tab (owner-only, ``handlers/browser_media.py``).
+    app.router.add_post("/api/browser/media", handlers.api_browser_media)
     # The turn replay (owner-only GETs, ``handlers/browser_recordings.py``). Every
     # path segment is matched against a strict pattern inside the handler.
     app.router.add_get(

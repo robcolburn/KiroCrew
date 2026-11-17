@@ -35,6 +35,7 @@ ROUTES = (
     "/api/browser/input/release",
     "/api/browser/input/event",
     "/api/browser/ask/answer",
+    "/api/browser/media",
 )
 RECORDING_ROUTES = (
     "/api/browser/live/{session}/recordings",
