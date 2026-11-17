@@ -321,10 +321,15 @@ exactly as with the switch off, and the page says why under the switch.
   then one task per helper agent with Slack's own status mark, what it is doing right
   now (the command it is running or the file it is editing, with secrets and your
   paths taken out), and how long it has been at it. A helper agent that needs you gets a threaded reply that mentions you, and the
-  channel's status shows it is waiting on you. **Stop** in the channel stops the
-  channel's own agent only: its helper agents keep going and keep the board up to
-  date, and you stop one from its chat (each board task links to it) with **Stop
-  generation**. A code channel adds no reactions to your
+  channel's status shows it is waiting on you. **Stop** (or `!stop`) in the channel
+  stops the channel's own agent, the running turn of every helper agent it started
+  and their sub-agents, and says how many it stopped, naming up to five stopped helpers
+  the work board shows, linked to its chat, and how many it could not stop. A
+  session on the board that the channel's agent did not start as a helper (a chat
+  filed in the channel's folder, for one) is not stopped; the reply says how many
+  such sessions still run. Stop does not hold them yet: a message
+  queued for a stopped helper, its own timer or patrol, or the channel's agent can
+  start it again. Keeping them stopped until someone writes is a follow-up change. A code channel adds no reactions to your
   messages: its progress is the channel's status and the board. In the dashboard the helper agents sit under the channel's session, in
   the channel's folder (a channel whose chat has conductor mode on keeps them out of folders, as conductor mode does everywhere).
   It adds the `code_channels:manage`, `chat:write.customize`, `canvases:write`,

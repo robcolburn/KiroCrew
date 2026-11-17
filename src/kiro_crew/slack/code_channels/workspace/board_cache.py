@@ -200,19 +200,15 @@ class BoardCache:
         except Exception:
             return False
 
-    def running_helpers(self, binding: Any) -> int:
-        """How many of the channel's helper agents the watch last saw running.
+    def watched_sessions(self, binding: Any) -> set[str]:
+        """The slot keys of the sessions the channel's watch last saw.
 
-        The sessions of its last pass (the conductor's workers and the sessions
-        filed in its folder), the channel's own session left out. ``0`` when the
-        board's scope refuses the channel: the reply points at a board it is not
-        shown, and the count would say what that board withholds.
+        Its helper agents and the sessions filed in its folder, the channel's own
+        session left out. Empty when the board's scope refuses the channel: the
+        Stop reply would count what that board withholds.
         """
         if not self._board_still_admitted(binding):
-            return 0
+            return set()
         key = f"{binding.team_id or ''}:{binding.channel_id or ''}"
         own = str(binding.session_key or "").removeprefix("dashboard_")
-        seen = self._seen.get(key, {})
-        return sum(
-            1 for k, (run, _g) in seen.items() if run and k.removeprefix("dashboard_") != own
-        )
+        return {k.removeprefix("dashboard_") for k in self._seen.get(key, {})} - {own}
