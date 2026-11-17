@@ -661,7 +661,14 @@ def judge_lane(config: Any | None = None, *, endpoint_consented: bool) -> str:
     the owner named would be worse than doing nothing.
 
     Never raises: an unreadable section resolves the same way an absent one does.
+
+    An LTS build always answers :data:`LANE_LLM`: hosted Jev is locked off there,
+    so ``jev`` and ``auto`` are coerced away from the endpoint lane.
     """
+    from kiro_crew import edition
+
+    if edition.is_lts():
+        return LANE_LLM
     try:
         provider = str(getattr(_judge_config(config), "provider", "") or "").strip().lower()
     except Exception:
@@ -779,11 +786,22 @@ def judge_evidence_scope_granted(
     alone. A loop whose owner armed no brief lacks the ``judge`` spec half of that
     lane's authorization, so screening it asks whether this point's own egress scope
     was granted. Fail-closed: anything unreadable answers False.
+
+    In an LTS build the judge runs on the LLM lane only (:func:`judge_lane`), which
+    sends to no decision endpoint, so the configured endpoint's eligibility (hosted
+    Jev is locked off there) does not bind it: the recorded grant and the row do.
     """
     try:
         cfg = config if config is not None else _snapshot()
         if cfg is None:
             return False
+        from kiro_crew import edition
+
+        if edition.is_lts():
+            state = _consent.load_state()
+            if not _consent.is_enabled(state) or _capability_denied(session_key):
+                return False
+            return _point_scope_granted(JUDGE_POINT, state)
         if not _consented_for(cfg, session_key, JUDGE_POINT):
             return False
         return _point_scope_granted(JUDGE_POINT, _consent.load_state())
