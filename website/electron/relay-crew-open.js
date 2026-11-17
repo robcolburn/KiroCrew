@@ -252,8 +252,12 @@ function createRelayCrewOpener({ requestToken, openWindow, openPane, createRenew
       const existing = windows.get(endpointId);
       if (existing && !existing.win.isClosed()) {
         if (existing.renewal.isStopped()) return once(endpointId, () => restart(endpointId, existing));
+        // A window left on the relay's error page loads the Crew again, so
+        // choosing it in the switcher recovers it instead of only raising it.
+        const stale = typeof existing.win.showsError === "function" && existing.win.showsError();
+        if (stale) existing.win.reload();
         existing.win.focus();
-        say(endpointId, "focused");
+        say(endpointId, stale ? "reloaded" : "focused");
         return { ok: true };
       }
       return once(endpointId, () => openNew(endpointId, pane || null));

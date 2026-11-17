@@ -20,8 +20,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRenderedLocationIsCurrent } from '../hooks/useRenderedLocationIsCurrent'
-import { useSearchParams } from 'react-router-dom'
-import { ExternalLink } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ExternalLink, LogIn } from 'lucide-react'
 import type { RelayCrewEntry } from '../api/client'
 import {
   clearRelayCrewsUnseen, isRelayCrewOnline, openRelayCrew, recordRelayCrewsSeen, relayCrewStatusText,
@@ -32,6 +32,7 @@ import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from './ui
 import ErrorNotice, { ErrorNoticeMenuItem } from './ErrorNotice'
 import { i18nT } from '../i18n/t'
 import { joinSentences } from '../i18n/format'
+import { KIRO_SIGN_IN_PATH } from '../pages/developer/kiroSignInLink'
 
 /** One Team Crew. A failed Open keeps the menu open and shows why under the row.
  *  The agent hand-off is a sibling menu item, so the keyboard reaches it. */
@@ -104,6 +105,7 @@ function RelayListRefusalNotice({ refusal, onRetry, retrying }: {
   retrying: boolean
 }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { retryAt } = refusal
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -118,9 +120,26 @@ function RelayListRefusalNotice({ refusal, onRetry, retrying }: {
   return (
     <>
       <div className="px-3 pb-1">
-        <ErrorNotice id="relay-crews-list-refusal" variant="inline" message={refusal.text} testId="relay-crews-list-refusal" />
+        {refusal.code === 'SIGNED_OUT' ? (
+          <ErrorNotice
+            id="relay-crews-list-refusal"
+            variant="inline"
+            message={refusal.text}
+            testId="relay-crews-list-refusal"
+            noHandoffReason="Every agent runs as the stored Kiro sign-in, the credential this read found missing, so the chat a hand-off opens would fail the same way."
+          />
+        ) : (
+          <ErrorNotice id="relay-crews-list-refusal" variant="inline" message={refusal.text} testId="relay-crews-list-refusal" />
+        )}
       </div>
-      <ErrorNoticeMenuItem Item={DropdownMenuItem} message={refusal.text} describedBy="relay-crews-list-refusal" />
+      {refusal.code === 'SIGNED_OUT' ? (
+        <DropdownMenuItem data-testid="relay-crews-list-sign-in" aria-describedby="relay-crews-list-refusal" onSelect={() => navigate(KIRO_SIGN_IN_PATH)}>
+          <LogIn size={14} aria-hidden="true" />
+          {t('components.relayCrews.sign_in')}
+        </DropdownMenuItem>
+      ) : (
+        <ErrorNoticeMenuItem Item={DropdownMenuItem} message={refusal.text} describedBy="relay-crews-list-refusal" />
+      )}
       {refusal.requestId && (
         <div className="px-3 pb-1 text-[11px] text-muted font-mono select-all" data-testid="relay-crews-list-details">
           {t('components.relayCrews.request_id', { id: refusal.requestId })}
