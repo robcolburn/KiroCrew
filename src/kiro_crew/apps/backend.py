@@ -62,6 +62,7 @@ from kiro_crew.sandbox import (
     MD_NOTEBOOK_APP_NAME,
     RLIMIT_PROFILE_BUILD,
     RLIMIT_PROFILE_TOOL,
+    app_backend_secret_mask_targets,
     app_backend_visible_targets,
     app_declared_mask_targets,
     app_declared_readonly_targets,
@@ -985,6 +986,8 @@ def _start_app_backend_body(app_name: str, manifest: Any) -> AppProcess | None:
                 sandboxed_npm, _ = wrap_argv(
                     [npm_bin, "install", "--production", "--no-audit", "--no-fund"],
                     mode="standard",
+                    # Lifecycle scripts (postinstall) are third-party code.
+                    extra_hidden_dirs=app_backend_secret_mask_targets(),
                 )
                 sandboxed_npm = cgroup_scope_argv(sandboxed_npm)  # cgroup DoS ceiling
                 npm_run = run_limited(
