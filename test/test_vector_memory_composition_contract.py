@@ -71,6 +71,7 @@ RUNTIME_MODULES = frozenset(
         "episodic_search",
         "episodic_write",
         "faiss_index",
+        "lesson_candidates",
         "lesson_write",
         "lessons",
         "migration",

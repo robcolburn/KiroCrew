@@ -613,9 +613,8 @@ Per-consolidation extraction caps (`vector_memory_constants.py`, also
 interpolated into the LLM prompt so the model is told the same numbers):
 `_MAX_SEMANTIC_PER_CONSOLIDATION = 20`, `_MAX_EPISODIC_PER_CONSOLIDATION = 10`,
 `_MAX_LESSONS_PER_CONSOLIDATION = 10`. The lessons cap exists because each
-`write_lesson()` can perform up to 6 blocking embeds (1 rule plus
-`_MAX_BACKFILLS_PER_CALL = 5` lazy backfills), so an uncapped LLM array could
-occupy a worker thread for minutes. An entry whose `rule` is not a non-blank
+`write_lesson()` embeds its own rule (one blocking embed; it embeds no stored
+lesson), so an uncapped LLM array could occupy a worker thread for minutes. An entry whose `rule` is not a non-blank
 string is skipped before either store sees it: both call string methods on the
 rule, so a list or number from the model would raise and drop every later lesson
 in the batch.
@@ -1090,7 +1089,8 @@ nothing reads either. New code for a member goes to the module that owns it. In
 | `term_index` | The resident set's compact row-term index: every row's key and value terms as ids into one vocabulary, and one query's matched terms per text |
 | `semantic_scoring_patch` | Patching the resident `_SemanticScoringSet` (rows, per-width row vectors, term index) for one written key under the new generation, and checking keys patched inside an unfinished transaction against the table so a rollback leaves nothing behind |
 | `write_outcomes` | What a write reports: `SemanticRejectCode`, `LessonWriteOutcome`, `EpisodicWriteOutcome` and `LessonWriteResult`, which keep `kiro_crew.vector_memory` as their `__module__` |
-| `lesson_write` | `write_lesson` (refusal screens, the scope-local dedup scan and its authority pre-pass, deferred supersede, the lesson vector), `embed_lesson` and `update_lesson_applies` (one lesson's tier, changed in place) |
+| `lesson_candidates` | The resident index a lesson write reads instead of every lesson: per active lesson its lowercased rule text, keyword set and 256-bit vector sketch, and the candidate keys for one write (text containment, the 50% keyword rule, nearest sketches), kept current by `_invalidate_semantic_scoring` and dropped on a bulk change or another process's commit |
+| `lesson_write` | `write_lesson` (refusal screens, the scope-local dedup scan over the candidate rows and its authority pre-pass, deferred supersede, the lesson vector), `embed_lesson` and `update_lesson_applies` (one lesson's tier, changed in place) |
 | `episodic_write` | `write_episodic` and `write_episodic_outcome` (screens, dedup, capacity, the FAISS add; the facade's `_injection_audit_snippet` redacts the injection-refusal snippet), forget, restore, cap eviction and row reads |
 | `bulk_ingest` | The writer loops of `migrate_from_markdown`, `import_memory` and `promote_episodic_patterns` |
 | `store_bookkeeping` | Record revisions and eligibility (`_record_mutation`, `with_record_metadata`, `_eligible_rows`), the `memory_events` audit trail (`_log_event`, `get_events`, `rotate_events`, `get_rejection_stats`) and the `memory_meta` helpers |
@@ -4185,6 +4185,19 @@ did. Suppressing either one alone does not keep both lessons — which is why
 why a caller that must never replace an existing lesson routes to
 `set_semantic_if_absent` instead (see `onboarding_import`, whose comment records that a
 foreign directive could otherwise delete a lesson already in the store).
+
+**What a write compares against.** Not every stored lesson. `lesson_candidates` keeps a
+resident index (per lesson: lowercased rule text, keyword set, a 256-bit random-hyperplane
+sketch of the stored vector) and nominates the in-scope keys that could trip a branch: rows
+whose text contains the rule or is contained in it, rows reaching the 50% keyword rule, and
+the 64 rows with the nearest sketch within 72 bits (a row at 0.85 cosine sits near 45 bits,
+sd 6). `write_lesson` re-reads those rows from the table and runs the branches above on them,
+so a stale index entry can cost a missed candidate and never a wrong supersede. A row with no
+stored vector is never a cosine candidate: the write embeds only its own rule, and the backfill
+sweep embeds the rest. The index is built once (one full read), patched by each lesson write
+through `_invalidate_semantic_scoring(key)`, and dropped by the argument-less call or by another
+process's commit (`PRAGMA data_version`); without numpy `write_lesson` reads every lesson as
+before.
 
 **A call that stores nothing deletes nothing.** Every branch above QUEUES its
 supersedes; the queue drains only after the semantic write commits the submission. The
