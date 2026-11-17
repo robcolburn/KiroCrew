@@ -201,11 +201,18 @@ def _hold_back_foreign_skills(snap: Path, mc: Path, *, allow_unpinned: bool = Fa
     staged, live = snap / "skills", mc / "skills"
     if not staged.is_dir() or not live.is_dir() or not any(live.iterdir()):
         return False
+    root_real = os.path.realpath(snap)
     try:
         pinned = _staging_is_pinned(allow_unpinned=allow_unpinned, what="skills hold-back")
     except pinned_fs.PinnedPathRefusal as exc:
         raise OSError(str(exc)) from exc
     if not pinned:
+        # shortcut: a by-name check right before a by-name delete still leaves a gap
+        # between the two; the platforms that land here cannot pin, so upgrade when
+        # one can. The root resolved above is the one the target must still sit in.
+        target = os.path.realpath(staged)
+        if target == root_real or os.path.commonpath([root_real, target]) != root_real:
+            raise OSError(f"the staged skills folder resolves outside the staging root: {target}")
         shutil.rmtree(staged)
         return True
 
