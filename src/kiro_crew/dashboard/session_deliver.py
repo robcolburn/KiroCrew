@@ -65,13 +65,16 @@ class Origin:
     steer: bool = False
     #: A peer's own Crew session key, for the trace link its delivery carries.
     sender: str = ""
+    #: The steer id of a peer steer held for a tool boundary
+    #: (``dashboard.deferred_steer``); it becomes the steer's delivery id.
+    held: str = ""
 
 
 def cron(label: str) -> Origin:
     return Origin(ORIGIN_CRON, label=label)
 
 
-def peer(*, steer: bool, sender: str = "") -> Origin:
+def peer(*, steer: bool, sender: str = "", held: str = "") -> Origin:
     """A peer session's text.
 
     ``steer=True`` is the steer arm only: it never queues or starts a turn, so a
@@ -79,7 +82,7 @@ def peer(*, steer: bool, sender: str = "") -> Origin:
     makes the one queue-or-run delivery itself (``steer=False``). *sender* is the
     peer's session key, read only to link the turn the text starts to the sender's.
     """
-    return Origin(ORIGIN_PEER, steer=steer, sender=sender)
+    return Origin(ORIGIN_PEER, steer=steer, sender=sender, held=held)
 
 
 def app(label: str) -> Origin:
@@ -391,7 +394,14 @@ async def _deliver_peer(
         )
 
         outcome = await steer_into_running_turn(
-            state, slot, text, user_origin=False, admission=admission, relay_meta=relay_meta
+            state,
+            slot,
+            text,
+            user_origin=False,
+            admission=admission,
+            relay_meta=relay_meta,
+            held_peer=bool(origin.held),
+            delivery_id=origin.held or None,
         )
         if outcome == STEER_STEERED:
             return DELIVERED_STEERED

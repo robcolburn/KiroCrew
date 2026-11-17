@@ -434,8 +434,14 @@ async def steer_into_running_turn(
     nudge_meta: dict | None = None,
     banner: str = "",
     relay_meta: dict | None = None,
+    held_peer: bool = False,
 ) -> str:
     """Inject *message* into the slot's RUNNING turn; return a ``STEER_*`` outcome.
+
+    ``held_peer`` marks a peer steer the gateway held for this tool boundary: on a
+    harness that can drop an accepted steer it skips the ``peer_steer_loss_recovery``
+    refusal. The sender marks such a steer delivered before this call, and the
+    teardown requeue skips a marked one, so it is injected at most once.
 
     Requires a live, steer-capable inner ACP client that the turn published on
     the slot. Fire-and-forget by design: the inline steer card materializes when
@@ -581,8 +587,15 @@ async def steer_into_running_turn(
     client = getattr(slot, "_acp_client", None)
     if client is None or not getattr(client, "supports_steer", False):
         return STEER_UNAVAILABLE
-    if not user_origin and getattr(client, "steer_needs_loss_recovery", False) is True:
+    if (
+        not user_origin
+        and not held_peer
+        and getattr(client, "steer_needs_loss_recovery", False) is True
+    ):
         # The requeue keeps a steer this harness drops but may run it twice; peers opt in.
+        # A held peer steer (``dashboard.deferred_steer``) opts in for itself: it is
+        # sent at a tool boundary, registered pending, and marked delivered by its
+        # sender first, so the requeue never queues a second copy of it.
         # A snapshot, not a load: no file read on the loop, no await before registering.
         live_config = live.snapshot()
         if live_config is None or not live_config.agent.peer_steer_loss_recovery:

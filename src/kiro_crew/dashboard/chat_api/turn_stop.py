@@ -674,6 +674,9 @@ async def stop_slot_turn(
             slot._steer_possibly_delivered.discard(_discarded)
             crew_steer_discarded(slot, _discarded)
         slot._pending_steers.clear()
+        # A hard stop discards held peer steers with the rest of the turn's pending work.
+        slot._deferred_steers.clear()
+        slot._deferred_steer_delivered.clear()
         state.push_slots_update()
         logger.info("Stop (force): hard-killing session for slot %s", name)
 

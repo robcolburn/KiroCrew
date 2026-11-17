@@ -563,8 +563,15 @@ async def _hand_off_queue(
     cancellable) and the cycle ends with its terminal ``chat_done``. The
     ``predecessor_*`` pair names the ending turn, so the drain marks its end
     unless the head is that turn's own recovery."""
+    # Steers still held for a tool boundary this turn never reached join the queue
+    # first, so the drain below starts the next turn on them in this same call.
+    if slot._deferred_steers:
+        from kiro_crew.dashboard import deferred_steer
+
+        await deferred_steer.requeue_all(state, slot)
     # Steers outrank queued messages, so they go to the head before the drain.
     _requeue_unconsumed_steers(state, slot)
+    slot._deferred_steer_delivered.clear()
     if drain and slot._queue:
         # A user message drained at a turn's end ends an armed synthesis's
         # batch only when no child of it is still out (running, delivering,

@@ -170,9 +170,14 @@ Three outcomes, and the reply tells you which one happened:
 | busy | `false` | Queued; it runs when the current turn ends |
 | busy | `true` | Injected into the running turn, so the target reads it mid-work |
 
-A steer that cannot be injected **falls back to the queue** rather than being
-dropped, and the reply says that explicitly. `steer` is ignored on an idle
-target, because the message starts a turn either way.
+A steer that cannot be injected at the instant of the send is **held as a
+pending steer** and injected at the target's next tool-call boundary in the same
+turn, retried at every boundary until it lands. The reply says `pending-steer`,
+and the target's `session_status` row later shows `delivered@<time>`. Only if the
+turn ends first does the held message take the end-of-turn queue, and the next
+turn then starts at once. Sending the same steer again returns the same pending
+steer instead of delivering a second copy. `steer` is ignored on an idle target,
+because the message starts a turn either way.
 
 A queued message is checked again just before it runs. If the target gained a
 channel link or mirror in the meantime, the message is dropped instead of run,
