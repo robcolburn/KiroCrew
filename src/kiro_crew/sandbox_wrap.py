@@ -516,6 +516,35 @@ def reset_backend() -> None:
     _last_unshare_failure = None
 
 
+def _direct_executable_argv(argv: list[str], *, confined: bool, tool_less: bool) -> list[str]:
+    """*argv* with ``argv[0]`` resolved through the edition's agent-executable seam.
+
+    Called on every branch of :func:`wrap_argv` that runs the command without a Crew
+    wrap; the namespace and Seatbelt wraps resolve it themselves (``namespace_argv``,
+    ``sandbox_exec_argv``). An edition may swap a managed launcher for the executable
+    it ends up running. A launcher can bring its own sandbox, so the swap is taken
+    only when that sandbox is not the one confining the child:
+
+    * *confined*: the Crew sandbox this process already runs in confines the child,
+      whichever executable it runs;
+    * *tool_less*: the child's agent spec mounts no tool, so it has nothing a
+      launcher's sandbox would guard, and Crew's zero-tool check still reads that spec.
+
+    Otherwise the launcher stays: with no Crew sandbox it may be the only sandbox
+    the child gets, and on a spawn delegated to kiro-cli's own sandbox it may be part
+    of that sandbox. The public seam is identity, so public builds are unchanged.
+    """
+    if not argv or not (confined or tool_less):
+        return argv
+    # Read through the owner module, so one patch of the seam reaches every wrap path.
+    from kiro_crew import sandbox_argv  # noqa: PLC0415
+
+    executable = sandbox_argv._resolve_agent_executable(argv[0])
+    if executable == argv[0]:
+        return argv
+    return [executable, *argv[1:]]
+
+
 def wrap_argv(
     argv: list[str],
     mode: str = "auto",
@@ -535,6 +564,7 @@ def wrap_argv(
     exec_cwd: str = "",
     is_kiro_cli: bool | None = None,
     first_party_fixed_argv: bool = False,
+    tool_less: bool = False,
 ) -> tuple[list[str], str | None]:
     """Wrap a command argv with OS-level sandbox if available.
 
@@ -590,6 +620,9 @@ def wrap_argv(
             (env-scrubbed, loudly warned, SEL ``outcome="unconfined"``) instead
             of fail-closing. Inert whenever a backend exists or
             ``sandbox_allow_unsandboxed_exec`` is set.
+        tool_less: True when the child's agent spec mounts no tool. On a spawn no
+            Crew wrap confines, it lets the edition swap a managed launcher for
+            the executable behind it (:func:`_direct_executable_argv`).
 
     Returns:
         (wrapped_argv, cleanup_path_or_None).
@@ -687,12 +720,15 @@ def wrap_argv(
             unset_args = _sandbox_env_unset_args(
                 "standard", strip_python_env, forward_ssh_auth_sock
             )
+            # Delegated: a managed launcher may be part of the sandbox this
+            # delegation relies on, so only a tool-less child skips it.
+            argv = _direct_executable_argv(argv, confined=False, tool_less=tool_less)
             if unset_args:
                 return [_pinned_env_bin(), *unset_args, *argv], None
             return list(argv), None
         # Fix #3: Make the degradation loud — both layers are inactive.
         _warn_mode_off_unconfined(argv, kiro_spawn_off)
-        return argv, None
+        return _direct_executable_argv(argv, confined=False, tool_less=tool_less), None
 
     # Already inside a Kiro Crew sandbox (script cron, sandboxed agent child, app
     # backend, pooled MCP server): the outer sandbox confines every descendant,
@@ -718,6 +754,8 @@ def wrap_argv(
                 "spawning within the existing isolation boundary rather than "
                 "fail-closing on a nesting artifact"
             )
+        # The outer Crew sandbox confines this child, whichever executable runs it.
+        argv = _direct_executable_argv(argv, confined=True, tool_less=tool_less)
         # Compare the tier the caller asked for against the tier the OUTER
         # sandbox was built at. The passthrough is unavoidable (a nested
         # re-wrap is denied by design on both platforms), but a tier
@@ -919,7 +957,9 @@ def wrap_argv(
                 )
         else:
             delegated = _delegate_to_kiro_internal_sandbox(
-                argv,
+                # A managed launcher may be part of the sandbox this delegation
+                # relies on, so only a tool-less child skips it.
+                _direct_executable_argv(argv, confined=False, tool_less=tool_less),
                 sandbox_level,
                 strip_python_env=strip_python_env,
                 forward_ssh_auth_sock=forward_ssh_auth_sock,
@@ -1078,7 +1118,11 @@ def wrap_argv(
                 and _classify_unavailable(transient) == "no_backend"
                 and not governance_floor
             ):
-                return _first_party_no_backend_passthrough(argv, sandbox_level, strip_python_env)
+                return _first_party_no_backend_passthrough(
+                    _direct_executable_argv(argv, confined=False, tool_less=tool_less),
+                    sandbox_level,
+                    strip_python_env,
+                )
             if transient:
                 # The mechanism follows the retry advice rather than leading it: the
                 # cap case is permanently reported transient, so withholding it here
@@ -1329,4 +1373,4 @@ def wrap_argv(
                 exc_info=True,
             )
         _warn_no_isolation(mode, granted_by)
-    return argv, None
+    return _direct_executable_argv(argv, confined=False, tool_less=tool_less), None
