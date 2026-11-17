@@ -376,7 +376,8 @@ def test_the_shared_state_keeps_its_identity() -> None:
 #: file had it: inside the function that needs it.
 _LAZY_IMPORTS = {
     "kiro_crew": (
-        "_hist_mod _rs crew_pause crewmate_harness_notice mcp_listing_gateway model_registry stt"
+        "_hist_mod _rs bot_chat_app_tools crew_pause crewmate_harness_notice"
+        " mcp_listing_gateway model_registry stt"
     ),
     "kiro_crew.agent": "rebuild_agent_config rebuild_agent_config_reporting",
     "kiro_crew.agent_sdk.chat_runtime_sharing": "chat_runtime_sharing_enabled",

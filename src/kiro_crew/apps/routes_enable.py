@@ -256,6 +256,7 @@ async def handle_enable_app(request: web.Request) -> web.Response:
     info = await asyncio.to_thread(get_app, name)
     if not info:
         return web.json_response({"error": f"app {name!r} not installed"}, status=404)
+    from kiro_crew import bot_chat_app_tools
 
     body: dict[str, Any] = {}
     if request.can_read_body:
@@ -505,6 +506,8 @@ async def handle_enable_app(request: web.Request) -> web.Response:
             await _reach_sessions(request)
         except Exception:  # noqa: BLE001 - the enable has committed
             logger.warning("Open chats did not get %s's MCP change", name, exc_info=True)
+    # A Bot chat the owner turned this app's server on for reconnects (``bot_chat_app_tools``).
+    await bot_chat_app_tools.after_app_change(request.app.get("state"))
     return web.json_response(resp)
 
 
@@ -528,6 +531,7 @@ async def handle_disable_app(request: web.Request) -> web.Response:
         return web.json_response({"error": f"app {name!r} not installed"}, status=404)
 
     warnings: list[str] = []
+    from kiro_crew import bot_chat_app_tools
 
     # Per-app lifecycle lock: disable stops the backend and deregisters
     # resources — must not interleave with a concurrent install/update/
@@ -648,6 +652,8 @@ async def handle_disable_app(request: web.Request) -> web.Response:
             await _reach_sessions(request)
         except Exception:  # noqa: BLE001 - the disable has committed
             logger.warning("Open chats did not get %s's MCP change", name, exc_info=True)
+    # A Bot chat that mounted this app's server drops it (``bot_chat_app_tools``).
+    await bot_chat_app_tools.after_app_change(request.app.get("state"))
     return web.json_response(resp)
 
 

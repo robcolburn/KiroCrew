@@ -384,6 +384,7 @@ describe('Settings > Developer > Feature Previews', () => {
     'Agent Harness for worker chats': true,
     'Session Environments': true,
     'ACP runtime sharing': true,
+    'App tools in bot chats': true,
     'Artifact Deploy': true,
     'Webhooks': true,
     'MCP sign-in by Kiro Crew': true,

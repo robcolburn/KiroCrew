@@ -111,7 +111,7 @@ from kiro_crew.kiro_cli import (
     resolved_kiro_cli_version,
     standalone_kiro_cli,
 )
-from kiro_crew.mate_worker import MATE_WORKER_AGENT
+from kiro_crew.mate_worker import MATE_CONDUCTOR_AGENT, MATE_WORKER_AGENT
 from kiro_crew.mcp_gateway import session_servers as session_servers_mod
 from kiro_crew.platform.tool_names import kas_verified_releases, kas_vocabulary_drift
 
@@ -1340,6 +1340,13 @@ class KasHarness(MembershipHarness):
                     # hold the crewmate's own limits.
                     raise AcpAgentUnavailable(str(exc), agent=agent) from exc
             else:
+                if agent == MATE_CONDUCTOR_AGENT:
+                    # A Bot's own chat: the shared conductor plus the app servers its
+                    # owner turned on for THIS Bot (``bot_chat_app_tools``), per
+                    # session. Added before the held limits so they cover these too.
+                    from kiro_crew.bot_chat_app_tools import conductor_session_spec
+
+                    spec = conductor_session_spec(spec, session_key)
                 # A child a Bot started runs under the Bot's identity: its held
                 # limits ask here too (the worker's are applied in its own merge).
                 from kiro_crew.mate_held_rules import held_child_spec
@@ -1455,6 +1462,13 @@ class KasHarness(MembershipHarness):
                 governance_app=governance_app,
                 scope_muted=scope_muted,
             )
+            if agent == MATE_CONDUCTOR_AGENT and session_key:
+                # A Bot's own chat: settle its app-server record from what this
+                # projection really declares, after every withholding above.
+                from kiro_crew.bot_chat_app_tools import mounted_names, record_mounted
+
+                own = custom_agents[0] if custom_agents else {}
+                record_mounted(session_key, mounted_names(own.get("mcpServers") or {}))
             if agent == MATE_WORKER_AGENT:
                 # A Bot's worker: the `deniedCommands` entries nobody can judge
                 # hold its shell at the gate, whatever its Bot's Permissions.

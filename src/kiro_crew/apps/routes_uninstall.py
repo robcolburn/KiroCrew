@@ -216,7 +216,9 @@ async def handle_uninstall_app(request: web.Request) -> web.Response:
         # A missing or malformed body keeps the safe defaults set above.
         pass
 
-    return await _run_uninstall(
+    from kiro_crew import bot_chat_app_tools
+
+    resp = await _run_uninstall(
         request,
         name,
         info,
@@ -224,6 +226,9 @@ async def handle_uninstall_app(request: web.Request) -> web.Response:
         keep_dependencies=keep_dependencies,
         keep_specific=keep_specific,
     )
+    # A Bot chat that mounted this app's server drops it (``bot_chat_app_tools``).
+    await bot_chat_app_tools.after_app_change(request.app.get("state"))
+    return resp
 
 
 async def _run_uninstall(

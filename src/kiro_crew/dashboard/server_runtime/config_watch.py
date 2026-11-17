@@ -324,6 +324,13 @@ def _register_config_watch(
             return
         state.push_refresh("config")
 
+    async def _reconcile_bot_chat_app_tools(change: ConfigChange) -> None:
+        # Switching the preview adds or takes away app servers on every Bot chat
+        # that has them, from whichever writer flipped it.
+        from kiro_crew import bot_chat_app_tools
+
+        await bot_chat_app_tools.on_preview_change(state, change)
+
     async def _alarm_crewmate_harness_fallback(change: ConfigChange) -> None:
         # A new Settings harness Crew bots cannot run on moves them onto KAS, and so
         # does a cleared pin on a Crew bot whose worker tool limits that harness
@@ -376,6 +383,11 @@ def _register_config_watch(
             "dashboard.feature_previews",
             callback=_count_chat_runtime_sharing_toggle,
             name="dashboard.chat_runtime_sharing_toggle",
+        ),
+        live.subscribe(
+            "dashboard.feature_previews",
+            callback=_reconcile_bot_chat_app_tools,
+            name="dashboard.bot_chat_app_tools",
         ),
         live.subscribe("apps", callback=_push_app_settings, name="apps"),
         live.subscribe("agents", callback=_push_mate_listing, name="agents.show_sessions_in_list"),

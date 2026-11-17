@@ -378,6 +378,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
     )
     from kiro_crew.apps.routes_install import (  # noqa: F401
         _resync_app_crons_after_update,
+        _update_app,
     )
     from kiro_crew.apps.routes_lifecycle import (  # noqa: F401
         _announce_app_ui_changed,
@@ -453,6 +454,7 @@ if TYPE_CHECKING:  # every owner-defined name in _EXPORTS, for type checkers and
         _announce_app_updates,
         _derive_registry_name,
         _held_mcp_servers,
+        _reach_bot_chats,
         _reach_open_chats,
         _registry_fetch_failures,
         _resolve_app_update_notes,

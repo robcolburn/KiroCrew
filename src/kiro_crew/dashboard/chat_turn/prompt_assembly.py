@@ -828,6 +828,14 @@ async def _turn_build_prompt(turn: _ChatTurn) -> None:
         if _ctx_prefix:
             message = _ctx_prefix + message
             turn.message = message
+        # A Bot chat draws no runtime notice row: what Crew owes its owner rides
+        # this prompt for the Bot to say (``bot_chat_app_tools.take_owner_notes``).
+        from kiro_crew.bot_chat_app_tools import take_owner_notes
+
+        _owner_notes = take_owner_notes(slot)
+        if _owner_notes:
+            message = _owner_notes + message
+            turn.message = message
         # The message that started the Slack thread this session joined
         # (``chat_slack._seed_thread_parent``), handed to build_message as the
         # fenced ``[SLACK THREAD CONTEXT — UNTRUSTED DATA]`` block, the same block
@@ -1136,7 +1144,9 @@ async def _turn_build_prompt(turn: _ChatTurn) -> None:
         _trusted_prompt_tail = full_message
         turn._trusted_prompt_tail = _trusted_prompt_tail
     else:
-        full_message = _request_prefix_context + message
+        from kiro_crew.bot_chat_app_tools import take_owner_notes
+
+        full_message = take_owner_notes(slot) + _request_prefix_context + message
         turn.full_message = full_message
         if _context_is_new and not _provider_has_history:
             # Mirror the builder arm (above): this is the one place a

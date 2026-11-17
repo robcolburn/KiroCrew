@@ -817,6 +817,12 @@ async def api_trusted_app_revoke(request: web.Request) -> web.Response:
                 # the operator we changed something we did not touch.
                 if was_enabled:
                     disabled = bool(await _run_off_loop(lambda: disable_app(name).ok))
+                # Whoever switched the app off (this request, the CLI, another
+                # process): a Bot chat still holding its tools loses them
+                # (``bot_chat_app_tools``). A chat that holds none is left alone.
+                from kiro_crew import bot_chat_app_tools
+
+                await bot_chat_app_tools.after_app_change(request.app.get("state"))
 
         def _mutate(agent_raw: dict) -> None:
             agent_raw["apps_trusted"] = [a for a in _trusted_list_raw(agent_raw) if a != name]
@@ -999,6 +1005,13 @@ async def api_trusted_apps_allow_all(request: web.Request) -> web.Response:
         else:
             stopped = sorted(set(stopped) | set(late_stopped))
             still_running = sorted(set(still_running) | set(late_still))
+
+    if stopped:
+        # As the single-app revoke does: a Bot chat holding a stopped app's tools
+        # loses them (``bot_chat_app_tools``).
+        from kiro_crew import bot_chat_app_tools
+
+        await bot_chat_app_tools.after_app_change(request.app.get("state"))
 
     incomplete = bool(still_running or sweep_error)
     _audit(

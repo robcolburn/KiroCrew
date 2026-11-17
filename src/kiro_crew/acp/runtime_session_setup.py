@@ -55,7 +55,10 @@ from kiro_crew.acp.types import (
     ACP_BACKENDS_SESSION_MCP_ARRAY,
     overlay_project_scope,
 )
-from kiro_crew.agent_sdk.backends import ACP_BACKENDS_CREW_OAUTH_BRIDGE
+from kiro_crew.agent_sdk.backends import (
+    ACP_BACKEND_CODEX,
+    ACP_BACKENDS_CREW_OAUTH_BRIDGE,
+)
 from kiro_crew.agent_sdk.mcp_json_reach import mcp_json_server_names
 from kiro_crew.agent_sdk.tool_search import spec_grants_tool_search
 from kiro_crew.config import live
@@ -652,6 +655,7 @@ async def _mirrored_session_mcp(
     session_key: str,
     channel_id: str,
     permission_surface_owned: bool = False,
+    harness_state: Any = None,
 ) -> _MirroredSessionMcp | None:
     """This session's ``mcpServers``, built by the host's agent-config MIRROR.
 
@@ -804,6 +808,37 @@ async def _mirrored_session_mcp(
         runtime_pid=_own_root_pid,
         owner=self,
     )
+    from kiro_crew.mate_worker import MATE_CONDUCTOR_AGENT
+
+    if active_agent == MATE_CONDUCTOR_AGENT and session_key:
+        # A Bot's own chat on Claude (shared session): check that the seed's deny rules
+        # cover the app servers the projection just added -- the seed runs in
+        # ``ClaudeSharedSession.prepare`` before the runtime mirror builds the array,
+        # so an offer that joined between them mounts without its deny.
+        # ``harness_state`` is the ``ClaudeSharedSession`` (a ``ClaudeAcpClient``) for
+        # the shared path; it is None for a non-shared session, whose AcpClient
+        # ``_resolve_session_mcp_servers`` already runs ``_worker_settings_lag`` at
+        # ``client_mcp_array.py:413``.  Call it on ``harness_state``, not on ``self``
+        # (which is ``AcpRuntime`` and has no ``_worker_settings_lag``).
+        if harness_state is not None and hasattr(harness_state, "_worker_settings_lag"):
+            if harness_state._worker_settings_lag(  # type: ignore[union-attr]
+                projection.agent_spec
+            ):
+                logger.warning(
+                    "bot chat app tools: withholding array for %s -- seeded deny rules lag "
+                    "the projection (preview enabled between seed and array build); "
+                    "next start picks up the updated seed",
+                    session_key,
+                )
+                servers = []
+        # Settle the app-server record from the array this session is handed, as the
+        # AcpClient path does (``bot_chat_app_tools.record_mounted``).
+        from kiro_crew.bot_chat_app_tools import mounted_names, record_mounted
+        from kiro_crew.providers.mirrors.codex import codex_name
+
+        # codex registers each server under its whitespace-folded name.
+        spelled = codex_name if self.acp_backend == ACP_BACKEND_CODEX else str
+        await asyncio.to_thread(record_mounted, session_key, mounted_names(servers), spelled)
     return _MirroredSessionMcp(
         servers=servers,
         denied_tools=projection.denied_tools,
