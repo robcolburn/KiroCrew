@@ -58,14 +58,11 @@ vi.mock('../components/settingRef/useConfigSchema', () => ({
   useConfigSchema: () => schemaMock(),
 }))
 
-// The card under the switch is a sentinel: its own behaviour (status query,
-// chooser, sign-out) is pinned in KiroSignInCard.test.tsx, and the real card
-// would need the kas-login API this file does not mock. Unlike the real card it
-// renders unconditionally, so its absence in a test can only be the tab's gate.
-vi.mock('../pages/developer/KiroSignInCard', () => ({
-  KiroSignInCard: ({ compact }: { compact?: boolean }) => (
-    <div data-testid="kiro-sign-in-card" data-compact={compact ? 'true' : 'false'} />
-  ),
+// The Kiro account line in the KAS detail is a sentinel: its behaviour is pinned
+// in KiroAccountStatusLine.test.tsx, and the real line would need the kas-login
+// API this file does not mock.
+vi.mock('../pages/developer/KiroAccountStatusLine', () => ({
+  KiroAccountStatusLine: () => <div data-testid="kiro-account-status-line" />,
 }))
 
 // Same sentinel treatment for the engine card under it: its behaviour is pinned in
@@ -439,7 +436,7 @@ describe('AgentBackendTab checking a row is not selecting an agent', () => {
         ?.closest('.sr-only') as HTMLElement
       // A sentence that already names its agent is not led by the name again.
       expect([...block.children].map(p => `${p.tagName} ${p.textContent}`)).toEqual([
-        'P Kiro Agent：デフォルト。',
+        'P Kiro Agent：デフォルト',
         'P Kiro CLI はインストール済みで、すぐに使用できます。',
         'P Claude Code：使用中。このマシンにありません: claude-agent-acp',
       ])
@@ -902,13 +899,13 @@ describe('AgentBackendTab status strip', () => {
     wrap()
     await waitFor(() => expect(row('Kiro CLI')).toBeInTheDocument())
     highlight('Kiro Agent')
-    expect(detail().textContent).toContain('Default.')
+    expect(detail().textContent).toContain("Kiro's own agent. Runs with your Kiro account.")
     highlight('Claude Code')
     expect(detail().textContent).toContain('Experimental')
     expect(screen.queryByText(/OS sandbox|Anthropic|steered mid-turn/)).toBeNull()
   })
 
-  it('puts the default line on DEFAULT_ACP_BACKEND, not on Kiro CLI', async () => {
+  it('puts the Default tag on DEFAULT_ACP_BACKEND, not on Kiro CLI, and describes both Kiro rows', async () => {
     // New installs run KAS. A page that called Kiro CLI the default and tagged KAS
     // Experimental would tell a new user the harness they are on is the risky one.
     acpBackendsMock.mockResolvedValue({
@@ -918,17 +915,21 @@ describe('AgentBackendTab status strip', () => {
     await waitFor(() => expect(row('Kiro Agent')).toBeInTheDocument())
     expect(DEFAULT_ACP_BACKEND).toBe('kas')
 
+    // The tag sits beside the name, on the default's row only.
+    expect(row('Kiro Agent').closest('label')?.textContent).toContain('Default')
+    expect(row('Kiro CLI').closest('label')?.textContent).not.toContain('Default')
     highlight('Kiro Agent')
-    await waitFor(() => expect(detail().textContent).toContain('Default.'))
+    await waitFor(() => expect(detail().textContent).toContain("Kiro's own agent. Runs with your Kiro account."))
+    expect(detail().textContent).not.toContain('Default.')
     expect(panel().queryByText('Experimental')).toBeNull()
-    expect(document.getElementById('agent-backend-row-status-kas')?.textContent).toBe('Default.')
+    expect(document.getElementById('agent-backend-row-status-kas')?.textContent).toBe('Default')
 
     // Kiro CLI is the stable floor: neither the default nor Experimental.
     highlight('Kiro CLI')
     await waitFor(() =>
       expect(detail().textContent).toContain('Kiro CLI is installed and ready to use.'),
     )
-    expect(detail().textContent).not.toContain('Default.')
+    expect(detail().textContent).toContain("Uses the kiro-cli installed on this machine, with kiro-cli's own sign-in.")
     expect(panel().queryByText('Experimental')).toBeNull()
     const kiroStatus = document.getElementById('agent-backend-row-status-kiro')?.textContent ?? ''
     expect(kiroStatus).not.toMatch(/Default|Experimental/)

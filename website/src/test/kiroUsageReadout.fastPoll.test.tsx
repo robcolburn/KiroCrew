@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import React from 'react'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider, type Query } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import { KIRO_USAGE_STEADY_POLL_MS, KIRO_USAGE_WARMING_POLL_MS } from '../api/kiroUsage'
 import { useKiroUsageReadout } from '../shell/topbar/kiroUsageReadout'
 
@@ -32,7 +33,7 @@ const KIRO_USAGE_KEY = ['kiro-usage']
 function mount() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   function Wrapper({ children }: { children: React.ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    return <QueryClientProvider client={queryClient}><MemoryRouter>{children}</MemoryRouter></QueryClientProvider>
   }
   const view = renderHook(() => useKiroUsageReadout(), { wrapper: Wrapper })
   return { queryClient, ...view }

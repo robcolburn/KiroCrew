@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useInRouterContext, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useInRouterContext } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Trans } from 'react-i18next'
 import { Check, CircleHelp, TriangleAlert, X } from 'lucide-react'
@@ -18,15 +18,14 @@ import {
 } from '../../components/agentHarness'
 import { SettingsCard } from '../../components/settings'
 import { useConfigSchema } from '../../components/settingRef/useConfigSchema'
-import { KIRO_SIGN_IN_HIGHLIGHT_ANCHOR } from '../../hooks/useSettingHighlight'
 import { fmtList } from '../../i18n/format'
 import { i18nT } from '../../i18n/t'
 import { clearCachedModels } from '../../providers/adapters/acp'
-import { KiroSignInCard } from './KiroSignInCard'
+import { KiroAccountStatusLine } from './KiroAccountStatusLine'
 import { OrchestratorMemoryDeepLink, OrchestratorMemoryToggle } from './OrchestratorMemoryToggle'
 import { StrandsSetupCard } from './StrandsSetupCard'
 import { MCP_SERVERS_HREF } from '../connections/connectionsLinks'
-import { KIRO_SIGN_IN_BACKEND, KIRO_SIGN_IN_SETTING_ID } from './kiroSignInLink'
+import { KIRO_SIGN_IN_BACKEND } from './kiroSignInLink'
 import { HarnessLogo } from '../../components/HarnessLogo'
 import type { CrewmateHarnessReadout } from '../../api/client'
 
@@ -196,12 +195,9 @@ const PROBE_REFRESH_MS = 30_000
  *
  * ## Where the Kiro sign-in lives
  *
- * Inside the KAS row's detail, and nowhere else. The identity it stores is
- * consumed by the KAS relay alone, so a sign-in card under the whole list read as
- * a step every user had to take — including one running Claude Code, for whom it
- * does nothing. The chat's "Sign in to Kiro" link still lands on it:
- * `SignInDeepLink` reads the same `?highlight=` the Settings highlight hook does
- * and checks the KAS row, so the anchor mounts and rings.
+ * On Settings > Kiro account, not here: the sign-in is used by more than this
+ * harness. The KAS row's detail says whether it is stored and links there
+ * (`KiroAccountStatusLine`).
  *
  * ## Why the choices come from the server
  *
@@ -350,8 +346,6 @@ export function AgentBackendTab() {
    * there once the real value arrived. Resolved every render by `shown` instead.
    */
   const [highlighted, setHighlighted] = useState<string | null>(null)
-  /** Bumped by the chat's sign-in deep link so the folded Kiro sign-in opens. */
-  const [signInOpenRequest, setSignInOpenRequest] = useState(0)
   /** The Kiro CLI → Kiro Agent callout's own save, so only that click shows its confirmation. */
   const [savedKiroAgent, setSavedKiroAgent] = useState(false)
   /**
@@ -1127,7 +1121,7 @@ export function AgentBackendTab() {
    * into a sentence would put the one string an operator has to run somewhere they
    * cannot click. `unknown` follows and must never read as missing; it reports a
    * failed check, not an absent binary. Only then do the default/experimental lines
-   * apply. `DEFAULT_ACP_BACKEND` gets the default sentence; Kiro CLI is stable but
+   * apply. `DEFAULT_ACP_BACKEND` gets the Default word; Kiro CLI is stable but
    * not the default, so it says only what the probe measured; anything else gets
    * `Experimental` rather than a claim.
    *
@@ -1225,8 +1219,9 @@ export function AgentBackendTab() {
    * before the gateway restart — in first-run setup's own sentence, so the two
    * screens built from one picker give one remedy for one state. Only then do
    * the descriptor lines apply:
-   * `DEFAULT_ACP_BACKEND` gets the default line; anything else installed is ready
-   * to use, and marked Experimental unless it is Kiro CLI, the stable floor.
+   * `DEFAULT_ACP_BACKEND` gets none (its description and Default tag say it);
+   * anything else installed is ready to use, and marked Experimental unless it is
+   * Kiro CLI, the stable floor.
    *
    * With no probe answer at all (a 404, a 403, a query in flight) the block says
    * only what it can: the default line for the default, nothing for Kiro CLI,
@@ -1261,12 +1256,8 @@ export function AgentBackendTab() {
           {i18nT('components.kiroPrerequisiteGate.agent_restart_required_detail', { name })}
         </p>
       )
-    if (value === DEFAULT_ACP_BACKEND)
-      return (
-        <p className="text-[13px] leading-relaxed text-text">
-          {i18nT('pages.developer.agentBackendTab.default_harness')}
-        </p>
-      )
+    // The default says what it is in its description and its Default tag.
+    if (value === DEFAULT_ACP_BACKEND) return null
     if (row?.installed === 'installed')
       return (
         // One line, with Experimental as a tag on the sentence it qualifies: as a
@@ -1285,6 +1276,18 @@ export function AgentBackendTab() {
         {i18nT('pages.developer.agentBackendTab.experimental')}
       </p>
     )
+  }
+
+  /**
+   * What the harness IS, above its state, for the two Kiro harnesses a reader
+   * has to tell apart: which one runs with the Kiro account, and which one with
+   * kiro-cli's own sign-in. Shown whatever the install state, because it is the
+   * reason to install one.
+   */
+  const description = (value: string): string | null => {
+    if (value === KAS) return i18nT('pages.developer.agentBackendTab.kas_description')
+    if (value === KIRO) return i18nT('pages.developer.agentBackendTab.kiro_cli_description')
+    return null
   }
 
   /**
@@ -1523,21 +1526,9 @@ export function AgentBackendTab() {
         askAgent
         onDismiss={() => setActionError('')}
       />
-      {/* The chat's "Sign in to Kiro" link lands here with the sign-in anchor as
-          its highlight. The anchor lives inside the KAS row's detail, so the
-          detail has to be open for the anchor to mount and ring; this opens it.
-          Rendered only under a router: the panel is also rendered bare, in tests
+      {/* Rendered only under a router: the panel is also rendered bare, in tests
           and captures, where there is no URL to read. */}
       {inRouter && <OrchestratorMemoryDeepLink onOpen={() => highlightRow(KAS)} />}
-      {inRouter && (
-        <SignInDeepLink
-          onSignIn={() => {
-            highlightRow(KIRO_SIGN_IN_BACKEND)
-            // The sign-in folds once done; the link asked for it, so unfold it.
-            setSignInOpenRequest(n => n + 1)
-          }}
-        />
-      )}
       {/* A stored Kiro CLI pick that sessions run on KAS: kiro-cli now serves its
           v3 (KAS) engine, and the server resolves the pick there
           (`agent_sdk.backends.KIRO_SELECTION_BACKEND`). The list below already
@@ -1618,6 +1609,9 @@ export function AgentBackendTab() {
                 id={value}
                 group={GROUP_NAME}
                 label={nameOf(value)}
+                tag={value === DEFAULT_ACP_BACKEND ? (
+                  <Badge variant="muted">{i18nT('pages.developer.agentBackendTab.default_harness')}</Badge>
+                ) : undefined}
                 selected={selected}
                 onSelect={() => highlightRow(value)}
                 icon={
@@ -1672,6 +1666,11 @@ export function AgentBackendTab() {
                         itself with, so the reason a dead button is dead is the one
                         block a screen reader gets -- not the whole detail, this
                         button included. */}
+                    {description(value) && (
+                      <p data-testid="agent-harness-description" className="m-0 text-[13px] leading-relaxed text-text">
+                        {description(value)}
+                      </p>
+                    )}
                     <div id={STRIP_ID} className="space-y-3">
                       {lead(value)}
                     </div>
@@ -1742,20 +1741,13 @@ export function AgentBackendTab() {
                       />
                     )}
                     {value === KAS && offered.includes(KAS) && <OrchestratorMemoryToggle />}
-                    {/* Kiro sign-in, inside the one row whose harness uses it. The
-                        identity the card stores is consumed by the KAS relay alone
-                        (`ACP_BACKENDS_HOST_AUTH_CALLBACK`), so it is offered exactly
+                    {/* Whether the Kiro sign-in this harness runs as is stored, and
+                        the way to the Kiro account tab that manages it. Offered
                         where KAS is: on a build that lists KAS without offering it
-                        there is nothing to sign in for, and a chooser there would be
-                        a sign-in to nothing. Isolated so a throwing card cannot take
-                        the switch down with it. */}
+                        there is nothing to sign in for. */}
                     {value === KIRO_SIGN_IN_BACKEND && offered.includes(KIRO_SIGN_IN_BACKEND) && (
-                      <ErrorBoundary scope="developer-kiro-sign-in" fallback={null}>
-                        <KiroSignInCard
-                          compact
-                          openRequest={signInOpenRequest}
-                          onOpenRequestHandled={() => setSignInOpenRequest(0)}
-                        />
+                      <ErrorBoundary scope="developer-kiro-account-status" fallback={null}>
+                        <KiroAccountStatusLine />
                       </ErrorBoundary>
                     )}
                     {value === STRANDS && (
@@ -1826,30 +1818,6 @@ export function AgentBackendTab() {
       </SettingsCard>
     </>
   )
-}
-
-/**
- * Opens the KAS detail when the URL carries the sign-in anchor as its highlight.
- *
- * `useSettingHighlight` (mounted by SettingsPage) waits for the anchor element
- * and rings it, but it cannot mount the anchor: that lives inside the KAS row's
- * detail, which opens only when KAS is the checked row. So this watches the same
- * parameter and checks that row. The callback is held in a ref so the effect
- * runs once per appearance of the parameter, not once per render — a reader who
- * then clicks another row must not be dragged back while the highlight is still
- * being consumed.
- */
-function SignInDeepLink({ onSignIn }: { onSignIn: () => void }) {
-  const [params] = useSearchParams()
-  const highlight = params.get('highlight')
-  // The chat's link sends the anchor; a Settings search hit sends its registry id.
-  const wanted = highlight === `key:${KIRO_SIGN_IN_HIGHLIGHT_ANCHOR}` || highlight === KIRO_SIGN_IN_SETTING_ID
-  const callback = useRef(onSignIn)
-  callback.current = onSignIn
-  useEffect(() => {
-    if (wanted) callback.current()
-  }, [wanted])
-  return null
 }
 
 /**

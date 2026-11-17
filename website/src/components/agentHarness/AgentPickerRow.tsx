@@ -21,6 +21,7 @@ export function AgentPickerRow({
   id,
   group,
   label,
+  tag,
   selected,
   onSelect,
   icon,
@@ -37,6 +38,8 @@ export function AgentPickerRow({
   group: string
   /** The harness's display name; also the radio's accessible name. */
   label: string
+  /** A small mark beside the name (the default harness's Default tag). */
+  tag?: ReactNode
   selected: boolean
   onSelect: () => void
   /** Decorative glyph before the name. */
@@ -88,6 +91,7 @@ export function AgentPickerRow({
           />
           {icon}
           <span className="truncate text-sm font-medium text-text-strong">{label}</span>
+          {tag}
         </span>
         {status}
       </label>
