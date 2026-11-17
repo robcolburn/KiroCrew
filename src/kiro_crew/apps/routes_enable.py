@@ -652,7 +652,17 @@ async def handle_disable_app(request: web.Request) -> web.Response:
             await _reach_sessions(request)
         except Exception:  # noqa: BLE001 - the disable has committed
             logger.warning("Open chats did not get %s's MCP change", name, exc_info=True)
-    # A Bot chat that mounted this app's server drops it (``bot_chat_app_tools``).
+    # Disable: immediately stop Bot chats running this app's servers (the app must not
+    # keep executing mid-turn after disable).  Rule D: propagate Bot-stop failures so
+    # callers know cleanup was incomplete.
+    # Bump generation before stopping so in-flight projections are fenced.
+    bot_chat_app_tools.revoke_app_generation(name)
+    _stopped, _failed = await bot_chat_app_tools.stop_app_bot_chat_servers(
+        request.app.get("state"), name
+    )
+    if _failed:
+        logger.warning("disable of %r: could not stop Bot chats for slugs %s", name, _failed)
+        resp["bot_chat_stop_failed"] = _failed
     await bot_chat_app_tools.after_app_change(request.app.get("state"))
     return web.json_response(resp)
 

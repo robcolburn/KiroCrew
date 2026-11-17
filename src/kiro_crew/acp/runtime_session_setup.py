@@ -821,8 +821,9 @@ async def _mirrored_session_mcp(
         # ``client_mcp_array.py:413``.  Call it on ``harness_state``, not on ``self``
         # (which is ``AcpRuntime`` and has no ``_worker_settings_lag``).
         if harness_state is not None and hasattr(harness_state, "_worker_settings_lag"):
-            if harness_state._worker_settings_lag(  # type: ignore[union-attr]
-                projection.agent_spec
+            if await asyncio.to_thread(  # recorded_durable takes a cross-process lock
+                harness_state._worker_settings_lag,  # type: ignore[union-attr]
+                projection.agent_spec,
             ):
                 logger.warning(
                     "bot chat app tools: withholding array for %s -- seeded deny rules lag "
@@ -833,12 +834,21 @@ async def _mirrored_session_mcp(
                 servers = []
         # Settle the app-server record from the array this session is handed, as the
         # AcpClient path does (``bot_chat_app_tools.record_mounted``).
-        from kiro_crew.bot_chat_app_tools import mounted_names, record_mounted
+        from kiro_crew.bot_chat_app_tools import (
+            check_and_filter_projection,
+            mounted_names,
+            record_mounted,
+        )
         from kiro_crew.providers.mirrors.codex import codex_name
 
         # codex registers each server under its whitespace-folded name.
         spelled = codex_name if self.acp_backend == ACP_BACKEND_CODEX else str
-        await asyncio.to_thread(record_mounted, session_key, mounted_names(servers), spelled)
+        # Strip any entry whose revocation generation advanced since the projection
+        # was built, so a stale cold-start cannot mount a revoked app's server.
+        servers_dict = {e["name"]: e for e in servers if isinstance(e, dict) and e.get("name")}
+        servers_dict = check_and_filter_projection(session_key, servers_dict)
+        servers = list(servers_dict.values())
+        await asyncio.to_thread(record_mounted, session_key, mounted_names(servers_dict), spelled)
     return _MirroredSessionMcp(
         servers=servers,
         denied_tools=projection.denied_tools,

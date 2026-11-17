@@ -818,10 +818,43 @@ async def api_trusted_app_revoke(request: web.Request) -> web.Response:
                 if was_enabled:
                     disabled = bool(await _run_off_loop(lambda: disable_app(name).ok))
                 # Whoever switched the app off (this request, the CLI, another
-                # process): a Bot chat still holding its tools loses them
-                # (``bot_chat_app_tools``). A chat that holds none is left alone.
+                # process): stop any Bot chat still running this app's servers
+                # immediately (trust withdrawal -- security operation).  Unlike an
+                # ordinary grant change, the app's code must not keep executing in a
+                # Bot chat after trust is gone, even if that chat is mid-turn.
                 from kiro_crew import bot_chat_app_tools
 
+                # Bump the revocation generation BEFORE stopping, so any in-flight
+                # projection that raced this revocation is fenced at mount time.
+                bot_chat_app_tools.revoke_app_generation(name)
+                _stopped, _failed = await bot_chat_app_tools.stop_app_bot_chat_servers(
+                    request.app.get("state"), name
+                )
+                if _failed:
+                    logger.warning(
+                        "trust revoke for %r: could not stop Bot chats for slugs %s",
+                        name,
+                        _failed,
+                    )
+                    _audit(
+                        request,
+                        operation=op,
+                        outcome="failed",
+                        resources=f"{name} bot_chat_stop_incomplete slugs={_failed}",
+                    )
+                    return web.json_response(
+                        {
+                            "error": (
+                                f"trust for {name!r} was NOT fully revoked: "
+                                f"Bot chats {_failed} could not be stopped — retry"
+                            ),
+                            "code": "teardown_incomplete",
+                            "failures": _failed,
+                        },
+                        status=409,
+                    )
+                # Deferred reconciliation for any Bot chats without a live slot
+                # (gateway restart race) and for ordinary grant-change bookkeeping.
                 await bot_chat_app_tools.after_app_change(request.app.get("state"))
 
         def _mutate(agent_raw: dict) -> None:
@@ -1006,14 +1039,53 @@ async def api_trusted_apps_allow_all(request: web.Request) -> web.Response:
             stopped = sorted(set(stopped) | set(late_stopped))
             still_running = sorted(set(still_running) | set(late_still))
 
-    if stopped:
-        # As the single-app revoke does: a Bot chat holding a stopped app's tools
-        # loses them (``bot_chat_app_tools``).
+    # Rule C: only stop Bot chats when withdrawing trust (value is False).
+    # When value is True (granting / reaffirming), leave Bot sessions alone.
+    bot_stop_failed: list[str] = []
+    if value is False:
+        # Stop Bot chats that are running any revoked apps' servers.  This must run
+        # even when `stopped` is empty: an app the CLI disabled (enabled=False) is not
+        # in `stopped` (which tracks "apps this sweep stopped"), but its servers may
+        # still be mounted in a Bot chat.  Use `_MOUNTED` as the authority.
         from kiro_crew import bot_chat_app_tools
 
-        await bot_chat_app_tools.after_app_change(request.app.get("state"))
+        state = request.app.get("state")
+        granted = set((await build_trusted_apps_snapshot_async())["apps"])
+        builtins = await _run_off_loop(builtin_app_names)
+        mounted_apps = {
+            alias.split(":")[0]
+            for mounts in bot_chat_app_tools._MOUNTED.values()
+            for alias in mounts
+        }
+        # Also include apps in in-flight projections (_PROJECTION_GENS) that
+        # have not yet reached record_mounted -- they would be missed by _MOUNTED.
+        in_flight_apps = {
+            alias.split(":")[0]
+            for gens in bot_chat_app_tools._PROJECTION_GENS.values()
+            for alias in gens
+        }
+        # All installed apps without individual grants, not builtins.
+        all_candidate_apps = (
+            {str(a.get("name") or "") for a in await _run_off_loop(list_apps) if a.get("name")}
+            - granted
+            - builtins
+        )
+        # Revoked = any of the above sets.
+        revoked_mounted = (mounted_apps | in_flight_apps | all_candidate_apps) - granted - builtins
+        if revoked_mounted:
+            for _app in revoked_mounted:
+                # Bump generation first to fence in-flight projections.
+                bot_chat_app_tools.revoke_app_generation(_app)
+            for _app in mounted_apps - granted - builtins:
+                _, _bot_failed = await bot_chat_app_tools.stop_app_bot_chat_servers(state, _app)
+                bot_stop_failed.extend(_bot_failed)
+            if bot_stop_failed:
+                logger.warning("blanket trust revoke: could not stop Bot chats %s", bot_stop_failed)
+        if stopped or revoked_mounted:
+            await bot_chat_app_tools.after_app_change(state)
 
-    incomplete = bool(still_running or sweep_error)
+    # Rule D: failed Bot shutdowns count toward partial failure.
+    incomplete = bool(still_running or sweep_error or bot_stop_failed)
     _audit(
         request,
         operation=op,
@@ -1021,6 +1093,7 @@ async def api_trusted_apps_allow_all(request: web.Request) -> web.Response:
         resources=(
             f"{value} stopped={len(stopped)} still_running={len(still_running)}"
             f"{' sweep_error' if sweep_error else ''}"
+            f"{f' bot_stop_failed={bot_stop_failed}' if bot_stop_failed else ''}"
         ),
     )
     if incomplete:

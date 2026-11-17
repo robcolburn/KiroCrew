@@ -92,11 +92,18 @@ def _offers(app: str) -> list[tuple[str, str]]:
 
 
 def _app_reaches(app: str, slug: str) -> bool:
-    """Whether *app* holds the approved ``tools`` scope AND the owner ticked Bot *slug*."""
+    """Whether *app* holds the approved ``tools`` scope AND the owner ticked Bot *slug*,
+    AND execution trust for *app* is not denied (re-checked at offer time so a trust
+    withdrawal that stops short of deregistration cannot re-mount servers on cold start).
+    """
     from kiro_crew.apps.bot_grants import BOT_SCOPE_TOOLS, app_bot_scopes, app_granted_bots
+    from kiro_crew.apps.execution import app_execution_denied
 
     # ``app_bot_scopes`` is empty for an app that is not installed and enabled.
-    return BOT_SCOPE_TOOLS in app_bot_scopes(app) and slug in app_granted_bots(app)
+    if not (BOT_SCOPE_TOOLS in app_bot_scopes(app) and slug in app_granted_bots(app)):
+        return False
+    # Execution-admission gate: covers the trust-withdrawn-but-still-enabled case.
+    return app_execution_denied(app, action="bot_chat_server_offer") is None
 
 
 def _app_names() -> list[str]:
@@ -193,6 +200,18 @@ def bot_servers(slug: str, cfg: Any = None) -> dict[str, dict[str, Any]]:
 #: revocation after the preview went off still lands. In memory: a gateway restart
 #: starts every chat on a freshly built spec.
 _MOUNTED: dict[str, dict[str, str]] = {}
+#: ``{Bot slug: session_key}`` the session key recorded at mount time — written by
+#: :func:`record_mounted` alongside :data:`_MOUNTED`.  Used by
+#: :func:`stop_app_bot_chat_servers` so teardown does not rely on a live DM-binding
+#: read (which may be unreadable during revocation).
+_MOUNTED_SESSION_KEYS: dict[str, str] = {}
+#: ``{app_name: int}`` revocation generation counter.  Incremented by
+#: :func:`revoke_app_generation` on every trust-withdrawal, disable, and uninstall.
+#: A cold-starting Bot projection stamps each app-server entry with the generation
+#: at build time (:func:`conductor_session_spec`); the three :func:`record_mounted`
+#: call-sites verify it before handing the entry to the session, so a stale
+#: projection that raced a revocation is stripped before it can mount.
+_APP_REVOKE_GEN: dict[str, int] = {}
 #: ``{Bot slug: fingerprints}`` a reconcile has queued (a reload or a fresh start)
 #: but no agent process has started with yet. Kept apart from :data:`_MOUNTED` so an
 #: addition undone before it applied is never judged a loss of what the chat runs.
@@ -255,6 +274,7 @@ def record_mounted(
         # codex keeps only the first; the error is toward a fresh start on untick, never
         # toward a revoked server left running.
         _MOUNTED[slug] = {a: f for a, f in offered.items() if spelled(a) in handed}
+        _MOUNTED_SESSION_KEYS[slug] = session_key
         _UNMOUNTED[slug] = {
             **shadow,
             **{a: f for a, f in offered.items() if spelled(a) not in handed},
@@ -306,6 +326,71 @@ def _fingerprints(servers: dict[str, dict[str, Any]]) -> dict[str, str]:
     return {alias: json.dumps(e, sort_keys=True, default=str) for alias, e in servers.items()}
 
 
+#: ``{session_key: {alias: gen}}`` the per-app revocation generation captured
+#: by :func:`conductor_session_spec` BEFORE reading the grant table.  A revocation
+#: that races the grant read cannot advance past the recorded generation.  Entries are
+#: removed by :func:`check_and_filter_projection` after the delivery gate runs.
+_PROJECTION_GENS: dict[str, dict[str, int]] = {}
+
+
+def revoke_app_generation(app_name: str) -> None:
+    """Bump the revocation generation for *app_name*.
+
+    Call this BEFORE :func:`stop_app_bot_chat_servers` on every security path that
+    removes the right for *app_name* to run in Bot chats (trust withdrawal, disable,
+    uninstall).  Any cold-starting projection that captured the old generation will
+    be fenced at the three delivery call-sites.
+    """
+    _APP_REVOKE_GEN[app_name] = _APP_REVOKE_GEN.get(app_name, 0) + 1
+
+
+def check_and_filter_projection(
+    session_key: str, servers: dict[str, dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
+    """Remove app-server entries whose revocation generation has advanced or whose
+    admission is invalid, and clear the sidecar-table entry for *session_key*.
+
+    Called at the three delivery points (AcpRuntime mirror, AcpClient array, KAS
+    projection) before the final array is handed to the session.
+
+    For each ``<app>:<server>`` alias:
+    * If the generation recorded in :data:`_PROJECTION_GENS` for this session differs
+      from the current :data:`_APP_REVOKE_GEN` value, the entry is stripped (revocation
+      raced the projection).
+    * If :func:`_app_reaches` says the app lacks execution admission (trust withdrawn
+      but still enabled), the entry is stripped.
+      still enabled), the entry is stripped.
+
+    Entries that were not part of the projection (no sidecar entry) are left as-is so
+    platform servers are never accidentally dropped.
+    """
+    snapshot = _PROJECTION_GENS.pop(session_key, {})
+    out: dict[str, dict[str, Any]] = {}
+    for alias, entry in servers.items():
+        if ":" not in alias:
+            out[alias] = entry
+            continue
+        app_name = alias.split(":")[0]
+        recorded_gen = snapshot.get(alias)
+        if recorded_gen is not None:
+            current_gen = _APP_REVOKE_GEN.get(app_name, 0)
+            if recorded_gen != current_gen:
+                continue  # revocation raced the projection
+        # Re-check execution admission (trust withdrawn but app still enabled).
+        # _app_reaches reads slug from _OFFERED; if the alias is not in the projection
+        # snapshot, it was not a Bot-app server and we skip the admission check.
+        if recorded_gen is not None:
+            # Find the slug from _OFFERED to re-run _app_reaches.
+            slug = next(
+                (s for s, (offered, _) in _OFFERED.items() if alias in offered),
+                None,
+            )
+            if slug is not None and not _app_reaches(app_name, slug):
+                continue  # execution admission denied
+        out[alias] = entry
+    return out
+
+
 def _slot_of(session_key: str) -> str:
     for prefix in ("dashboard_", "dashboard:"):
         if session_key.startswith(prefix):
@@ -324,8 +409,10 @@ def conductor_session_spec(spec: dict[str, Any], session_key: str) -> dict[str, 
     from kiro_crew.members import member_identity_for_session
 
     try:
-        # Read before the grants are: a change that lands during the read then shows
-        # as a newer generation when this projection is recorded.
+        # Snapshot the per-app revocation generations BEFORE reading grants, so a
+        # revocation that races the grant-read cannot advance past this snapshot.
+        # check_and_filter_projection uses it at the three delivery call-sites.
+        gen_snapshot = {app: gen for app, gen in _APP_REVOKE_GEN.items()}
         generation = _GENERATION
         ident = member_identity_for_session(session_key)
         servers = bot_servers(ident["slug"]) if ident else {}
@@ -347,12 +434,20 @@ def conductor_session_spec(spec: dict[str, Any], session_key: str) -> dict[str, 
         return spec
     tools = list(out.get("tools") or [])
     label = f"dashboard:{_slot_of(session_key)}"
+    # Store the sidecar: {alias: gen-at-snapshot-time} for every app-server entry
+    # offered to this session, keyed on session_key so the delivery points can find it.
+    proj_gens: dict[str, int] = {}
     for alias, entry in servers.items():
         if alias in shadowed:
             continue
+        app_name = alias.split(":")[0] if ":" in alias else None
+        if app_name:
+            proj_gens[alias] = gen_snapshot.get(app_name, 0)
         mounted[alias] = stamp_session_label(entry, label)
         if "*" not in tools and f"@{alias}" not in tools:
             tools.append(f"@{alias}")
+    if proj_gens:
+        _PROJECTION_GENS[session_key] = proj_gens
     out["mcpServers"] = mounted
     out["tools"] = tools
     return out
@@ -420,6 +515,9 @@ async def reload_bot_chats(state: Any, slugs: Iterable[str]) -> dict[str, str]:
         try:
             slot = await asyncio.to_thread(_live_slot, state, slug)
             if slot is None:
+                # DM-binding read failed (e.g. a Windows sharing violation): clear the
+                # pending entry so the next reconciliation retries instead of skipping.
+                _PENDING.pop(slug, None)
                 continue
             if getattr(slot, "_pending_discard_conversation_key", None) is not None:
                 # A fresh start is already queued (an app disabled then enabled): its
@@ -431,6 +529,7 @@ async def reload_bot_chats(state: Any, slugs: Iterable[str]) -> dict[str, str]:
             if out[slug] != GONE:
                 _tell_bot(slot, _RELOAD_NOTICE)
         except Exception:  # noqa: BLE001 - a missed reload leaves the next spawn to read it
+            _PENDING.pop(slug, None)  # allow the next reconciliation to retry
             logger.warning("bot chat reload for %s failed", slug, exc_info=True)
     return out
 
@@ -455,6 +554,9 @@ async def fresh_bot_chats(state: Any, slugs: Iterable[str]) -> list[str]:
             # shortcut: a chat with no live slot keeps its resume pointer; every opened
             # Bot chat has a slot while the gateway runs, so only a restart lands here.
             if slot is None:
+                # DM-binding read failed: clear the pending entry so the next
+                # reconciliation retries the revocation instead of skipping it.
+                _PENDING.pop(slug, None)
                 continue
             slot._pending_discard_conversation_key = effective_session_key(slot)
             slot._pending_discard_from_wake = False
@@ -463,6 +565,7 @@ async def fresh_bot_chats(state: Any, slugs: Iterable[str]) -> list[str]:
             _arm_pending_reset_retry(state, slot)
             queued.append(slug)
         except Exception:  # noqa: BLE001 - a missed discard leaves the tools uncallable
+            _PENDING.pop(slug, None)  # allow the next reconciliation to retry
             logger.warning("bot chat fresh start for %s failed", slug, exc_info=True)
     return queued
 
@@ -589,3 +692,66 @@ def schedule_reload(state: Any, slugs: list[str]) -> "asyncio.Task | None":
     tasks.add(task)
     task.add_done_callback(tasks.discard)
     return task
+
+
+async def stop_app_bot_chat_servers(state: Any, app_name: str) -> tuple[list[str], list[str]]:
+    """Immediately stop every Bot chat that mounts *app_name*'s servers.
+
+    For security-critical paths (trust withdrawal, disable, uninstall) that must
+    not leave app code running in Bot chats after the grant is gone.
+
+    Unlike :func:`after_app_change`, which queues a deferred fresh-start that only
+    takes effect at the next idle boundary, this function calls
+    ``discard_conversation`` directly on each affected Bot chat without
+    ``skip_if_busy``, so the session's provider (KAS or ACP) is told to shut down
+    regardless of whether a turn is in progress.
+
+    Session identity is resolved from :data:`_MOUNTED_SESSION_KEYS`, which is written
+    at mount time, so teardown does not rely on a live DM-binding read.  If no
+    session key was recorded the slug is treated as a failure (the process may still
+    be running and cannot be positively confirmed stopped), unless the slot is also
+    absent from the session manager (confirmed down).
+
+    Returns ``(stopped, failed)``: the Bot slugs whose sessions were discarded, and
+    those whose discard call raised. Never raises; failures are returned so callers
+    can decide whether to 409.
+    """
+    prefix = f"{app_name}:"
+    # Find every Bot slug that is currently running with one of this app's servers.
+    affected = [
+        slug
+        for slug, mounted in _MOUNTED.items()
+        if any(alias.startswith(prefix) for alias in mounted)
+    ]
+    if not affected:
+        return [], []
+
+    stopped: list[str] = []
+    failed: list[str] = []
+    sessions = getattr(state, "sessions", None)
+    for slug in affected:
+        try:
+            session_key = _MOUNTED_SESSION_KEYS.get(slug)
+            if not session_key:
+                # No session key recorded at mount time: identity is unresolvable.
+                # Cannot confirm the process is stopped, so this is a failure.
+                # (A missing DM binding and a not-yet-started slot are
+                # indistinguishable here; fail closed.)
+                failed.append(slug)
+                continue
+            if sessions is None:
+                failed.append(slug)
+                continue
+            # ``skip_if_busy`` omitted (defaults to False): stop NOW, not at the
+            # next idle boundary.  The app's code must not keep running.
+            await sessions.discard_conversation(session_key, replay=False)
+            stopped.append(slug)
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "bot chat app tools: could not stop Bot chat for %s (app %s)",
+                slug,
+                app_name,
+                exc_info=True,
+            )
+            failed.append(slug)
+    return stopped, failed

@@ -1465,10 +1465,22 @@ class KasHarness(MembershipHarness):
             if agent == MATE_CONDUCTOR_AGENT and session_key:
                 # A Bot's own chat: settle its app-server record from what this
                 # projection really declares, after every withholding above.
-                from kiro_crew.bot_chat_app_tools import mounted_names, record_mounted
+                from kiro_crew.bot_chat_app_tools import (
+                    check_and_filter_projection,
+                    mounted_names,
+                    record_mounted,
+                )
 
                 own = custom_agents[0] if custom_agents else {}
-                record_mounted(session_key, mounted_names(own.get("mcpServers") or {}))
+                mcp_servers: dict = dict(own.get("mcpServers") or {})
+                mcp_servers = check_and_filter_projection(session_key, mcp_servers)
+                if mcp_servers != own.get("mcpServers"):
+                    # Some entries were stripped; rebuild the custom agent dict.
+                    own = dict(own)
+                    own["mcpServers"] = mcp_servers
+                    if custom_agents:
+                        custom_agents = [own, *custom_agents[1:]]
+                record_mounted(session_key, mounted_names(mcp_servers))
             if agent == MATE_WORKER_AGENT:
                 # A Bot's worker: the `deniedCommands` entries nobody can judge
                 # hold its shell at the gate, whatever its Bot's Permissions.

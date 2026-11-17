@@ -443,12 +443,20 @@ def _record_bot_chat_mounts(client: AcpClient, servers: list[dict[str, Any]]) ->
 
     if client._agent != MATE_CONDUCTOR_AGENT or not client._session_key:
         return
-    from kiro_crew.bot_chat_app_tools import mounted_names, record_mounted
+    from kiro_crew.bot_chat_app_tools import (
+        check_and_filter_projection,
+        mounted_names,
+        record_mounted,
+    )
     from kiro_crew.providers.mirrors.codex import codex_name
 
     # codex registers each server under its whitespace-folded name.
     spelled = codex_name if client._acp_backend == ACP_BACKEND_CODEX else str
-    record_mounted(client._session_key, mounted_names(servers), spelled)
+    # Strip any entry whose revocation generation advanced since the projection.
+    servers_dict = {e["name"]: e for e in servers if isinstance(e, dict) and e.get("name")}
+    servers_dict = check_and_filter_projection(client._session_key, servers_dict)
+    servers[:] = list(servers_dict.values())
+    record_mounted(client._session_key, mounted_names(servers_dict), spelled)
 
 
 def _with_own_ipc_pickups(client: AcpClient, servers: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -226,8 +226,30 @@ async def handle_uninstall_app(request: web.Request) -> web.Response:
         keep_dependencies=keep_dependencies,
         keep_specific=keep_specific,
     )
-    # A Bot chat that mounted this app's server drops it (``bot_chat_app_tools``).
-    await bot_chat_app_tools.after_app_change(request.app.get("state"))
+    # Only stop Bot chats when the uninstall actually succeeded (status < 400).
+    # A rejected uninstall (trust_grant_not_removed, cron-store 409, startup-hook
+    # refusal, 400 not_orphaned) leaves the app unchanged; stopping Bot chats that
+    # are running its servers while claiming nothing happened is incorrect.
+    if resp.status < 400:
+        # Bump generation before stopping so in-flight projections are fenced.
+        bot_chat_app_tools.revoke_app_generation(name)
+        _stopped, _failed = await bot_chat_app_tools.stop_app_bot_chat_servers(
+            request.app.get("state"), name
+        )
+        if _failed:
+            logger.warning("uninstall of %r: could not stop Bot chats for slugs %s", name, _failed)
+            # Rule D: propagate Bot-stop failure in the response body.
+            # Use status 200 (not dynamic): the uninstall succeeded, this is a
+            # cleanup warning. A fixed status avoids the dynamic-status ratchet.
+            import json as _json
+
+            try:
+                body = _json.loads(resp.text or "{}")
+            except Exception:
+                body = {}
+            body["bot_chat_stop_failed"] = _failed
+            resp = web.json_response(body)
+        await bot_chat_app_tools.after_app_change(request.app.get("state"))
     return resp
 
 
