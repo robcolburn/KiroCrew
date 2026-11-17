@@ -151,3 +151,59 @@ async def test_an_unreadable_fold_still_serves_the_board(monkeypatch):
     assert response.status == 200
     assert body["asks"] == {}
     assert [row["item_id"] for row in body["items"]] == [item_id]
+
+
+def _row(body, item_id: str) -> dict:
+    return next(row for row in body["items"] if row["item_id"] == item_id)
+
+
+@pytest.mark.asyncio
+async def test_a_current_ask_record_reaches_the_card_and_a_newer_report_drops_it():
+    item_id = _item()
+    _ask_person(item_id)
+    # Not vetted yet: the worker's question carries no ask record.
+    body, _ = await _call(_state(), CONDUCTOR)
+    assert "ask" not in _row(body, item_id)
+    wl.apply_ask_record(
+        CONDUCTOR,
+        item_id,
+        what="Pick the tea for the menu",
+        why="Only you know the guests",
+        options=[{"label": "Oolong", "outcome": "ships today"}, {"label": "Green"}],
+        pick="Oolong",
+        pick_why="already stocked",
+    )
+    body, _ = await _call(_state(), CONDUCTOR)
+    ask = _row(body, item_id)["ask"]
+    assert (ask["what"], ask["why"], ask["pick"], ask["pick_why"]) == (
+        "Pick the tea for the menu",
+        "Only you know the guests",
+        "Oolong",
+        "already stocked",
+    )
+    assert [o["label"] for o in ask["options"]] == ["Oolong", "Green"]
+    # A newer report is a new question the conductor has not vetted: the old record goes.
+    wl.apply_worker_report(
+        CONDUCTOR, item_id, status="question", summary="also the cups?", reason="needs_human"
+    )
+    body, _ = await _call(_state(), CONDUCTOR)
+    row = _row(body, item_id)
+    assert row["awaits_person"] is True
+    assert "ask" not in row
+
+
+@pytest.mark.asyncio
+async def test_a_remote_item_carries_its_current_ask_record_too():
+    item_id = _item()
+    wl.apply_remote_bind(
+        CONDUCTOR, item_id, worker_session_key="chat-peer", worker_instance_id="crew-peer"
+    )
+    wl.apply_worker_report(
+        CONDUCTOR, item_id, status="question", summary="which tea?", reason="needs_human"
+    )
+    wl.apply_ask_record(CONDUCTOR, item_id, what="Pick the tea", options=[{"label": "Oolong"}])
+    body, _ = await _call(_state(), CONDUCTOR)
+    row = _row(body, item_id)
+    assert row["ask"]["what"] == "Pick the tea"
+    # An option list with no pick: no pick is sent.
+    assert row["ask"]["pick"] == ""

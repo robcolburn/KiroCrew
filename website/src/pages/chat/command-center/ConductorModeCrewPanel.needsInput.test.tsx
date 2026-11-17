@@ -1,8 +1,9 @@
 /**
  * Conductor mode Board > Status > Needs your input: each ledger item a worker said
- * waits on the PERSON (goal-board's "needs you" rule) shows its task and what it
- * asks, with goal-board's Reply buttons -- the conductor's offered answers from the
- * board read's `asks`. A button fills the chat box and never sends.
+ * waits on the PERSON (goal-board's "needs you" rule). With the conductor's current
+ * ask record it shows what is needed, why, the answers and the pick; without one it
+ * says the main chat is still checking, and never shows the worker's prose behind a
+ * blank reply box. A button fills the chat box and never sends.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -17,6 +18,8 @@ vi.mock('../../../hooks/usePanelTabs', () => ({ openPanelView: vi.fn() }))
 import ConductorModeCrewPanel, { personAsks } from './ConductorModeCrewPanel'
 import { CrewWorkersTab } from './CrewWorkerList'
 import type { WorkBoardItem } from '../../../api/crewBoard'
+import { i18next } from '../../../i18n/all'
+import zh from '../../../i18n/locales/zh-CN.json'
 
 const ITEM = (over: Partial<WorkBoardItem>): WorkBoardItem => ({
   schema: 1, item_id: 'it_q', title: 'Pick a tea', acceptance: { kind: 'human_approval' }, state: 'open', verdict: null,
@@ -26,12 +29,10 @@ const ITEM = (over: Partial<WorkBoardItem>): WorkBoardItem => ({
   reason: 'needs_human', awaits_person: true, ...over,
 } as WorkBoardItem)
 
+const ASK = { what: 'Pick the tea for the menu', why: 'Only you know the guests', options: [{ label: 'Oolong', outcome: 'ships today' }, { label: 'Green', outcome: '' }], pick: 'Oolong', pick_why: 'already stocked', written_at: '2026-10-30T00:06:00Z' }
+
 const BOARD = { conductor: { schema: 1, slot_key: 'root-1', goal: 'Plan the launch.', round: 1, depth: 0, parent_item: null, created_at: '' }, conductor_alive: 'idle', items: [] as WorkBoardItem[], take_over_available: false }
 
-/** A Radix menu trigger opens on a mouse pointerdown. */
-function openMenu(el: HTMLElement) {
-  fireEvent.pointerDown(el, { pointerType: 'mouse', button: 0, ctrlKey: false })
-}
 
 function renderWith(ui: React.ReactElement, slots: unknown[] = []) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -47,49 +48,97 @@ describe('Conductor mode Needs your input', () => {
   })
   afterEach(() => vi.clearAllMocks())
 
-  it('shows a waiting item: which task and what it asks, counted', async () => {
-    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})] })
+  it('with no current ask record: counted, but no worker prose and no blank reply box', async () => {
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})], asks: { it_q: ['Oolong'] } })
     renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={vi.fn()} />)
     const row = await screen.findByTestId('conductor-mode-person-ask')
     expect(row).toHaveTextContent('Pick a tea')
-    expect(within(row).getByTestId('conductor-mode-person-ask-text')).toHaveTextContent('Which tea goes on the menu: oolong or green?')
+    expect(row).not.toHaveTextContent('Which tea goes on the menu')
+    expect(within(row).getByTestId('conductor-mode-person-ask-pending')).toHaveTextContent('The main chat is checking this. It has not said yet what it needs from you.')
+    expect(within(row).queryByTestId('conductor-mode-person-ask-reply')).toBeNull()
+    expect(within(row).queryByTestId('conductor-mode-person-ask-option')).toBeNull()
     expect(screen.getByTestId('conductor-mode-needs-you')).toHaveTextContent('· 1')
     expect(screen.queryByTestId('conductor-mode-needs-you-none')).toBeNull()
-    // Its milestone and the recap say it waits on the person, not on the main chat.
-    expect(screen.getByTestId('conductor-mode-milestone')).toHaveTextContent('Waiting on your answer above')
+    // Its milestone says the move is the main chat's, not the person's.
+    expect(screen.getByTestId('conductor-mode-milestone')).toHaveTextContent('Waiting on the main chat')
     expect(screen.getByTestId('conductor-mode-recap')).toHaveTextContent('Pick a tea waits on you')
   })
 
-  it("puts the conductor's offered answers in one menu beside Reply: two controls in the row", async () => {
-    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})], asks: { it_q: ['Oolong', 'Green'] } })
+  it('with an ask record: what, why, one button per answer with its outcome, the pick marked, Reply secondary', async () => {
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: ASK })] })
     renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={vi.fn()} />)
     const row = await screen.findByTestId('conductor-mode-person-ask')
-    const actions = within(row).getByTestId('conductor-mode-person-ask-actions')
-    expect(within(actions).getAllByRole('button')).toHaveLength(2)
+    expect(row).not.toHaveTextContent('Which tea goes on the menu')
+    expect(within(row).getByTestId('conductor-mode-person-ask-what')).toHaveTextContent('Pick the tea for the menu')
+    expect(within(row).getByTestId('conductor-mode-person-ask-why')).toHaveTextContent('Why only you: Only you know the guests')
+    const options = within(row).getAllByTestId('conductor-mode-person-ask-option')
+    expect(options.map(o => o.tagName)).toEqual(['BUTTON', 'BUTTON'])
+    expect(options[0]).toHaveTextContent('OolongRecommendedships today')
+    expect(options[0]).toHaveAttribute('data-pick', 'yes')
+    expect(options[1]).toHaveTextContent('Green')
+    expect(options[1]).not.toHaveAttribute('data-pick')
+    expect(within(row).getAllByTestId('conductor-mode-person-ask-pick')).toHaveLength(1)
+    expect(within(row).getByTestId('conductor-mode-person-ask-pick-why')).toHaveTextContent('Why recommended: already stocked')
     expect(within(row).getByTestId('conductor-mode-person-ask-reply')).toHaveTextContent('Write a reply')
     // The visible line says the buttons send nothing.
-    expect(within(row).getByTestId('conductor-mode-person-ask-hint')).toHaveTextContent('Puts this in your chat box to check and send')
-    openMenu(within(row).getByTestId('conductor-mode-person-ask-answers'))
-    expect((await screen.findAllByTestId('conductor-mode-person-ask-option')).map(b => b.textContent)).toEqual(['Oolong', 'Green'])
+    expect(within(row).getByTestId('conductor-mode-person-ask-hint')).toHaveTextContent('Pick an answer to draft it in your chat box. Nothing is sent until you press send.')
+    expect(screen.getByTestId('conductor-mode-milestone')).toHaveTextContent('Waiting on your answer above')
   })
 
   it('a button fills the chat box with the item reference and never sends', async () => {
-    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})], asks: { it_q: ['Oolong'] } })
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: ASK })] })
     const onAct = vi.fn()
     renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={onAct} />)
-    openMenu(await screen.findByTestId('conductor-mode-person-ask-answers'))
-    fireEvent.click(await screen.findByRole('menuitem', { name: 'Oolong' }))
+    fireEvent.click((await screen.findAllByTestId('conductor-mode-person-ask-option'))[0])
     expect(onAct).toHaveBeenLastCalledWith('About "Pick a tea" (it_q): Oolong')
     fireEvent.click(screen.getByTestId('conductor-mode-person-ask-reply'))
     expect(onAct).toHaveBeenLastCalledWith('About "Pick a tea" (it_q): ')
     expect(api.sendMessage).not.toHaveBeenCalled()
   })
 
-  it('no offered answers: Reply alone, no menu', async () => {
-    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})] })
+  it('options without a pick: no answer is marked', async () => {
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: { ...ASK, pick: '', pick_why: '' } })] })
     renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={vi.fn()} />)
-    await screen.findByTestId('conductor-mode-person-ask-reply')
-    expect(screen.queryByTestId('conductor-mode-person-ask-answers')).toBeNull()
+    expect(await screen.findAllByTestId('conductor-mode-person-ask-option')).toHaveLength(2)
+    expect(screen.queryByTestId('conductor-mode-person-ask-pick')).toBeNull()
+    expect(screen.queryByTestId('conductor-mode-person-ask-pick-why')).toBeNull()
+  })
+
+  it("a record with no options borrows goal-board's offered labels; with neither, Reply alone", async () => {
+    const bare = { ...ASK, options: [], pick: '', pick_why: '' }
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: bare })], asks: { it_q: ['Oolong', 'Green'] } })
+    const { qc } = renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={vi.fn()} />)
+    expect((await screen.findAllByTestId('conductor-mode-person-ask-option')).map(b => b.textContent)).toEqual(['Oolong', 'Green'])
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: bare })] })
+    await qc.invalidateQueries()
+    await waitFor(() => expect(screen.queryByTestId('conductor-mode-person-ask-option')).toBeNull())
+    expect(screen.getByTestId('conductor-mode-person-ask-reply')).toBeInTheDocument()
+  })
+
+  it('a newer report (the board drops the stale record) goes back to the pending line', async () => {
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: ASK })] })
+    const { qc } = renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={vi.fn()} />)
+    await screen.findByTestId('conductor-mode-person-ask-what')
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ summary: 'Also the cups?' })] })
+    await qc.invalidateQueries()
+    expect(await screen.findByTestId('conductor-mode-person-ask-pending')).toBeInTheDocument()
+    expect(screen.queryByTestId('conductor-mode-person-ask-what')).toBeNull()
+    expect(screen.getByTestId('conductor-mode-person-ask')).not.toHaveTextContent('Also the cups?')
+  })
+
+  it('reads in Chinese: the pending line and the ask record labels', async () => {
+    await i18next.changeLanguage('zh-CN')
+    try {
+      api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({}), ITEM({ item_id: 'it_r', title: 'Pick a cup', ask: ASK })] })
+      renderWith(<ConductorModeCrewPanel root="root-1" viewing="root-1" active onAct={vi.fn()} />)
+      const crew = zh.components.crewMode
+      expect(await screen.findByTestId('conductor-mode-person-ask-pending')).toHaveTextContent(crew.conductor_mode_ask_pending)
+      expect(screen.getByTestId('conductor-mode-person-ask-why')).toHaveTextContent(crew.conductor_mode_ask_why.replace('{{why}}', 'Only you know the guests'))
+      expect(screen.getByTestId('conductor-mode-person-ask-pick')).toHaveTextContent(crew.conductor_mode_ask_pick)
+      expect(screen.getByTestId('conductor-mode-person-ask-pick-why')).toHaveTextContent(crew.conductor_mode_ask_pick_why.replace('{{why}}', 'already stocked'))
+    } finally {
+      await i18next.changeLanguage('en')
+    }
   })
 
   it('says nothing waits when nothing does', async () => {
@@ -112,12 +161,13 @@ describe('Conductor mode Needs your input', () => {
     expect(screen.queryByTestId('conductor-mode-person-ask')).toBeNull()
   })
 
-  it('with a crew member on screen the item shows and offers to open the main chat', async () => {
-    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})], asks: { it_q: ['Oolong'] } })
+  it('with a crew member on screen the item shows its answers read-only and offers to open the main chat', async () => {
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: ASK })] })
     const { store } = renderWith(<ConductorModeCrewPanel root="root-1" viewing="w-1" active onAct={vi.fn()} />, [{ key: 'root-1', title: 'Root', crew_mode_root: true, messages: 2 }, { key: 'w-1', title: 'Worker', crew_root: 'root-1' }])
     const row = await screen.findByTestId('conductor-mode-person-ask')
     expect(row).toHaveTextContent('Pick a tea')
     expect(within(row).queryByTestId('conductor-mode-person-ask-reply')).toBeNull()
+    expect(within(row).getAllByTestId('conductor-mode-person-ask-option').map(o => o.tagName)).toEqual(['DIV', 'DIV'])
     expect(within(row).getByTestId('conductor-mode-person-ask-open-main')).toHaveTextContent('Back to main chat')
     fireEvent.click(within(row).getByTestId('conductor-mode-person-ask-open-main'))
     expect(store.getState().chat.activeSlot).toBe('root-1')
@@ -171,7 +221,7 @@ describe('Conductor mode Needs your input', () => {
   })
 
   it('the Board tab hands its composer insert to the panel', async () => {
-    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({})] })
+    api.crewBoard.mockResolvedValue({ ...BOARD, items: [ITEM({ ask: ASK })] })
     const onAct = vi.fn()
     renderWith(<CrewWorkersTab slot="root-1" active onAct={onAct} />, [{ key: 'root-1', title: 'Root' }])
     fireEvent.click(await screen.findByTestId('conductor-mode-person-ask-reply'))

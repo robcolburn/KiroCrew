@@ -827,6 +827,11 @@ async def _build_board(state: DashboardState, requested: str, key: str, caller: 
         row["acceptance_concrete"] = work_ledger.is_acceptance_concrete(item.acceptance)
         row["report_undelivered"] = undelivered.get(item.item_id)
         events = [event.to_dict() for event in event_tails[item.item_id]]
+        # The conductor's ask record only while it explains the question waiting now:
+        # a newer report is a new question it has not vetted, so the card must not
+        # show the old what/why/options beside it.
+        if row.get("ask") and not ask_is_current(events):
+            row.pop("ask")
         # Waits on the PERSON: the one test the sidebar's crew_work count uses too.
         row["awaits_person"] = not item.is_terminal and awaits_person(item, events, running=running)
         row["events"] = _mask_events(events)
