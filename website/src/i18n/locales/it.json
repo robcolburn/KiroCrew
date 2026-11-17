@@ -6612,7 +6612,7 @@
     "approvalModePicker": {
       "approve_for_me_failed": "Impossibile attivare «Approva per me». Riprova.",
       "approve_for_me_label": "Approva per me",
-      "approve_for_me_desc": "KAS, il motore Kiro su cui gira questa chat, decide da solo quali azioni approvare, compresi i comandi shell e le modifiche ai file. Queste azioni saltano i controlli di sicurezza di {{productName}}, ma vengono comunque registrate. Quando non è sicuro, KAS ti chiede.",
+      "approve_for_me_desc": "In questa chat KAS, il motore Kiro su cui gira, decide da solo quali azioni approvare, compresi i comandi shell e le modifiche ai file; queste azioni saltano i controlli di sicurezza di {{productName}}, ma vengono comunque registrate, e quando non è sicuro KAS ti chiede",
       "nudge_body": "Qui puoi regolare il modo in cui {{productName}} chiede l'approvazione. Scegliendo «Fiducia» qui, può lavorare in questa chat senza chiedere prima: puoi tornare indietro in qualsiasi momento.",
       "nudge_dismiss": "Ho capito",
       "nudge_title": "Vuoi meno richieste di approvazione?",

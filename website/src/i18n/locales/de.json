@@ -6437,7 +6437,7 @@
     "approvalModePicker": {
       "approve_for_me_failed": "„Für mich genehmigen“ konnte nicht eingeschaltet werden. Versuche es noch einmal.",
       "approve_for_me_label": "Für mich genehmigen",
-      "approve_for_me_desc": "KAS, die Kiro-Engine, auf der dieser Chat läuft, entscheidet selbst, welche Aktionen es genehmigt, auch Shell-Befehle und Dateiänderungen. Diese Aktionen umgehen die eigenen Sicherheitsprüfungen von {{productName}}, werden aber weiterhin protokolliert. Wenn KAS unsicher ist, fragt es dich.",
+      "approve_for_me_desc": "In diesem Chat entscheidet KAS, die Kiro-Engine, auf der er läuft, selbst, welche Aktionen es genehmigt, auch Shell-Befehle und Dateiänderungen; diese Aktionen umgehen die eigenen Sicherheitsprüfungen von {{productName}}, werden aber protokolliert, und wenn KAS unsicher ist, fragt es dich",
       "nudge_body": "Hier stellst du ein, wie {{productName}} um Genehmigung bittet. Wählst du hier „Vertrauen“, arbeitet es in diesem Chat, ohne vorher zu fragen – du kannst jederzeit zurückwechseln.",
       "nudge_dismiss": "Verstanden",
       "nudge_title": "Weniger Genehmigungsanfragen?",

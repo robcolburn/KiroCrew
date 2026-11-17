@@ -6262,7 +6262,7 @@
     "approvalModePicker": {
       "approve_for_me_failed": "无法开启“替我批准”。请重试。",
       "approve_for_me_label": "替我批准",
-      "approve_for_me_desc": "KAS（这个聊天所用的 Kiro 引擎）会自行决定批准哪些操作，包括 shell 命令和文件编辑。这些操作会跳过 {{productName}} 自身的安全检查，但仍会记录在日志中。KAS 拿不准时会问你。",
+      "approve_for_me_desc": "在此对话中，KAS（它所用的 Kiro 引擎）会自行决定批准哪些操作，包括 shell 命令和文件编辑；这些操作会跳过 {{productName}} 自身的安全检查，但仍会记录在日志中，KAS 拿不准时会问你",
       "nudge_body": "在这里可以调整 {{productName}} 的审批模式——选择这里的“信任”后，它在此对话中无需先询问即可工作，随时可以改回。",
       "nudge_dismiss": "知道了",
       "nudge_title": "想减少确认次数？",

@@ -26,9 +26,10 @@ import { guideTrustRoot, GuideTrustRootProvider } from '../guide/trustRoot'
  *  language was active at import and never re-translate on a language switch. */
 export const APPROVAL_SEGMENTS = [
   { key: 'normal' as const, icon: <ShieldCheck size={13} />, color: '' },
-  // Offered only while the slot's KAS session offers it (the `approveForMe` prop).
-  { key: 'approve_for_me' as const, icon: <BadgeCheck size={13} />, color: 'text-accent' },
   { key: 'trust_reads' as const, icon: <BookOpen size={13} />, color: 'text-accent' },
+  // Offered only while the slot's KAS session offers it (the `approveForMe` prop).
+  // Placed by how much it lets through: past Reads, before Trust.
+  { key: 'approve_for_me' as const, icon: <BadgeCheck size={13} />, color: 'text-warn' },
   { key: 'trust' as const, icon: <Handshake size={13} />, color: 'text-ok' },
   { key: 'yolo' as const, icon: <Rocket size={13} />, color: 'text-danger' },
 ]

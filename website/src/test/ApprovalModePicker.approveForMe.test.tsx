@@ -44,9 +44,12 @@ describe('ApprovalModePicker: Approve for me', () => {
   it('says KAS approves shell commands and file edits that skip the safety checks', () => {
     renderPicker('normal', false)
     fireEvent.click(screen.getByLabelText('Approval mode: Normal'))
-    const row = screen.getAllByRole('menuitem').map(i => i.textContent || '').find(t => t.includes('Approve for me'))
+    const texts = screen.getAllByRole('menuitem').map(i => i.textContent || '')
+    const row = texts.find(t => t.includes('Approve for me'))
     expect(row).toBeDefined()
-    expect(row).toContain('the Kiro engine this chat runs on')
+    // Placed past Reads and before Trust, by how much it lets through.
+    expect(texts.indexOf(row as string)).toBe(2)
+    expect(row).toContain('In this chat, KAS, the Kiro engine it runs on')
     expect(row).toContain('decides on its own')
     expect(row).toContain('shell commands and file edits')
     expect(row).toContain('skip')
