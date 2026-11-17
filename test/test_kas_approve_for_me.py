@@ -378,7 +378,8 @@ def test_every_entry_point_sets_a_mode_through_the_shared_mutation(module):
     import ast
     from pathlib import Path
 
-    tree = ast.parse(Path(module).read_text(encoding="utf-8"))
+    repo_root = Path(__file__).resolve().parent.parent
+    tree = ast.parse((repo_root / module).read_text(encoding="utf-8"))
     calls = [
         n
         for n in ast.walk(tree)
@@ -387,3 +388,140 @@ def test_every_entry_point_sets_a_mode_through_the_shared_mutation(module):
         and n.func.id == "apply_approval_mode"
     ]
     assert calls, f"{module} sets an approval mode without apply_approval_mode"
+
+
+@pytest.mark.parametrize(
+    "flag, value",
+    [
+        ("linked_session_key", "slack:123.456"),
+        ("_slack_linked", True),
+        ("_slack_channel", "C123"),
+        ("channel_origin", True),
+        ("_channel_runtime_origin", True),
+    ],
+)
+def test_a_session_tied_to_a_channel_holds_it_off(_permitted, flag, value):
+    slot = _slot("dashboard:1")
+    setattr(slot, flag, value)
+    state = _state([slot], keys={"dashboard:1"})
+    assert _permitted.owner_allows(state, "dashboard:1") is False
+
+
+@pytest.mark.parametrize("flag", ["_turn_channel_origin", "_turn_channel_narrowed"])
+def test_a_turn_from_a_channel_holds_it_off(_permitted, flag):
+    slot = _slot("dashboard:1")
+    state = _state([slot], keys={"dashboard:1"})
+    assert _permitted.owner_allows(state, "dashboard:1") is True
+    setattr(slot, flag, True)
+    assert _permitted.owner_allows(state, "dashboard:1") is False
+
+
+def _route_app(slot: Any) -> Any:
+    from unittest.mock import MagicMock
+
+    from aiohttp import web
+
+    from kiro_crew.dashboard.chat_handlers import api_chat_slot_approve_for_me
+
+    state = MagicMock()
+    state._slots = {slot.key: slot}
+    state.sessions.get_provider = MagicMock(return_value=None)
+    state._approve_for_me_keys = set()
+    app = web.Application()
+    app["state"] = state
+    app.router.add_post("/api/chat/slots/{slot}/approve-for-me", api_chat_slot_approve_for_me)
+    return app
+
+
+@pytest.mark.parametrize("busy", [False, True])
+def test_the_route_refuses_a_channel_slot_and_a_pending_first_turn(monkeypatch, busy):
+    """A channel-tied slot is refused; a turn pending before any session exists is busy."""
+    from unittest.mock import AsyncMock
+
+    from aiohttp.test_utils import TestClient, TestServer
+
+    from kiro_crew.dashboard import chat_handlers
+    from kiro_crew.dashboard.chat_api import slot_effort
+    from kiro_crew.dashboard.state_parts.chat_slot import _ChatSlot
+
+    monkeypatch.setattr(chat_handlers, "deny_session_approval_caller", AsyncMock(return_value=None))
+    monkeypatch.setattr(chat_handlers, "approve_for_me_permitted", lambda: True)
+    monkeypatch.setattr(
+        slot_effort,
+        "_configured_backend_for_slot",
+        AsyncMock(return_value=next(iter(chat_handlers.ACP_BACKENDS_APPROVE_FOR_ME))),
+    )
+    seen: list[object] = []
+
+    def _busy(_state, _slot, _key, provider):
+        seen.append(provider)
+        return busy
+
+    monkeypatch.setattr(chat_handlers, "_switch_target_busy", _busy)
+    slot = _ChatSlot("test")
+    if not busy:
+        slot.linked_session_key = "slack:123.456"
+    app = _route_app(slot)
+
+    async def _run() -> tuple[int, dict]:
+        async with TestClient(TestServer(app)) as client:
+            resp = await client.post("/api/chat/slots/test/approve-for-me", json={"enabled": True})
+            return resp.status, await resp.json()
+
+    status, body = asyncio.run(_run())
+    assert status == 409
+    if busy:
+        assert body["code"] == "turn_in_flight"
+        # The busy check ran though no session exists yet.
+        assert seen == [None]
+    else:
+        assert body["code"] == "approve_for_me_channel_linked"
+    assert app["state"]._approve_for_me_keys == set()
+
+
+def _capture(name: str) -> list[dict[str, Any]]:
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent / "fixtures" / "acp_frames" / "kas" / name
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()[1:]]
+
+
+def _offered(frames: list[dict[str, Any]]) -> str | None:
+    """The ``approveForMe`` value the capture's ``session/new`` answer lists."""
+    answer = next(f["result"] for f in frames if "configOptions" in (f.get("result") or {}))
+    return afm.option_value(answer["configOptions"])
+
+
+def _tool_updates(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        f["params"]["update"]
+        for f in frames
+        if f.get("method") == "session/update"
+        and f["params"]["update"].get("sessionUpdate") in ("tool_call", "tool_call_update")
+    ]
+
+
+def test_the_live_off_capture_offers_nothing_and_asks():
+    """KAS spawned with the switch off, as every unchosen Crew session: same as main."""
+    frames = _capture("approve-for-me-off-live.jsonl")
+    assert _offered(frames) is None
+    assert afm.settle_target(None, allowed=True) is None
+    assert [f for f in frames if f.get("method") == "session/request_permission"]
+    assert not any(afm.classifier_approved(u) for u in _tool_updates(frames))
+
+
+def test_the_live_on_capture_runs_the_call_unasked_with_one_audit_row(monkeypatch):
+    """KAS spawned enforced: the option is listed, the call runs unasked, one SEL row."""
+    frames = _capture("approve-for-me-on-live.jsonl")
+    assert _offered(frames) == "files"
+    assert afm.settle_target("files", allowed=True) == "on"
+    assert not [f for f in frames if f.get("method") == "session/request_permission"]
+    sink = _Sel()
+    monkeypatch.setattr("kiro_crew.sel.sel", lambda: sink)
+    afm.register_owner_check(lambda _key: True)
+    handle = SimpleNamespace(_session_key="dashboard:1", _session_id="s1", active_agent="kirocrew")
+    for update in _tool_updates(frames):
+        if afm.classifier_approved(update):
+            afm.audit_classifier_approved(handle, update)
+    assert [row["request_id"] for row in sink.rows] == ["tooluse_afm01"]

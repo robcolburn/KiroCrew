@@ -72,6 +72,9 @@ from kiro_crew.dashboard.approve_for_me import (  # noqa: F401 -- read by chat_a
     approve_for_me_permitted,
 )
 from kiro_crew.dashboard.approve_for_me import (  # noqa: F401
+    channel_linked as approve_for_me_channel_linked,
+)
+from kiro_crew.dashboard.approve_for_me import (  # noqa: F401
     owner_allows as approve_for_me_owner_allows,
 )
 from kiro_crew.dashboard.body_numbers import body_int  # noqa: F401

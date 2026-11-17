@@ -3241,7 +3241,9 @@ The `approval_modes` policy permits `approve_for_me` only where an installed rul
 `enforce` (`session_env`), which also keys it onto a process of its own, and the
 runtime spawn keeps the value from there alone (`apply_runtime_env`). The option is
 written `on` or `off` at session open and before each turn (`settle`); Trust, Reads,
-YOLO, another pick or a policy deny holds it off, and a running turn is cancelled at
+YOLO, another pick, a policy deny, a Dashboard card turn, a session tied to a messaging
+channel or a turn that came from one holds it off (the picker does not offer it on a
+channel session, and the route refuses one), and a running turn is cancelled at
 the next call the engine approves after the leave is withdrawn.
 
 **KAS spec built-in grant** (`spec-builtin-grant`, the third grant row of

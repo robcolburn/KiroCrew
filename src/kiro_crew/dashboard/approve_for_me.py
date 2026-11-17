@@ -11,7 +11,10 @@ whenever the answer is no. The answer is yes only while all of these hold:
 * no slot on that session holds Trust, Reads or a reaching YOLO grant, under
   which Crew answers the calls itself;
 * no Dashboard card's turn runs on it: a card turn keeps its human-approval
-  floor, so its calls take Crew's permission path.
+  floor, so its calls take Crew's permission path;
+* no slot on that session is tied to a messaging channel, and no running turn
+  on it came from one: other people reach a channel session, and their turns
+  keep Crew's deny floor (the same lines ``deny_override`` draws).
 """
 
 from __future__ import annotations
@@ -44,6 +47,25 @@ def approve_for_me_permitted() -> bool:
     return session_mode_permitted(APPROVE_FOR_ME_MODE)
 
 
+def channel_linked(slot: object) -> bool:
+    """Whether *slot* is bound to another session (channel, cron, workflow) or mirrored to Slack."""
+    return bool(
+        getattr(slot, "linked_session_key", "")
+        or getattr(slot, "_slack_linked", False)
+        or getattr(slot, "_slack_channel", "")
+        or getattr(slot, "channel_origin", False)
+        or getattr(slot, "_channel_runtime_origin", False)
+    )
+
+
+def _channel_turn(slot: object) -> bool:
+    """Whether *slot*'s running turn came from, or was narrowed by, a messaging channel."""
+    return bool(
+        getattr(slot, "_turn_channel_origin", False)
+        or getattr(slot, "_turn_channel_narrowed", False)
+    )
+
+
 def owner_allows(state: DashboardState, session_key: str) -> bool:
     """Whether *session_key*'s approve-for-me may stay on. Memory reads only."""
     if not approve_for_me_permitted():
@@ -62,6 +84,8 @@ def owner_allows(state: DashboardState, session_key: str) -> bool:
         if fold(effective_session_key(slot)) != target:
             continue
         matched = True
+        if channel_linked(slot) or _channel_turn(slot):
+            return False
         if slot._trust or slot._trust_reads or slot._trust_scope:
             return False
         if yolo and state.yolo_reaches(slot):

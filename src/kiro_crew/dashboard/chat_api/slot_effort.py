@@ -37,6 +37,7 @@ if TYPE_CHECKING:
         _subagents_attached_response,
         _switch_target_busy,
         apply_approval_mode,
+        approve_for_me_channel_linked,
         approve_for_me_keys,
         approve_for_me_owner_allows,
         approve_for_me_permitted,
@@ -667,7 +668,7 @@ def _approve_for_me_field(state: DashboardState, slot: _ChatSlot, backend: str) 
     Read from the dashboard's own record, not the session: the engine lists the
     option only after an opted-in restart, and the slot has no session in between.
     """
-    if backend not in ACP_BACKENDS_APPROVE_FOR_ME:
+    if backend not in ACP_BACKENDS_APPROVE_FOR_ME or approve_for_me_channel_linked(slot):
         return {}
     return {"approve_for_me": approve_for_me_owner_allows(state, effective_session_key(slot))}
 
@@ -714,7 +715,8 @@ async def api_chat_slot_approve_for_me(request: web.Request) -> web.Response:
 
     Body: ``{"enabled": true | false}``; answers ``{"ok": true, "approve_for_me":
     <bool>}``. Dashboard owner only. Only a slot on a harness in
-    ``ACP_BACKENDS_APPROVE_FOR_ME`` takes it (409 ``approve_for_me_not_offered``).
+    ``ACP_BACKENDS_APPROVE_FOR_ME`` takes it (409 ``approve_for_me_not_offered``), and
+    never one tied to a messaging channel (409 ``approve_for_me_channel_linked``).
     Turning it on is checked against the ``approval_modes`` policy (403
     ``mode_disabled_by_policy``) and first puts the slot back to Normal. Either way
     the slot's idle session is restarted so the next message starts its engine with
@@ -760,6 +762,15 @@ async def api_chat_slot_approve_for_me(request: web.Request) -> web.Response:
             backend = provider.capabilities.backend
         else:
             backend = await _configured_backend_for_slot(slot)
+        if enabled and approve_for_me_channel_linked(slot):
+            # Other people reach a channel session; their turns keep Crew's deny floor.
+            return web.json_response(
+                {
+                    "error": "approve for me is not offered on a session tied to a channel",
+                    "code": "approve_for_me_channel_linked",
+                },
+                status=409,
+            )
         if backend not in ACP_BACKENDS_APPROVE_FOR_ME:
             return web.json_response(
                 {
@@ -775,9 +786,7 @@ async def api_chat_slot_approve_for_me(request: web.Request) -> web.Response:
                 mode=mode,
                 resource=slot.key,
             )
-        if isinstance(provider, LLMProvider) and _switch_target_busy(
-            state, slot, session_key, provider
-        ):
+        if _switch_target_busy(state, slot, session_key, provider):
             return web.json_response(
                 {"error": "a turn is in flight", "code": "turn_in_flight"}, status=409
             )
