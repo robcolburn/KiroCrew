@@ -18651,6 +18651,10 @@
         "sdk_missing_body": "{{channel}} 渠道需要 {{package}} 包，默认不会安装。请在终端运行下面的命令来安装它。",
         "sdk_restart_after_install": "然后重启网关以启动 {{channel}} 渠道。",
         "sdk_install_unsupported": "此网关的 Python 无法安装额外的包，因此无法在此添加 {{package}}。请从 pip 能够安装的 Python 环境中启动网关。",
+        "sdk_install_in_app_body": "{{channel}} 渠道需要 {{package}} 软件包。在这里安装，应用更新后会保留。",
+        "sdk_install": "安装",
+        "sdk_installing": "正在安装…",
+        "sdk_install_failed": "无法安装 {{package}}。请检查网络连接后重试。",
         "verified_and_saved": "已通过 {{channel}} 验证并保存。",
         "backfill_failed_all_other": "有 {{count}} 个会话无法移动。请再次点击重试。",
         "backfill_folder_gone": "{{folder}} 文件夹在运行期间被删除。这些会话此前已被放入其中。它们现在回到了侧边栏，不在任何文件夹中，需要手动移动。",
@@ -20714,7 +20718,7 @@
         "group_allowlist_description": "允许发起一轮对话的飞书群 chat_id。留空 = 不服务任何群。",
         "group_allowlist_label": "允许的群 chat ID",
         "group_empty_hint": "已开启群聊但未列出任何 chat_id，因此不会服务任何群。请添加一个 chat_id，或关闭该开关。",
-        "guide_body": "在飞书开放平台控制台创建一个<mono>自建应用</mono>，打开<mono>凭证与基础信息</mono>页面获取 <mono>App ID</mono> 和 <mono>App Secret</mono>，并把两者粘贴到下方。然后启用<mono>长连接</mono>事件模式，并订阅 <mono>im.message.receive_v1</mono>。每位成员的 <mono>open_id</mono> 填入白名单。该渠道还需要它的可选依赖：在运行网关的环境中执行 <mono>pip install \"lark-oapi>=1.4,<2\"</mono>，然后重启网关。",
+        "guide_body": "在飞书开放平台控制台创建一个<mono>自建应用</mono>，打开<mono>凭证与基础信息</mono>页面获取 <mono>App ID</mono> 和 <mono>App Secret</mono>，并把两者粘贴到下方。然后启用<mono>长连接</mono>事件模式，并订阅 <mono>im.message.receive_v1</mono>。每位成员的 <mono>open_id</mono> 填入白名单。",
         "open_developer_console": "打开飞书开放平台控制台"
       },
       "webexPanel": {

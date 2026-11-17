@@ -63,6 +63,8 @@ export interface BotChannelConfigData {
   sdk_installed?: boolean
   sdk_install_supported?: boolean
   sdk_install_command?: string
+  /** The desktop app installs the SDK itself; see ``sdkExtra.install``. */
+  sdk_install_in_app?: boolean
 }
 
 /** Writable fields shared by every bot-token channel save endpoint. */
@@ -278,6 +280,8 @@ export interface BotChannelSpec {
   sdkExtra?: {
     /** Distribution name as the user would type it, e.g. "lark-oapi". */
     packageLabel: string
+    /** The gateway's own installer, used where ``sdk_install_in_app`` is true. */
+    install?: () => Promise<unknown>
   }
   /** API calls. */
   getConfig: () => Promise<BotChannelConfigData>
@@ -617,7 +621,13 @@ export function BotChannelPanel({ spec }: { spec: BotChannelSpec }) {
 
       {/* ── Missing optional SDK ── */}
       {spec.sdkExtra && (
-        <OptionalSdkCard channel={spec.name} packageLabel={spec.sdkExtra.packageLabel} status={data} />
+        <OptionalSdkCard
+          channel={spec.name}
+          packageLabel={spec.sdkExtra.packageLabel}
+          status={data}
+          onInstall={spec.sdkExtra.install}
+          onInstalled={() => qc.invalidateQueries({ queryKey: [spec.queryKey] })}
+        />
       )}
 
       {/* ── Required ── */}

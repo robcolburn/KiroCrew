@@ -15,8 +15,11 @@ hostname, or open port to manage.
 > `pip install "lark-oapi>=1.4,<2"`. Without it the gateway logs a line and skips
 > the channel — nothing else is affected.
 >
-> **Desktop app: nothing to install.** The app bundles `lark-oapi`, and every
-> update ships it again. Do not run `pip` against the app's bundled Python;
+> **Desktop app: one click.** The app does not ship `lark-oapi`. Open
+> **Settings → Messaging Channels → Feishu** and press **Install**: the app
+> downloads the pinned, hash-checked SDK into your data home
+> (`~/.kiro/crew/extras/feishu/`), outside the app, so updates keep it. Restart
+> the gateway afterwards. Do not run `pip` against the app's bundled Python;
 > that writes into the code-signed bundle.
 
 ## Quick start

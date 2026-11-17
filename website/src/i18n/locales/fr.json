@@ -19665,6 +19665,10 @@
         "sdk_missing_body": "Le canal {{channel}} nécessite le paquet {{package}}, qui n'est pas installé par défaut. Exécutez la commande ci-dessous dans un terminal pour l'ajouter.",
         "sdk_restart_after_install": "Redémarrez ensuite la passerelle pour démarrer le canal {{channel}}.",
         "sdk_install_unsupported": "Le Python de cette passerelle ne peut pas installer de paquets supplémentaires, donc {{package}} ne peut pas être ajouté ici. Lancez la passerelle depuis un environnement Python où pip peut l'installer.",
+        "sdk_install_in_app_body": "Le canal {{channel}} a besoin du paquet {{package}}. Installez-le ici ; l'app le conserve d'une mise à jour à l'autre.",
+        "sdk_install": "Installer",
+        "sdk_installing": "Installation…",
+        "sdk_install_failed": "Impossible d'installer {{package}}. Vérifiez votre connexion réseau et réessayez.",
         "verified_and_saved": "Vérifié avec {{channel}} et enregistré.",
         "backfill_failed_all_one": "{{count}} session n'a pas pu être déplacée. Cliquez à nouveau pour réessayer.",
         "backfill_failed_all_many": "{{count}} sessions n'ont pas pu être déplacées. Cliquez à nouveau pour réessayer.",
@@ -21776,7 +21780,7 @@
         "group_allowlist_description": "chat_ids de groupes Feishu autorisés à déclencher un tour. Vide = aucun groupe n’est servi.",
         "group_allowlist_label": "ID de discussions de groupe autorisés",
         "group_empty_hint": "Les discussions de groupe sont activées mais aucun chat_id n’est listé, donc aucun groupe n’est servi. Ajoute un chat_id ou désactive l’option.",
-        "guide_body": "Dans la console développeur Feishu, crée une <mono>custom app</mono> et ouvre sa page <mono>Credentials & Basic Info</mono> pour récupérer l’<mono>App ID</mono> et l’<mono>App Secret</mono> — colle les deux ci-dessous. Active ensuite le mode d’événements <mono>Long connection</mono> et abonne-toi à <mono>im.message.receive_v1</mono>. L’<mono>open_id</mono> de chaque membre va dans la liste d’autorisation. Le canal a aussi besoin de sa dépendance optionnelle : lance <mono>pip install \"lark-oapi>=1.4,<2\"</mono> dans l’environnement qui exécute la passerelle, puis redémarre-la.",
+        "guide_body": "Dans la console développeur Feishu, crée une <mono>custom app</mono> et ouvre sa page <mono>Credentials & Basic Info</mono> pour récupérer l’<mono>App ID</mono> et l’<mono>App Secret</mono> — colle les deux ci-dessous. Active ensuite le mode d’événements <mono>Long connection</mono> et abonne-toi à <mono>im.message.receive_v1</mono>. L’<mono>open_id</mono> de chaque membre va dans la liste d’autorisation.",
         "open_developer_console": "Ouvrir la console développeur Feishu"
       },
       "webexPanel": {

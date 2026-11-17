@@ -19,7 +19,7 @@ import importlib
 import logging
 from typing import TYPE_CHECKING
 
-from kiro_crew import extras
+from kiro_crew import extras, sdk_extras
 from kiro_crew.config import live
 from kiro_crew.feishu.client import LarkClient
 from kiro_crew.feishu.transport import FeishuTransport
@@ -67,6 +67,9 @@ async def maybe_start_feishu(orch: "GatewayOrchestrator") -> "LarkClient | None"
         # on a worker thread first: on the loop it would stall the gateway long
         # enough for the loop-stall watchdog to restart it. Every later import
         # is then a sys.modules hit. A missing extra still raises ImportError.
+        # On the desktop app the SDK lives in the data home, installed from
+        # Settings (``sdk_extras``); put it on sys.path first.
+        await asyncio.to_thread(sdk_extras.activate)
         for module in _LARK_MODULES:
             await asyncio.to_thread(importlib.import_module, module)
 

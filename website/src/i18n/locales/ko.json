@@ -18651,6 +18651,10 @@
         "sdk_missing_body": "{{channel}} 채널에는 {{package}} 패키지가 필요하지만 기본적으로 설치되지 않습니다. 아래 명령을 터미널에서 실행해 추가하세요.",
         "sdk_restart_after_install": "그런 다음 게이트웨이를 재시작하여 {{channel}} 채널을 시작하세요.",
         "sdk_install_unsupported": "이 게이트웨이의 Python은 추가 패키지를 설치할 수 없으므로 여기에서 {{package}}을(를) 추가할 수 없습니다. pip로 설치할 수 있는 Python 환경에서 게이트웨이를 실행하세요.",
+        "sdk_install_in_app_body": "{{channel}} 채널에는 {{package}} 패키지가 필요합니다. 여기에서 설치하세요. 앱을 업데이트해도 유지됩니다.",
+        "sdk_install": "설치",
+        "sdk_installing": "설치 중…",
+        "sdk_install_failed": "{{package}}을(를) 설치하지 못했습니다. 네트워크 연결을 확인하고 다시 시도하세요.",
         "verified_and_saved": "{{channel}}에서 확인되어 저장되었습니다.",
         "backfill_failed_all_other": "세션 {{count}}개를 옮기지 못했습니다. 다시 시도하려면 클릭하세요.",
         "backfill_folder_gone": "{{folder}} 폴더가 실행 중에 삭제되었습니다. 이 세션들은 이미 그 안에 정리되어 있었습니다. 지금은 사이드바에서 어느 폴더에도 속하지 않은 상태로 돌아갔으며 직접 옮겨야 합니다.",
@@ -20714,7 +20718,7 @@
         "group_allowlist_description": "턴을 시작할 수 있는 Feishu 그룹 chat_id. 비어 있으면 = 어떤 그룹도 처리하지 않습니다.",
         "group_allowlist_label": "허용된 그룹 채팅 ID",
         "group_empty_hint": "그룹 채팅이 켜져 있지만 chat_id가 하나도 없어 어떤 그룹도 처리되지 않습니다. chat_id를 추가하거나 토글을 끄세요.",
-        "guide_body": "Feishu 개발자 콘솔에서 <mono>custom app</mono>을 만들고 <mono>Credentials & Basic Info</mono> 페이지에서 <mono>App ID</mono>와 <mono>App Secret</mono>을 확인해 아래에 붙여 넣으세요. 그다음 이벤트 모드 <mono>Long connection</mono>을 활성화하고 <mono>im.message.receive_v1</mono>을 구독합니다. 각 구성원의 <mono>open_id</mono>를 허용 목록에 넣습니다. 이 채널에는 선택적 의존성도 필요합니다. 게이트웨이를 실행하는 환경에서 <mono>pip install \"lark-oapi>=1.4,<2\"</mono>를 실행한 뒤 재시작하세요.",
+        "guide_body": "Feishu 개발자 콘솔에서 <mono>custom app</mono>을 만들고 <mono>Credentials & Basic Info</mono> 페이지에서 <mono>App ID</mono>와 <mono>App Secret</mono>을 확인해 아래에 붙여 넣으세요. 그다음 이벤트 모드 <mono>Long connection</mono>을 활성화하고 <mono>im.message.receive_v1</mono>을 구독합니다. 각 구성원의 <mono>open_id</mono>를 허용 목록에 넣습니다.",
         "open_developer_console": "Feishu 개발자 콘솔 열기"
       },
       "webexPanel": {

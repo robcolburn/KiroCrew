@@ -7231,8 +7231,13 @@ and closes its loop before the daemon thread exits.
 `lark-oapi` is an OPTIONAL dependency declared as the
 `[feishu]` extra in `setup.cfg` and lazily imported inside the client module;
 `maybe_start_feishu` catches `ImportError` and logs a skip so a missing
-library never takes down the gateway. The desktop app's bundled backend ships
-the extra (`packaging/build-desktop.sh`). No public webhook endpoint is required.
+library never takes down the gateway. The desktop app's backend does NOT ship
+the extra: there `sdk_install_in_app` is true while the SDK is missing, and the
+panel's Install calls `POST /api/feishu/sdk/install` (owner, local machine only),
+which installs the hash-locked wheels into `<data home>/extras/` through
+`kiro_crew.sdk_extras`; `maybe_start_feishu` and `_channel_sdk_status` call
+`sdk_extras.activate()` first, which appends a finished install to `sys.path`.
+No public webhook endpoint is required.
 
 **Optional-SDK card (Feishu, Teams, WhatsApp).** Every channel whose client
 library ships as an optional extra is one `_CHANNEL_SDK_EXTRA` entry in
@@ -7257,7 +7262,8 @@ While `sdk_installed` is false the WhatsApp and bot-channel (Feishu) panels hide
 owns that state. The Teams `jwt_required` notice carries no command, ends with the
 restart step, and shows only when the card does not (`jwt_available` false while
 `find_spec` finds a `jwt` module: PyJWT installed after the start, or a `jwt`
-module that is not PyJWT; or an older gateway). There is no Install button.
+module that is not PyJWT; or an older gateway). Only Feishu has an Install
+button, and only on the desktop app (`sdk_install_in_app`).
 
 Feishu capabilities: `streaming=False`, `edit=False`, `reactions=False`,
 `files_inbound=True`, `files_outbound=True`, `rich_blocks=False`,

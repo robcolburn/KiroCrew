@@ -23,7 +23,7 @@ from typing import Any, Callable, cast  # noqa: F401
 
 from aiohttp import web
 
-from kiro_crew import platform_compat, redaction_seams  # noqa: F401
+from kiro_crew import platform_compat, redaction_seams, sdk_extras  # noqa: F401
 from kiro_crew._facade_compose import compose as _facade_compose
 from kiro_crew.agent_sdk.drivers.acp_vocab import NATIVE_CHILD_NOT_RESUMABLE  # noqa: F401
 from kiro_crew.config import live  # noqa: F401
@@ -157,6 +157,7 @@ from kiro_crew.dashboard.messaging_api.feishu_settings import (  # noqa: F401
     _is_valid_feishu_id,
     api_feishu_config_get,
     api_feishu_config_save,
+    api_feishu_sdk_install,
 )
 from kiro_crew.dashboard.messaging_api.imessage_settings import (  # noqa: F401
     _clean_imessage_path,
@@ -1096,6 +1097,10 @@ async def api_imessage_config_save(request: web.Request) -> web.Response:
 # SDK is importable by this gateway process and the exact command that installs
 # it into this interpreter. Every panel that reports these renders the shared
 # optional-SDK card instead of a bare ``pip install`` line.
+#: One optional-SDK install at a time (``api_feishu_sdk_install``); a second press
+#: while one runs gets 409.
+_SDK_INSTALL_LOCK = asyncio.Lock()
+
 _CHANNEL_SDK_EXTRA: dict[str, tuple[str, str]] = {
     "feishu": ("lark_oapi", "feishu"),
     # PyJWT installs as the ``jwt`` package (teams/client.py imports ``jwt``).
